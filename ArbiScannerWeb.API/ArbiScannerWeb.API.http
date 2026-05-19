@@ -1,0 +1,6 @@
+@ArbiScannerWebApp.Server_HostAddress = http://localhost:5267
+
+GET {{ArbiScannerWebApp.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,126 @@
+version: "3.8"
+
+services:
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    container_name: arbiscanner-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ArbiScannerBot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: REDACTED
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: arbiscanner-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"   # management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    container_name: arbiscanner-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+  # ── Application ─────────────────────────────────────────────────────────────
+  web:
+    # Build with Projects/ parent as context so ArbiScannerAdminPannel is reachable.
+    # Run from the Projects parent directory:
+    #   docker compose -f ArbiScannerWebApp/docker-compose.yml up --build
+    build:
+      context: ../
+      dockerfile: ArbiScannerWebApp/Dockerfile
+    image: arbiscanner-web:latest
+    container_name: arbiscanner-web
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__SqlServer: "Host=postgres;Port=5432;Database=ArbiScannerBot;Username=postgres;Password=REDACTED"
+      RabbitMq__Host: rabbitmq
+      Redis__Endpoint: redis:6379
+      # Allow requests proxied by the client nginx container
+      Cors__AllowedOrigins__0: http://localhost:3001
+      # Override Loki URI so logs reach the monitoring stack
+      Serilog__WriteTo__1__Args__uri: http://loki:3100
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+      - loki
+    networks:
+      - backend
+      - monitoring
+
+  client:
+    build:
+      context: ./ArbiScannerWeb.Client
+      dockerfile: Dockerfile
+    image: arbiscanner-client:latest
+    container_name: arbiscanner-client
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    depends_on:
+      - web
+    networks:
+      - backend
+
+  # ── Monitoring ──────────────────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: arbiscanner-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:11.6.1
+    container_name: arbiscanner-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+volumes:
+  postgres-data:
+  loki-data:
+  grafana-data:
+
+networks:
+  backend:
+    driver: bridge
+  monitoring:
+    driver: bridge

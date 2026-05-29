@@ -48,6 +48,7 @@ export interface TradeOpportunityModel {
 export interface TradeOpportunityDetailsDTO {
     positionModel: TradeOpportunityModel,
     tickers: PossiblePositionTickerModel[],
+    groupName: string,
     shortExchangeUrl?: string | null,
     longExchangeUrl?: string | null,
 }

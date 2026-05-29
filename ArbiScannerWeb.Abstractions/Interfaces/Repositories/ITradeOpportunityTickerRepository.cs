@@ -11,6 +11,7 @@ namespace ArbiScannerWeb.Abstractions.Interfaces.Repositories
     {
         Task InsertAsync(TradeOpportunityTickerModel ticker);
         Task DeleteAllByGuidAsync(Guid guid);
+        Task<long> DeleteOrphanedAsync(IEnumerable<Guid> openGuids);
         Task<TradeOpportunityTickerModel?> GetLatestByGuidAsync(Guid guid);
         Task<List<TradeOpportunityTickerModel>> GetRemainingWithoutOrderBookAsync(Guid guid, int skip, int limit);
     }

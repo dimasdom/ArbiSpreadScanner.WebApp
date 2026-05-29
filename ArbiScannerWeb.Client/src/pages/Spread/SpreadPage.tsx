@@ -61,8 +61,9 @@ function SpreadPage() {
         possiblePositionDTO,
         tickers,
         isLoading,
-        shortRate,
-        longRate,
+        isSpotSpread,
+        displayedShortRate,
+        displayedLongRate,
         spreadVal,
         isSpreadClosedDialogOpen,
         displayedVolatility,
@@ -162,7 +163,7 @@ function SpreadPage() {
                                     ) : (
                                         possiblePositionDTO?.positionModel.exchangeShort.exchange
                                     )}
-                                    {': '}{shortRate ?? possiblePositionDTO?.positionModel.exchangeShort.exchangeRate}
+                                    {': '}{displayedShortRate}
                                 </p>
                                 {possiblePositionDTO?.positionModel.exchangeShort.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeShort.fundingRateValue !== 0 && (
                                     <p className="text-sm text-gray-500">
@@ -186,9 +187,9 @@ function SpreadPage() {
                                     ) : (
                                         possiblePositionDTO?.positionModel.exchangeLong.exchange
                                     )}
-                                    {': '}{longRate ?? possiblePositionDTO?.positionModel.exchangeLong.exchangeRate}
+                                    {': '}{displayedLongRate}
                                 </p>
-                                {possiblePositionDTO?.positionModel.exchangeLong.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeLong.fundingRateValue !== 0 && (
+                                {!isSpotSpread && possiblePositionDTO?.positionModel.exchangeLong.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeLong.fundingRateValue !== 0 && (
                                     <p className="text-sm text-gray-500">
                                         Funding: {(possiblePositionDTO.positionModel.exchangeLong.fundingRateValue * 100).toFixed(2)}% ({getFundingDirectionText(possiblePositionDTO.positionModel.exchangeLong.fundingRateValue, true)})
                                     </p>

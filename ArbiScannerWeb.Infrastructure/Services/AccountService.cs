@@ -688,7 +688,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
 
             var tokenHash = HashToken(refreshToken);
-            var tokenEntity = await _accountRepository.GetRefreshTokenByHashAsync(tokenHash, asNoTracking: true);
+            var tokenEntity = await _accountRepository.GetRefreshTokenByHashAsync(tokenHash);
 
             if (tokenEntity == null)
             {

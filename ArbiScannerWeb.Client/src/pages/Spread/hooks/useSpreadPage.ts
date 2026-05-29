@@ -56,9 +56,7 @@ export function useSpreadPage() {
                 setPossiblePositionDTO(spread);
                 setTickers([...spread.tickers].reverse());
                 setSpreadVal(spread.positionModel.spread);
-                setGroupName(
-                    `${spread.positionModel.exchangeRateA.exchange}${spread.positionModel.exchangeRateB.exchange}${spread.positionModel.symbol}`,
-                );
+                setGroupName(spread.groupName);
                 setLoading(false);
                 return;
             }
@@ -141,12 +139,29 @@ export function useSpreadPage() {
     const spreadLabel = spreadType === undefined ? undefined : SpreadType[spreadType];
     const spreadClass = spreadLabel ? SpreadTypeColors[spreadLabel] : 'bg-gray-100 text-gray-700';
 
+    const isSpotSpread = spreadType === SpreadType.Spot;
+
+    // For spot spread we display price from the orderbook (best bid for short, best ask for long)
+    // because the ticker price often differs significantly from the actual executable price in the book.
+    const shortBids = shortExchangeIsA ? bidsA : bidsB;
+    const longAsks = shortExchangeIsA ? asksB : asksA;
+    const spotShortRate = isSpotSpread
+        ? shortBids?.slice().sort((a, b) => b.price - a.price)[0]?.price
+        : undefined;
+    const spotLongRate = isSpotSpread
+        ? longAsks?.slice().sort((a, b) => a.price - b.price)[0]?.price
+        : undefined;
+
+    const displayedShortRate = spotShortRate ?? shortRate ?? pos?.exchangeShort.exchangeRate;
+    const displayedLongRate = spotLongRate ?? longRate ?? pos?.exchangeLong.exchangeRate;
+
     return {
         possiblePositionDTO,
         tickers,
         isLoading: loading || isSpreadLoading,
-        shortRate,
-        longRate,
+        isSpotSpread,
+        displayedShortRate,
+        displayedLongRate,
         spreadVal,
         isSpreadClosedDialogOpen,
         displayedVolatility,

@@ -12,6 +12,8 @@ namespace ArbiScannerWeb.Domain.Models.DTOs
 
         public required List<TradeOpportunityTickerModel> Tickers { get; set; }
 
+        public string GroupName { get; set; } = string.Empty;
+
         /// <summary>URL for the short exchange based on spread type.</summary>
         public string? ShortExchangeUrl { get; set; }
 

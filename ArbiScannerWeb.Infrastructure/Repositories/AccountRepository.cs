@@ -14,11 +14,16 @@ public class AccountRepository : IAccountRepository
         _context = context;
     }
 
+    private IQueryable<RefreshTokenModel> RefreshTokensQuery(bool forUpdate = false) =>
+        forUpdate
+            ? _context.RefreshTokens.AsTracking()
+            : _context.RefreshTokens.AsNoTracking();
+
     public Task<EmailConfirmationCodes?> GetEmailConfirmationByUserIdAsync(string userId)
-        => _context.EmailConfirmationCodes.FirstOrDefaultAsync(ec => ec.UserId == userId);
+        => _context.EmailConfirmationCodes.AsNoTracking().FirstOrDefaultAsync(ec => ec.UserId == userId);
 
     public Task<EmailConfirmationCodes?> GetEmailConfirmationByIdAsync(Guid id)
-        => _context.EmailConfirmationCodes.FirstOrDefaultAsync(ec => ec.Id == id);
+        => _context.EmailConfirmationCodes.AsNoTracking().FirstOrDefaultAsync(ec => ec.Id == id);
 
     public async Task ReplaceEmailConfirmationCodeAsync(string userId, EmailConfirmationCodes emailCode)
     {
@@ -41,7 +46,7 @@ public class AccountRepository : IAccountRepository
     }
 
     public Task<ForgetPasswordRequest?> GetForgetPasswordRequestByIdAsync(Guid id)
-        => _context.ForgetPasswordRequests.FirstOrDefaultAsync(fpr => fpr.Id == id);
+        => _context.ForgetPasswordRequests.AsNoTracking().FirstOrDefaultAsync(fpr => fpr.Id == id);
 
     public async Task ReplaceForgetPasswordRequestAsync(string userId, ForgetPasswordRequest request)
     {
@@ -62,22 +67,19 @@ public class AccountRepository : IAccountRepository
     }
 
     public Task<RefreshTokenModel?> GetRefreshTokenByUserAndHashAsync(string userId, string tokenHash)
-        => _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.UserId == userId && rt.TokenHash == tokenHash);
+        => RefreshTokensQuery().FirstOrDefaultAsync(rt => rt.UserId == userId && rt.TokenHash == tokenHash);
 
-    public Task<RefreshTokenModel?> GetRefreshTokenByHashAsync(string tokenHash, bool asNoTracking = false)
-    {
-        var query = asNoTracking ? _context.RefreshTokens.AsNoTracking() : _context.RefreshTokens.AsQueryable();
-        return query.FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash);
-    }
+    public Task<RefreshTokenModel?> GetRefreshTokenByHashAsync(string tokenHash, bool forUpdate = false)
+        => RefreshTokensQuery(forUpdate).FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash);
 
     public Task<RefreshTokenModel?> GetRefreshTokenByIdAsync(Guid tokenId)
-        => _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Id == tokenId);
+        => RefreshTokensQuery().FirstOrDefaultAsync(rt => rt.Id == tokenId);
 
     public Task<List<RefreshTokenModel>> GetRefreshTokensByReplacedByTokenIdAsync(Guid replacedByTokenId)
-        => _context.RefreshTokens.Where(rt => rt.ReplacedByTokenId == replacedByTokenId).ToListAsync();
+        => RefreshTokensQuery().Where(rt => rt.ReplacedByTokenId == replacedByTokenId).ToListAsync();
 
     public Task<List<RefreshTokenModel>> GetActiveRefreshTokensForUserAsync(string userId, DateTime utcNow)
-        => _context.RefreshTokens
+        => RefreshTokensQuery()
             .Where(rt => rt.UserId == userId && rt.RevokedAt == null && rt.ExpiresAt > utcNow)
             .ToListAsync();
 

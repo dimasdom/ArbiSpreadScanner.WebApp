@@ -15,7 +15,7 @@ public interface IAccountRepository
 
     Task AddRefreshTokenAsync(RefreshTokenModel refreshToken, bool detachAfterSave = false);
     Task<RefreshTokenModel?> GetRefreshTokenByUserAndHashAsync(string userId, string tokenHash);
-    Task<RefreshTokenModel?> GetRefreshTokenByHashAsync(string tokenHash, bool asNoTracking = false);
+    Task<RefreshTokenModel?> GetRefreshTokenByHashAsync(string tokenHash, bool forUpdate = false);
     Task<RefreshTokenModel?> GetRefreshTokenByIdAsync(Guid tokenId);
     Task<List<RefreshTokenModel>> GetRefreshTokensByReplacedByTokenIdAsync(Guid replacedByTokenId);
     Task<List<RefreshTokenModel>> GetActiveRefreshTokensForUserAsync(string userId, DateTime utcNow);

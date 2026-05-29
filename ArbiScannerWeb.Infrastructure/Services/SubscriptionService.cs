@@ -105,7 +105,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             if (!user.IsNullOrEmpty)
             {
                 var userSubDto = Newtonsoft.Json.JsonConvert.DeserializeObject<UserSubscriptionModel>((string)user!);
-                if (userSubDto != null)
+                if (userSubDto != null && userSubDto.EndDate > DateTime.UtcNow)
                 {
                     return Result.Ok(new UserSubscriptionModelDTO(userSubDto));
                 }
@@ -118,7 +118,14 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 {
                     IsActive = false
                 };
-                await _redis.StringSetAsync($"userSubscription:{userId}", Newtonsoft.Json.JsonConvert.SerializeObject(res.Value), TimeSpan.FromHours(24));
+                if (res.Value != null)
+                {
+                    var remaining = res.Value.EndDate - DateTime.UtcNow;
+                    var cacheTtl = remaining > TimeSpan.Zero
+                        ? TimeSpan.FromTicks(Math.Min(remaining.Ticks, TimeSpan.FromHours(24).Ticks))
+                        : TimeSpan.FromMinutes(5);
+                    await _redis.StringSetAsync($"userSubscription:{userId}", Newtonsoft.Json.JsonConvert.SerializeObject(res.Value), cacheTtl);
+                }
                 return Result.Ok(userSubDto);
             }
         

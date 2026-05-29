@@ -45,6 +45,13 @@ namespace ArbiScannerWeb.Abstractions.Interfaces.Repositories
             => _collection.DeleteManyAsync(
                 Builders<TradeOpportunityTickerModel>.Filter.Eq(x => x.Guid, guid));
 
+        public async Task<long> DeleteOrphanedAsync(IEnumerable<Guid> openGuids)
+        {
+            var result = await _collection.DeleteManyAsync(
+                Builders<TradeOpportunityTickerModel>.Filter.Nin(x => x.Guid, openGuids));
+            return result.DeletedCount;
+        }
+
         public Task<TradeOpportunityTickerModel?> GetLatestByGuidAsync(Guid guid)
             => _collection
                 .Find(Builders<TradeOpportunityTickerModel>.Filter.Eq(x => x.Guid, guid))

@@ -111,7 +111,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     var tickers = new List<TradeOpportunityTickerModel> { latestTicker };
                     tickers.AddRange(remaining);
 
-                    var dto = new TradeOpportunityDetailsDTO { PositionModel = spread, Tickers = tickers };
+                    var dto = new TradeOpportunityDetailsDTO { PositionModel = spread, Tickers = tickers, GroupName = GetGroupNameBasedOnPosition(spread) };
                     await EnrichWithExchangeLinksAsync(dto);
                     return Result.Ok(dto);
                 }
@@ -176,7 +176,8 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     .Select(x => new TradeOpportunityDetailsDTO
                     {
                         PositionModel = x,
-                        Tickers = new List<TradeOpportunityTickerModel>()
+                        Tickers = new List<TradeOpportunityTickerModel>(),
+                        GroupName = GetGroupNameBasedOnPosition(x)
                     })
                     .ToList();
 
@@ -202,6 +203,11 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
                 if (existing is not null)
                 {
+                    // Late-arriving update messages after CloseSpread was already processed
+                    // would insert orphaned tickers that are never cleaned up. Skip silently.
+                    if (existing.OrderStatus == OrderStatus.Closed)
+                        return Result.Ok();
+
                     existing.ExchangeRateA.ExchangeRate = model.ExchangeRateA.ExchangeRate;
                     existing.ExchangeRateB.ExchangeRate = model.ExchangeRateB.ExchangeRate;
                     existing.ExchangeLong.ExchangeRate = model.ExchangeLong.ExchangeRate;
@@ -221,6 +227,11 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     _ = _realtimeNotifier.NotifyGroupAsync(GetGroupNameBasedOnPosition(model), new MessageDto() { Ticker = ticker });
                     await _tickerRepo.InsertAsync(ticker);
                 }
+                else
+                {
+                    _logger.LogWarning("Spread with Guid {Guid} not found for update", model.Guid);
+                    await AddSpread(model);
+                }
             }
             catch (Exception ex)
             {
@@ -231,7 +242,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
         }
 
         private static string GetGroupNameBasedOnPosition(TradeOpportunityModel model)
-            => $"{model.ExchangeRateA.Exchange}{model.ExchangeRateB.Exchange}{model.Symbol}";
+            => model.Guid.ToString().ToLowerInvariant();
 
         private async Task EnrichWithExchangeLinksAsync(TradeOpportunityDetailsDTO dto)
         {

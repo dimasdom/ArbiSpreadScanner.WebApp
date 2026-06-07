@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
@@ -7,13 +7,6 @@ import { useRegisterMutation } from '../../../store/services/account';
 import { useAppDispatch } from '../../../hooks';
 import type { IRootStore } from '../../../store/store';
 import { validateEmail, validatePassword } from '../../../utils/validationUtils';
-
-interface RegisterFields {
-    email: string;
-    password: string;
-    confirmEmail: string;
-    confirmPassword: string;
-}
 
 interface RegisterErrors {
     email: string;
@@ -31,12 +24,11 @@ export function useRegisterForm() {
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
     const loginError = useSelector((state: IRootStore) => state.account.error);
 
-    const [fields, setFields] = useState<RegisterFields>({
-        email: '',
-        password: '',
-        confirmEmail: '',
-        confirmPassword: '',
-    });
+    const emailRef = useRef<HTMLInputElement>(null);
+    const confirmEmailRef = useRef<HTMLInputElement>(null);
+    const passwordRef = useRef<HTMLInputElement>(null);
+    const confirmPasswordRef = useRef<HTMLInputElement>(null);
+
     const [errors, setErrors] = useState<RegisterErrors>({
         email: '',
         confirmEmail: '',
@@ -50,16 +42,19 @@ export function useRegisterForm() {
     useEffect(() => { dispatch(clearError()); }, [dispatch]);
     useEffect(() => { if (isLoggedIn) navigate('/'); }, [isLoggedIn, navigate]);
 
-    const setField = (field: keyof RegisterFields, value: string) => {
-        setFields((prev) => ({ ...prev, [field]: value }));
+    const clearFieldError = (field: keyof RegisterErrors) =>
         setErrors((prev) => ({ ...prev, [field]: '' }));
-    };
 
     const validate = (): boolean => {
-        const emailErr = validateEmail(fields.email);
-        const confirmEmailErr = fields.email !== fields.confirmEmail ? 'Emails do not match.' : '';
-        const passwordErr = validatePassword(fields.password);
-        const confirmPasswordErr = fields.password !== fields.confirmPassword ? 'Passwords do not match.' : '';
+        const email = emailRef.current?.value ?? '';
+        const confirmEmail = confirmEmailRef.current?.value ?? '';
+        const password = passwordRef.current?.value ?? '';
+        const confirmPassword = confirmPasswordRef.current?.value ?? '';
+
+        const emailErr = validateEmail(email);
+        const confirmEmailErr = email === confirmEmail ? '' : 'Emails do not match.';
+        const passwordErr = validatePassword(password);
+        const confirmPasswordErr = password === confirmPassword ? '' : 'Passwords do not match.';
 
         setErrors((prev) => ({
             ...prev,
@@ -83,7 +78,9 @@ export function useRegisterForm() {
         setShowEulaModal(false);
         setLoading(true);
         try {
-            const res = await register({ login: fields.email, password: fields.password }).unwrap();
+            const email = emailRef.current?.value ?? '';
+            const password = passwordRef.current?.value ?? '';
+            const res = await register({ login: email, password }).unwrap();
             if (res && (res.isSuccess || !res.isFailed)) {
                 navigate('/account/confirmemail?emailConfirmToken=' + res.value.id);
             } else {
@@ -101,12 +98,15 @@ export function useRegisterForm() {
     const handleEulaCancel = () => setShowEulaModal(false);
 
     return {
-        fields,
+        emailRef,
+        confirmEmailRef,
+        passwordRef,
+        confirmPasswordRef,
         errors,
         loading,
         loginError,
         showEulaModal,
-        setField,
+        clearFieldError,
         handleSubmit,
         handleEulaAgree,
         handleEulaCancel,

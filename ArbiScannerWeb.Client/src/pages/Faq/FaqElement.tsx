@@ -10,12 +10,12 @@ const FaqElement: React.FC<FaqProps> = ({ question, answer }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className=" bg-white last:border-0 shadow-lg hover:shadow-2xl shadown-inner transition-shadow rounded-2xl ">
+        <div className="bg-white dark:bg-gray-800 last:border-0 shadow-lg hover:shadow-2xl transition-shadow rounded-2xl">
             <button
-                className="w-full py-5 flex bg-white border-none justify-between items-center text-left focus:outline-none group px-4"
+                className="w-full py-5 flex bg-white dark:bg-gray-800 border-none justify-between items-center text-left focus:outline-none group px-4 rounded-2xl"
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <span className={`text-base sm:text-lg font-semibold pr-4 ${isOpen ? 'text-indigo-600' : 'text-gray-900 group-hover:text-indigo-600'}`}>
+                <span className={`text-base sm:text-lg font-semibold pr-4 ${isOpen ? 'text-indigo-600' : 'text-gray-900 dark:text-gray-100 group-hover:text-indigo-600'}`}>
                     {question}
                 </span>
                 <span 
@@ -29,7 +29,7 @@ const FaqElement: React.FC<FaqProps> = ({ question, answer }) => {
                     isOpen ? 'max-h-[2000px] opacity-100 mb-6' : 'max-h-0 opacity-0'
                 }`}
             >
-                <div className="text-gray-600 leading-relaxed text-sm sm:text-base py-2 break-words">
+                <div className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm sm:text-base py-2 wrap-break-word">
                     {answer}
                 </div>
             </div>

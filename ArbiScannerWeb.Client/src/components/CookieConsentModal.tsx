@@ -21,12 +21,12 @@ const CookieConsentModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center backdrop-blur-sm bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 mb-4 sm:mb-0 p-6 flex flex-col gap-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-md w-full mx-4 mb-4 sm:mb-0 p-6 flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🍪</span>
-          <h2 className="text-lg font-bold text-gray-800">Cookie Notice</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Cookie Notice</h2>
         </div>
-        <p className="text-gray-600 text-sm leading-relaxed">
+        <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
           This site uses <strong>functional cookies only</strong> — they are strictly necessary for the site to work correctly.
           We do <strong>not</strong> collect, store, or share any personal data.
         </p>

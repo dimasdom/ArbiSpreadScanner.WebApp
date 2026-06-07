@@ -46,11 +46,7 @@ function SpreadsPage() {
 
     const columns: GridColDef[] = [
         { field: 'spread', headerName: 'Spread', width: 110 },
-        {
-            field: 'type',
-            headerName: 'Type',
-            width: 130,
-        },
+        { field: 'type', headerName: 'Type', width: 130 },
         { field: 'symbol', headerName: 'Symbol', width: 150 },
         { field: 'exchangeLong', headerName: 'Exchange Long', width: 150 },
         { field: 'exchangeShort', headerName: 'Exchange Short', width: 150 },
@@ -61,29 +57,28 @@ function SpreadsPage() {
     ];
 
     return (
-        <div className="shadow-inner max-w-7xl mx-auto mt-6 rounded-4xl p-4 md:p-5 bg-white min-h-screen md:min-h-auto relative">
+        <div className="shadow-inner max-w-7xl mx-auto mt-6 rounded-4xl p-4 md:p-5 bg-white dark:bg-gray-900 min-h-screen md:min-h-auto relative transition-colors duration-200">
             <GuideModal storageKey="guide_spreads_seen" title="Using the Spreads Table" steps={spreadsGuideSteps} />
             {isLoading ? (
                 <div className="flex items-center justify-center h-64">
-                    <div className="w-10 h-10 border-4 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+                    <div className="w-10 h-10 border-4 border-gray-200 dark:border-gray-700 border-t-indigo-500 rounded-full animate-spin" />
                 </div>
             ) : (
-            <div className="rounded-4xl shadow-2xl w-full px-2 md:px-5 py-5">
-                <DataGrid
-                    rows={rows}
-                    columns={columns}
-                    pageSizeOptions={[10, 25, 50]}
-                    initialState={{
-                        pagination: { paginationModel: { pageSize: 10, page: 0 } },
-                    }}
-                    disableRowSelectionOnClick
-                    onRowDoubleClick={handleRowDoubleClick}
-                    onRowClick={handleRowClick}
-                />
-            </div>
+                <div className="rounded-4xl shadow-2xl w-full px-2 md:px-5 py-5">
+                    <DataGrid
+                        rows={rows}
+                        columns={columns}
+                        pageSizeOptions={[10, 25, 50]}
+                        initialState={{
+                            pagination: { paginationModel: { pageSize: 10, page: 0 } },
+                        }}
+                        disableRowSelectionOnClick
+                        onRowDoubleClick={handleRowDoubleClick}
+                        onRowClick={handleRowClick}
+                    />
+                </div>
             )}
         </div>
-
     );
 }
 

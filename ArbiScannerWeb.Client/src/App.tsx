@@ -1,4 +1,5 @@
 import './App.css';
+import { Toaster } from 'react-hot-toast';
 import NavBar from './components/NavBar';
 import { Route, Routes, useNavigate, useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -51,7 +52,7 @@ function App() {
     const [logout] = useLogoutMutation();
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen dark:bg-gray-950 transition-colors duration-200">
             <NavBar isLoggedIn={isLoggedIn} isActiveSubscription={isActiveSubscription} onLogin={() => { dispatch(clearUserData()); navigate("/account/login") }} onLogout={() => { void logout(); }} />
 
             <main className="flex-1 pt-20">
@@ -78,6 +79,7 @@ function App() {
             </main>
             <Footer/>
             <CookieConsentModal />
+            <Toaster position="bottom-right" />
         </div>
     )
 }

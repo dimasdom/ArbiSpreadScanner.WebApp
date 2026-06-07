@@ -57,7 +57,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
     const isLast = currentStep === steps.length - 1;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/50 dark:bg-black/50">
             {/* Backdrop close button */}
             <button
                 className="absolute opacity-0 inset-0 w-full h-full cursor-default"
@@ -67,7 +67,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
             />
             <dialog
                 open
-                className="relative bg-white w-full sm:max-w-lg sm:mx-4 sm:rounded-2xl shadow-2xl flex flex-col max-h-[90dvh] sm:max-h-[80vh] rounded-t-2xl overflow-hidden m-0 p-0 border-0"
+                className="relative bg-white dark:bg-gray-900 w-full sm:max-w-lg sm:mx-4 sm:rounded-2xl shadow-2xl flex flex-col max-h-[90dvh] sm:max-h-[80vh] rounded-t-2xl overflow-hidden m-0 p-0 border-0"
                 aria-label={title}
             >
                 {/* Header */}
@@ -91,11 +91,11 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
 
                 {/* Step content */}
                 <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col items-center text-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
                         {step.icon}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">{step.title}</h3>
-                    <div className="text-gray-600 text-sm leading-relaxed max-w-sm">{step.description}</div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{step.title}</h3>
+                    <div className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed max-w-sm">{step.description}</div>
                 </div>
 
                 {/* Progress dots */}
@@ -109,7 +109,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                                 className={`w-2 h-2 rounded-full transition-all duration-200 ${
                                     i === currentStep
                                         ? 'bg-indigo-600 w-6'
-                                        : 'bg-gray-200 hover:bg-gray-300'
+                                        : 'bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500'
                                 }`}
                             />
                         ))}
@@ -117,7 +117,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                 )}
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+                <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3">
                     <button
                         onClick={handleDontShowAgain}
                         className="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm shrink-0"
@@ -129,7 +129,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                         {!isFirst && (
                             <button
                                 onClick={handleBack}
-                                className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                                className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                             >
                                 Back
                             </button>

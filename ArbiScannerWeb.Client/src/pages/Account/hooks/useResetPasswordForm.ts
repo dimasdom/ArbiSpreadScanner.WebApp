@@ -1,15 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
 import type { IRootStore } from '../../../store/store';
 import { useResetPasswordMutation } from '../../../store/services/account';
 import { validatePassword } from '../../../utils/validationUtils';
-
-interface ResetPasswordFields {
-    password: string;
-    confirmPassword: string;
-}
 
 interface ResetPasswordErrors {
     password: string;
@@ -21,7 +16,8 @@ export function useResetPasswordForm() {
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
     const [resetPassword] = useResetPasswordMutation();
 
-    const [fields, setFields] = useState<ResetPasswordFields>({ password: '', confirmPassword: '' });
+    const passwordRef = useRef<HTMLInputElement>(null);
+    const confirmPasswordRef = useRef<HTMLInputElement>(null);
     const [errors, setErrors] = useState<ResetPasswordErrors>({ password: '', server: '' });
     const [loading, setLoading] = useState(false);
     const [token, setToken] = useState('');
@@ -32,22 +28,22 @@ export function useResetPasswordForm() {
         setToken(params.get('token') ?? '');
     }, [isLoggedIn, navigate]);
 
-    const setField = (field: keyof ResetPasswordFields, value: string) => {
-        setFields((prev) => ({ ...prev, [field]: value }));
-        setErrors((prev) => ({ ...prev, password: '' }));
-    };
+    const handlePasswordInput = () => setErrors((prev) => ({ ...prev, password: '' }));
 
     const validate = (): boolean => {
         if (!token) {
             setErrors((prev) => ({ ...prev, server: 'Confirmation token is missing from URL.' }));
             return false;
         }
-        const passwordErr = validatePassword(fields.password);
+        const password = passwordRef.current?.value ?? '';
+        const confirmPassword = confirmPasswordRef.current?.value ?? '';
+
+        const passwordErr = validatePassword(password);
         if (passwordErr) {
             setErrors((prev) => ({ ...prev, password: passwordErr }));
             return false;
         }
-        if (fields.password !== fields.confirmPassword) {
+        if (password !== confirmPassword) {
             setErrors((prev) => ({ ...prev, password: 'Password and confirmation do not match.' }));
             return false;
         }
@@ -60,7 +56,8 @@ export function useResetPasswordForm() {
         if (!validate()) return;
         setLoading(true);
         try {
-            const res = await resetPassword({ token, newPassword: fields.password }).unwrap();
+            const password = passwordRef.current?.value ?? '';
+            const res = await resetPassword({ token, newPassword: password }).unwrap();
             if (res && (res.isSuccess || !res.isFailed)) {
                 navigate('/account/login');
             } else {
@@ -75,5 +72,5 @@ export function useResetPasswordForm() {
         }
     };
 
-    return { fields, errors, loading, setField, handleSubmit };
+    return { passwordRef, confirmPasswordRef, errors, loading, handlePasswordInput, handleSubmit };
 }

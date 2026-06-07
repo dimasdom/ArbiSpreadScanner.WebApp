@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
@@ -23,6 +23,8 @@ export function useLoginForm() {
     const needsEmailConfirmation = useSelector((state: IRootStore) => state.account.needsEmailConfirmation);
     const emailConfirmToken = useSelector((state: IRootStore) => state.account.emailConfirmToken);
 
+    const emailRef = useRef<HTMLInputElement>(null);
+    const passwordRef = useRef<HTMLInputElement>(null);
     const [errors, setErrors] = useState<LoginErrors>({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
 
@@ -42,9 +44,8 @@ export function useLoginForm() {
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        const data = new FormData(event.currentTarget);
-        const emailVal = (data.get('email') as string) ?? '';
-        const passwordVal = (data.get('password') as string) ?? '';
+        const emailVal = emailRef.current?.value ?? '';
+        const passwordVal = passwordRef.current?.value ?? '';
 
         const emailErr = validateEmail(emailVal);
         const passwordErr = !passwordVal || passwordVal.length < 12
@@ -60,5 +61,5 @@ export function useLoginForm() {
         login({ login: emailVal, password: passwordVal }).finally(() => setLoading(false));
     };
 
-    return { errors, loading, loginError, clearFieldError, handleSubmit };
+    return { emailRef, passwordRef, errors, loading, loginError, clearFieldError, handleSubmit };
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
@@ -16,22 +16,21 @@ export function useForgotPasswordForm() {
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
     const [forgotPassword] = useForgotPasswordMutation();
 
-    const [email, setEmailValue] = useState('');
+    const emailRef = useRef<HTMLInputElement>(null);
     const [errors, setErrors] = useState<ForgotPasswordErrors>({ email: '', server: '' });
     const [loading, setLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [submittedEmail, setSubmittedEmail] = useState('');
 
     useEffect(() => { if (isLoggedIn) navigate('/'); }, [isLoggedIn, navigate]);
 
-    const setEmail = (value: string) => {
-        setEmailValue(value);
-        setErrors((prev) => ({ ...prev, email: '' }));
-    };
+    const handleEmailInput = () => setErrors((prev) => ({ ...prev, email: '' }));
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setErrors({ email: '', server: '' });
 
+        const email = emailRef.current?.value ?? '';
         const emailErr = validateEmail(email);
         if (emailErr) {
             setErrors((prev) => ({ ...prev, email: emailErr }));
@@ -42,6 +41,7 @@ export function useForgotPasswordForm() {
         try {
             const res = await forgotPassword({ email }).unwrap();
             if (res && (res.isSuccess || !res.isFailed)) {
+                setSubmittedEmail(email);
                 setIsSuccess(true);
             } else {
                 const msg = res?.errors?.[0]?.message || 'Unable to send reset link.';
@@ -55,5 +55,5 @@ export function useForgotPasswordForm() {
         }
     };
 
-    return { email, errors, loading, isSuccess, setEmail, handleSubmit };
+    return { emailRef, errors, loading, isSuccess, submittedEmail, handleEmailInput, handleSubmit };
 }

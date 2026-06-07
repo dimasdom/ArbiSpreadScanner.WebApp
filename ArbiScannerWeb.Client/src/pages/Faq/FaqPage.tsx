@@ -10,7 +10,7 @@ const faqData = [
         answer: (
             <span>
                 We currently support a wide range of top-tier exchanges including
-                <span className="font-semibold text-gray-800"> Binance, Bybit, OKX, KuCoin Futures, MEXC, Bitget, HTX, XT, CoinEX, LBank, WhiteBit, Gate.io, and BingX</span>.
+                <span className="font-semibold text-gray-800 dark:text-gray-200"> Binance, Bybit, OKX, KuCoin Futures, MEXC, Bitget, HTX, XT, CoinEX, LBank, WhiteBit, Gate.io, and BingX</span>.
                 We are constantly working on adding more integrations.
             </span>
         )
@@ -93,36 +93,36 @@ const faqData = [
 function FaqPage() {
     return (
         <div className="max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8 pb-12">
-            <div className="bg-white shadow-2xl rounded-3xl overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 shadow-2xl rounded-3xl overflow-hidden transition-colors duration-200">
                 {/* Header Section */}
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-700 py-10 sm:py-16 px-4 sm:px-8 text-center text-white">
+                <div className="bg-linear-to-r from-blue-600 to-indigo-700 py-10 sm:py-16 px-4 sm:px-8 text-center text-white">
                     <h1 className="text-2xl sm:text-4xl md:text-6xl font-extrabold mb-4 sm:mb-6 tracking-tight">
                         Frequently Asked Questions
                     </h1>
                     <p className="text-base sm:text-xl md:text-2xl max-w-3xl mx-auto opacity-90 leading-relaxed">
-                        Everything you need to know about 
-                        <span className="font-semibold text-yellow-300"> ArbiScanner</span>, 
+                        Everything you need to know about
+                        <span className="font-semibold text-yellow-300"> ArbiScanner</span>,
                         features, and how to get started with spread trading.
                     </p>
                 </div>
 
                 {/* FAQ Content Section */}
                 <div className="p-8 md:p-12">
-                    <div className="max-w-4xl mx-auto bg-white">
+                    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900 transition-colors duration-200">
                         <div className="space-y-1">
                             {faqData.map((faq, index) => (
-                                <FaqElement 
-                                    key={index} 
-                                    question={faq.question} 
-                                    answer={faq.answer} 
+                                <FaqElement
+                                    key={index}
+                                    question={faq.question}
+                                    answer={faq.answer}
                                 />
                             ))}
                         </div>
                     </div>
-                    
+
                     {/* Contact Support CTA */}
-                    <div className="mt-16 text-center border-t border-gray-100 pt-10">
-                        <p className="text-gray-600 mb-4">
+                    <div className="mt-16 text-center border-t border-gray-100 dark:border-gray-700 pt-10">
+                        <p className="text-gray-600 dark:text-gray-400 mb-4">
                             Can't find what you're looking for?
                         </p>
                         <a
@@ -131,8 +131,8 @@ function FaqPage() {
                         >
                             Contact Support
                         </a>
-                        <p className="text-sm text-gray-400 mt-3">
-                            Send us an email at <span className="text-indigo-600 font-medium">arbiscannerweb@atomicmail.io</span>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-3">
+                            Send us an email at <span className="text-indigo-600 dark:text-indigo-400 font-medium">arbiscannerweb@atomicmail.io</span>
                         </p>
                     </div>
 

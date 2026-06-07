@@ -82,13 +82,13 @@ function SpreadPage() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64 mt-6">
-                <div className="w-10 h-10 border-4 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+                <div className="w-10 h-10 border-4 border-gray-200 dark:border-gray-700 border-t-indigo-500 rounded-full animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="max-w-5xl mx-auto mt-6 shadow-2xl rounded-4xl bg-white">
+        <div className="max-w-5xl mx-auto mt-6 shadow-2xl rounded-4xl bg-white dark:bg-gray-900 transition-colors duration-200">
             <GuideModal storageKey="guide_spread_seen" title="Reading the Spread Detail" steps={spreadGuideSteps} />
             <Dialog
                 open={isSpreadClosedDialogOpen}
@@ -96,11 +96,11 @@ function SpreadPage() {
                 maxWidth="xs"
                 fullWidth
             >
-                <DialogTitle className="text-lg font-semibold text-gray-900">
+                <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Spread Closed
                 </DialogTitle>
                 <DialogContent>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                         This spread has been closed and is no longer available.
                     </p>
                 </DialogContent>
@@ -112,51 +112,51 @@ function SpreadPage() {
             </Dialog>
 
             <div className="shadow-inner pb-4 px-4 sm:px-6 rounded-4xl lg:px-8 w-full">
-                <div className="flex justify-center p-5 rounded-2xl ">
+                <div className="flex justify-center p-5 rounded-2xl">
                     <RealtimeLineChart ticker={tickers} title={possiblePositionDTO?.positionModel.symbol} />
                 </div>
 
                 <div className="px-3 pb-2">
-                    <div className="grid grid-cols-1  md:grid-cols-3 gap-4 items-start">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                         <div className="md:col-span-2">
-                            <h2 className="text-2xl font-semibold">{possiblePositionDTO?.positionModel.symbol}</h2>
+                            <h2 className="text-2xl font-semibold dark:text-gray-100">{possiblePositionDTO?.positionModel.symbol}</h2>
 
                             <div className="flex flex-wrap gap-2 mt-2">
                                 <span className={`${spreadClass} inline-flex items-center text-sm font-medium px-3 py-1 rounded-full`}>{spreadLabel}</span>
-                                <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-700">Volatility: {displayedVolatility?.toFixed(2)}%</span>
-                                <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${spreadVal > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>Spread: {spreadVal.toFixed(2)}%</span>
+                                <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">Volatility: {displayedVolatility?.toFixed(2)}%</span>
+                                <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${spreadVal > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>Spread: {spreadVal.toFixed(2)}%</span>
                             </div>
 
-                            <p className="text-sm text-gray-500 mt-3">Start Spread: {possiblePositionDTO?.positionModel.startSpread.toFixed(2)}%</p>
-                                <p className="text-sm text-gray-500">Summary Tariff: {possiblePositionDTO?.positionModel.summaryTarrif.toFixed(4)}%</p>
-                                <p className="text-base font-bold mt-2">Estimated Profit: {possiblePositionDTO?.positionModel.possibleProfit.toFixed(2)}%</p>
-                                {totalSlippage != null && (
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${totalSlippage > Math.abs(spreadVal) ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                            Est. Slippage: {totalSlippage.toFixed(3)}%
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">Start Spread: {possiblePositionDTO?.positionModel.startSpread.toFixed(2)}%</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Summary Tariff: {possiblePositionDTO?.positionModel.summaryTarrif.toFixed(4)}%</p>
+                            <p className="text-base font-bold mt-2 dark:text-gray-100">Estimated Profit: {possiblePositionDTO?.positionModel.possibleProfit.toFixed(2)}%</p>
+                            {totalSlippage != null && (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${totalSlippage > Math.abs(spreadVal) ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'}`}>
+                                        Est. Slippage: {totalSlippage.toFixed(3)}%
+                                    </span>
+                                    {positionSize > 0 && (
+                                        <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                            for ${positionSize.toLocaleString()} position
                                         </span>
-                                        {positionSize > 0 && (
-                                            <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-600">
-                                                for ${positionSize.toLocaleString()} position
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div className="md:col-span-1">
-                            <p className="text-xs text-gray-500 mb-2">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                                 Tip: click an exchange name to open its trading page directly.
                             </p>
                             <div>
-                                <h3 className="text-sm font-medium text-gray-600">Short Exchange</h3>
-                                <p className="text-gray-800">
+                                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Short Exchange</h3>
+                                <p className="text-gray-800 dark:text-gray-200">
                                     {possiblePositionDTO?.shortExchangeUrl ? (
                                         <a
                                             href={possiblePositionDTO.shortExchangeUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-indigo-600 hover:underline"
+                                            className="text-indigo-600 dark:text-indigo-400 hover:underline"
                                         >
                                             {possiblePositionDTO.positionModel.exchangeShort.exchange}
                                         </a>
@@ -166,21 +166,21 @@ function SpreadPage() {
                                     {': '}{displayedShortRate}
                                 </p>
                                 {possiblePositionDTO?.positionModel.exchangeShort.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeShort.fundingRateValue !== 0 && (
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
                                         Funding: {(possiblePositionDTO.positionModel.exchangeShort.fundingRateValue * 100).toFixed(2)}% ({getFundingDirectionText(possiblePositionDTO.positionModel.exchangeShort.fundingRateValue, false)})
                                     </p>
                                 )}
                             </div>
-                            <hr className="my-3" />
+                            <hr className="my-3 border-gray-200 dark:border-gray-700" />
                             <div>
-                                <h3 className="text-sm font-medium text-gray-600">Long Exchange</h3>
-                                <p className="text-gray-800">
+                                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Long Exchange</h3>
+                                <p className="text-gray-800 dark:text-gray-200">
                                     {possiblePositionDTO?.longExchangeUrl ? (
                                         <a
                                             href={possiblePositionDTO.longExchangeUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-indigo-600 hover:underline"
+                                            className="text-indigo-600 dark:text-indigo-400 hover:underline"
                                         >
                                             {possiblePositionDTO.positionModel.exchangeLong.exchange}
                                         </a>
@@ -190,7 +190,7 @@ function SpreadPage() {
                                     {': '}{displayedLongRate}
                                 </p>
                                 {!isSpotSpread && possiblePositionDTO?.positionModel.exchangeLong.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeLong.fundingRateValue !== 0 && (
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
                                         Funding: {(possiblePositionDTO.positionModel.exchangeLong.fundingRateValue * 100).toFixed(2)}% ({getFundingDirectionText(possiblePositionDTO.positionModel.exchangeLong.fundingRateValue, true)})
                                     </p>
                                 )}
@@ -203,17 +203,16 @@ function SpreadPage() {
                     const hasOrderData = asksA != null && bidsA != null && asksB != null && bidsB != null;
                     return hasOrderData ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div className="">
+                            <div>
                                 <OrderBlock title={pos?.exchangeRateA.exchange} asks={asksA} bids={bidsA} />
                             </div>
-                            <div className="">
+                            <div>
                                 <OrderBlock title={pos?.exchangeRateB.exchange} asks={asksB} bids={bidsB} />
                             </div>
                         </div>
                     ) : null;
                 })()}
             </div>
-
         </div>
     );
 }

@@ -17,7 +17,7 @@ function SubscriptionPage() {
      if (error) {
          return (
              <div className="flex h-[80vh] items-center justify-center">
-                 <div className="text-xl text-red-500 font-semibold bg-red-50 px-6 py-4 rounded-xl border border-red-200">
+                 <div className="text-xl text-red-500 font-semibold bg-red-50 dark:bg-red-900/20 px-6 py-4 rounded-xl border border-red-200 dark:border-red-800">
                      Failed to load subscriptions. Please try again later.
                  </div>
              </div>
@@ -27,10 +27,10 @@ function SubscriptionPage() {
     return (
         <div className="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8 pb-20">
             <div className="text-center mb-16 space-y-4">
-                <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
                     Select Your Plan
                 </h1>
-                <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto">
+                <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
                     Unlock premium features including real-time spread data, advanced analytics, and priority support.
                 </p>
             </div>

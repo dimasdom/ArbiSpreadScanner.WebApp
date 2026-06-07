@@ -26,8 +26,9 @@ const OrderBlock: React.FC<OrderBlockProps> = ({ title, bids = [], asks = [] }) 
     }, [asks]);
 
     const renderRow = (side: 'buy' | 'sell', price: number, amount: number, i: number) => {
-        const bgColor = side === 'buy' ? 'bg-green-50' : 'bg-red-50';
-        const textColor = side === 'buy' ? 'text-green-900' : 'text-red-900';
+        const rowClass = side === 'buy'
+            ? 'bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-300'
+            : 'bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-300';
         const sumUsd = price * amount;
 
         const bestPrice = side === 'sell' ? bestAsk : bestBid;
@@ -38,7 +39,7 @@ const OrderBlock: React.FC<OrderBlockProps> = ({ title, bids = [], asks = [] }) 
         return (
             <div
                 key={`${side}-${i}`}
-                className={`flex justify-between px-4 py-2 ${bgColor} ${textColor} text-sm rounded mb-1`}
+                className={`flex justify-between px-4 py-2 ${rowClass} text-sm rounded mb-1`}
             >
                 <span className="w-1/4 capitalize font-medium">{side}</span>
                 <span className="w-1/4 text-right">${sumUsd.toFixed(2)}</span>
@@ -50,17 +51,17 @@ const OrderBlock: React.FC<OrderBlockProps> = ({ title, bids = [], asks = [] }) 
         );
     };
 
-    const ROW_HEIGHT = 41; // px per row (py-2 + text-sm + mb-1)
+    const ROW_HEIGHT = 41;
     const VISIBLE_ROWS = 5;
     const sectionHeight = ROW_HEIGHT * VISIBLE_ROWS;
 
     return (
         <div className='flex justify-center'>
-            <div className="border border-gray-200 rounded-3xl p-4 w-full max-w-sm bg-white shadow-md">
-                <h3 className="text-lg font-bold mb-4 text-gray-900">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-3xl p-4 w-full max-w-sm bg-white dark:bg-gray-800 shadow-md transition-colors duration-200">
+                <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">
                     {title}
                 </h3>
-                <div className="flex justify-between px-4 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                <div className="flex justify-between px-4 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                     <span className="w-1/4">Side</span>
                     <span className="w-1/4 text-right">Sum ($)</span>
                     <span className="w-1/4 text-right">Price</span>

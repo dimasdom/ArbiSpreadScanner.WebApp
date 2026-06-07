@@ -7,6 +7,8 @@ import store from './store/store.ts'
 import { Provider } from 'react-redux'
 import { logger } from './services/loggerService.ts'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
+import { ThemeProvider } from './contexts/ThemeContext.tsx'
+import MuiBridge from './contexts/MuiBridge.tsx'
 
 window.onerror = (message, source, lineno, colno, error) => {
     logger.error(
@@ -28,9 +30,13 @@ createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <Provider store={store}>
             <BrowserRouter>
-                <ErrorBoundary>
-                    <App />
-                </ErrorBoundary>
+                <ThemeProvider>
+                    <MuiBridge>
+                        <ErrorBoundary>
+                            <App />
+                        </ErrorBoundary>
+                    </MuiBridge>
+                </ThemeProvider>
             </BrowserRouter>
         </Provider>
     </StrictMode>,

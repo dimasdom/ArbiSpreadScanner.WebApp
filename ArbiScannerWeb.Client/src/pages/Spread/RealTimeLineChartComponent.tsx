@@ -1,10 +1,10 @@
-﻿// RealtimeLineChart.tsx
 import React, { useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import type { PossiblePositionTickerModel } from '../../types/tickerType';
 import { convertToSeries } from '../../utils/chartUtils';
 import { useChartWidth } from '../../hooks/useChartWidth';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface RealtimeChartProps {
     title: string | undefined | null;
@@ -13,6 +13,7 @@ interface RealtimeChartProps {
 
 export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker }) => {
     const chartWidth = useChartWidth(0.8);
+    const { theme } = useTheme();
     const series = useMemo(
         () => [{ data: convertToSeries(ticker) }],
         [ticker],
@@ -23,6 +24,7 @@ export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker 
             id: 'realtime',
             type: 'line',
             height: 350,
+            background: 'transparent',
             animations: {
                 enabled: true,
                 easing: 'linear',
@@ -44,14 +46,17 @@ export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker 
             },
             zoom: {
                 enabled: true,
-                type: 'xy', 
-                autoScaleYaxis: false, 
+                type: 'xy',
+                autoScaleYaxis: false,
             },
             pan: {
                 enabled: true,
-                type: 'xy', 
-                freeMove: true, 
+                type: 'xy',
+                freeMove: true,
             },
+        },
+        theme: {
+            mode: theme,
         },
         title: {
             text: title || 'Realtime Chart',
@@ -91,7 +96,7 @@ export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker 
     };
 
     return (
-        <div className='overflow-x-auto w-full mx-auto shadow-lg rounded-2xl'>
+        <div className='overflow-x-auto w-full mx-auto shadow-lg rounded-2xl bg-white dark:bg-gray-800 transition-colors duration-200'>
             <div className='p-2 flex justify-center overflow-x-hidden overflow-y-hidden'>
                 <Chart options={options} series={series} type="line" height={350} width={chartWidth} />
             </div>

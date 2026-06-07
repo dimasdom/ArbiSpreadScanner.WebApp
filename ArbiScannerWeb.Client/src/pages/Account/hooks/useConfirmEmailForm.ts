@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { clearUserData } from '../../../store/slices/accountSlice';
@@ -17,24 +17,22 @@ export function useConfirmEmailForm() {
     const [confirmEmail] = useConfirmEmailMutation();
     const [resendEmailRequest] = useResendEmailRequestMutation();
 
-    const [token, setTokenValue] = useState('');
-    const [emailConfirmToken, setEmailConfirmToken] = useState('');
+    const tokenRef = useRef<HTMLInputElement>(null);
+    const emailConfirmTokenRef = useRef('');
     const [errors, setErrors] = useState<ConfirmEmailErrors>({ token: '', server: '' });
     const [loading, setLoading] = useState(false);
     const [resending, setResending] = useState(false);
 
     useEffect(() => {
         const tokenFromUrl = searchParams.get('emailConfirmToken');
-        if (tokenFromUrl) setEmailConfirmToken(tokenFromUrl);
+        if (tokenFromUrl) emailConfirmTokenRef.current = tokenFromUrl;
     }, [searchParams]);
 
-    const setToken = (value: string) => {
-        setTokenValue(value);
-        setErrors({ token: '', server: '' });
-    };
+    const handleTokenInput = () => setErrors({ token: '', server: '' });
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        const emailConfirmToken = emailConfirmTokenRef.current;
         if (!emailConfirmToken) {
             setErrors((prev) => ({ ...prev, token: 'Confirmation token is required.' }));
             return;
@@ -42,6 +40,7 @@ export function useConfirmEmailForm() {
         setErrors({ token: '', server: '' });
         setLoading(true);
         try {
+            const token = tokenRef.current?.value ?? '';
             const res = await confirmEmail({ emailConfirmToken, token }).unwrap();
             if (res && (res.isSuccess || !res.isFailed)) {
                 dispatch(clearUserData());
@@ -59,6 +58,7 @@ export function useConfirmEmailForm() {
     };
 
     const handleResendCode = async () => {
+        const emailConfirmToken = emailConfirmTokenRef.current;
         if (!emailConfirmToken) {
             setErrors((prev) => ({ ...prev, server: 'Email confirmation token is required to resend confirmation code.' }));
             return;
@@ -79,5 +79,5 @@ export function useConfirmEmailForm() {
         }
     };
 
-    return { token, errors, loading, resending, setToken, handleSubmit, handleResendCode };
+    return { tokenRef, errors, loading, resending, handleTokenInput, handleSubmit, handleResendCode };
 }

@@ -370,6 +370,11 @@ namespace ArbiScannerWeb.Infrastructure.Services
             {
                 return Result.Fail("User not found.");
             }
+            var existing = await _userManager.FindByEmailAsync(newEmail);
+            if (existing != null && existing.Id != userId)
+            {
+                return Result.Fail("A user with this email address already exists.");
+            }
             var emailRes = await SendConfirmationEmail(newEmail, user);
             if(emailRes.IsFailed)
             {

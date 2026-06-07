@@ -163,6 +163,19 @@ State management: Redux Toolkit with RTK Query (services: `account`, `spread`, `
 | Routing | react-router 7 |
 | Animations | framer-motion 12 |
 
+### Backend Observability
+
+| Package | Purpose |
+|---|---|
+| `OpenTelemetry.Extensions.Hosting` | OTel SDK host integration |
+| `OpenTelemetry.Instrumentation.AspNetCore` | ASP.NET Core request tracing |
+| `OpenTelemetry.Instrumentation.Http` | Outbound HTTP client tracing |
+| `OpenTelemetry.Instrumentation.EntityFrameworkCore` | EF Core query tracing |
+| `OpenTelemetry.Instrumentation.StackExchangeRedis` | Redis command tracing |
+| `OpenTelemetry.Exporter.OpenTelemetryProtocol` | OTLP gRPC export to Tempo |
+| `OpenTelemetry.Exporter.Prometheus.AspNetCore` | `/metrics` endpoint for Prometheus |
+| `Serilog.Enrichers.Span` | Enriches every log event with `TraceId` and `SpanId` |
+
 ### Infrastructure / Observability
 
 | Service | Version |
@@ -171,8 +184,10 @@ State management: Redux Toolkit with RTK Query (services: `account`, `spread`, `
 | MongoDB | latest |
 | Redis | 7 |
 | RabbitMQ | 3 (management plugin) |
-| Grafana Loki | 3.4.2 |
-| Grafana | 11.6.1 |
+| Grafana Loki | latest |
+| Grafana Tempo | latest |
+| Prometheus | latest |
+| Grafana | latest |
 | nginx | alpine |
 
 ---
@@ -269,6 +284,9 @@ All settings below can be overridden via environment variables using the `__` do
   },
   "Redis": {
     "Endpoint": "localhost:6379"
+  },
+  "OpenTelemetry": {
+    "Endpoint": "http://localhost:4317"
   },
   "Jwt": {
     "SigningKey": "<min-32-char-secret>",
@@ -378,9 +396,11 @@ This starts:
 | `arbiscanner-postgres` | 5432 | PostgreSQL database |
 | `arbiscanner-rabbitmq` | 5672, 15672 | RabbitMQ + management UI |
 | `arbiscanner-redis` | 6379 | Redis cache |
-| `arbiscanner-web` | 8080 | .NET API |
+| `arbiscanner-web` | 8080 | .NET API (+ `/metrics` for Prometheus) |
 | `arbiscanner-client` | 3001 | React SPA (nginx) |
 | `arbiscanner-loki` | 3100 | Log aggregation |
+| `arbiscanner-tempo` | 3200, 4317, 4318 | Distributed trace storage |
+| `arbiscanner-prometheus` | 9090 | Metrics storage |
 | `arbiscanner-grafana` | 3000 | Grafana dashboards |
 
 After startup, open `http://localhost:3001` in your browser. Grafana is available at `http://localhost:3000` (default credentials: `admin` / `admin`). RabbitMQ management UI is at `http://localhost:15672`.
@@ -452,5 +472,7 @@ ArbiScannerWebApp/
 └── grafana/
     └── provisioning/
         └── datasources/
-            └── loki.yaml               # Grafana Loki datasource provisioning
+            ├── loki.yaml               # Grafana Loki datasource (uid: loki)
+            ├── tempo.yaml              # Grafana Tempo datasource (trace-to-log, service map)
+            └── prometheus.yaml         # Grafana Prometheus datasource (uid: prometheus)
 ```

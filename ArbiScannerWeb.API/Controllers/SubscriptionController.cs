@@ -60,7 +60,7 @@ namespace ArbiScannerWeb.API.Controllers
         [HttpPost("CancelPayment")]
         public async Task<Result> CancelPayment([FromQuery] int userSubscriptionPaymentId)
         {
-            return await _subscriptionService.CancelPayment(userSubscriptionPaymentId);
+            return (await _subscriptionService.CancelPayment(userSubscriptionPaymentId)).ToSerializable();
         }
     }
 }

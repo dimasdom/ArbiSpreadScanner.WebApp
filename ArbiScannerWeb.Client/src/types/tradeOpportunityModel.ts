@@ -7,7 +7,6 @@ export interface OrderBlock {
     amount:number
 }
 
-// Exchange Rate Model
 export interface ExchangeRateModel {
     id: number;
     symbol: string;
@@ -18,18 +17,15 @@ export interface ExchangeRateModel {
     slippageLong: number;
     slippageShort: number;
     summarySlipage: number;
-    volatility: number;
     fundingRateValue?: number | null;
 }
 
-// Trade Opportunity Model
 export interface TradeOpportunityModel {
     guid: string;
     exchangeRateA: ExchangeRateModel;
     exchangeRateB: ExchangeRateModel;
     exchangeShort: ExchangeRateModel;
     exchangeLong: ExchangeRateModel;
-    volatility: number;
     summaryTarrif: number;
     possibleProfit: number;
     totalFunding: number;
@@ -42,7 +38,7 @@ export interface TradeOpportunityModel {
     asksExchangeA?: OrderBlock[] | null;
     bidsExchangeB?: OrderBlock[] | null;
     asksExchangeB?: OrderBlock[] | null;
-    dateTime: string; // ISO 8601 date string
+    dateTime: string;
 }
 
 export interface TradeOpportunityDetailsDTO {
@@ -53,7 +49,6 @@ export interface TradeOpportunityDetailsDTO {
     longExchangeUrl?: string | null,
 }
 
-// Type guards for runtime type checking
 export const isSpreadType = (value: unknown): value is SpreadType => {
     return typeof value === 'number' && value >= 0 && value <= 2;
 };
@@ -74,7 +69,6 @@ export const isExchangeRateModel = (obj: unknown): obj is ExchangeRateModel => {
         typeof o.slippageLong === 'number' &&
         typeof o.slippageShort === 'number' &&
         typeof o.summarySlipage === 'number' &&
-        typeof o.volatility === 'number' &&
         (o.fundingRateValue === null || o.fundingRateValue === undefined || typeof o.fundingRateValue === 'number');
 };
 
@@ -86,7 +80,6 @@ export const isPossiblePositionModel = (obj: unknown): obj is TradeOpportunityMo
         isExchangeRateModel(o.exchangeRateB) &&
         isExchangeRateModel(o.exchangeShort) &&
         isExchangeRateModel(o.exchangeLong) &&
-        typeof o.volatility === 'number' &&
         typeof o.summaryTarrif === 'number' &&
         typeof o.possibleProfit === 'number' &&
         typeof o.totalFunding === 'number' &&
@@ -98,7 +91,6 @@ export const isPossiblePositionModel = (obj: unknown): obj is TradeOpportunityMo
         typeof o.dateTime === 'string';
 };
 
-// Utility functions for working with the models
 export const createEmptyExchangeRateModel = (): ExchangeRateModel => ({
     id: 0,
     symbol: '',
@@ -109,7 +101,6 @@ export const createEmptyExchangeRateModel = (): ExchangeRateModel => ({
     slippageLong: 0,
     slippageShort: 0,
     summarySlipage: 0,
-    volatility: 0,
     fundingRateValue: null
 });
 
@@ -119,7 +110,6 @@ export const createEmptyPossiblePositionModel = (): TradeOpportunityModel => ({
     exchangeRateB: createEmptyExchangeRateModel(),
     exchangeShort: createEmptyExchangeRateModel(),
     exchangeLong: createEmptyExchangeRateModel(),
-    volatility: 0,
     summaryTarrif: 0,
     possibleProfit: 0,
     totalFunding: 0,
@@ -135,7 +125,6 @@ export const createEmptyPossiblePositionModel = (): TradeOpportunityModel => ({
     dateTime: new Date().toISOString()
 });
 
-// Helper functions for date handling
 export const formatDateTime = (date: Date): string => {
     return date.toISOString();
 };
@@ -144,7 +133,6 @@ export const parseDateTime = (dateString: string): Date => {
     return new Date(dateString);
 };
 
-// API response types (useful for HTTP requests)
 export interface ApiResponse<T> {
     data: T;
     success: boolean;

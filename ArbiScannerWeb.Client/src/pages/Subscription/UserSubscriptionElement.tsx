@@ -1,12 +1,17 @@
 import { useGetUserActiveSubscriptionsQuery } from "../../store/services/subscription";
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import ErrorState from '../../components/ErrorState';
 
 function UserSubscriptionElement() {
-    const { data, isLoading } = useGetUserActiveSubscriptionsQuery();
+    const { data, isLoading, isError } = useGetUserActiveSubscriptionsQuery();
 
     if (isLoading) {
         return <div className="w-full h-64 bg-gray-50 rounded-2xl animate-pulse"></div>;
+    }
+
+    if (isError) {
+        return <ErrorState message="Failed to load your subscription status. Please try again later." />;
     }
 
     if (data?.value) {

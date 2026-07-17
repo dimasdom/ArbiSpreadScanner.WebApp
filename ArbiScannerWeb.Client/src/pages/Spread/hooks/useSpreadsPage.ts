@@ -11,7 +11,7 @@ const typeLabels: Record<number, string> = {
 };
 
 export function useSpreadsPage() {
-    const { data, isLoading } = useGetSpreadsQuery();
+    const { data, isLoading, isError } = useGetSpreadsQuery();
     const navigate = useNavigate();
     const isMobile = useIsMobile();
 
@@ -50,5 +50,5 @@ export function useSpreadsPage() {
         }
     };
 
-    return { rows, isLoading, isMobile, handleRowDoubleClick, handleRowClick };
+    return { rows, isLoading, isError, isMobile, handleRowDoubleClick, handleRowClick };
 }

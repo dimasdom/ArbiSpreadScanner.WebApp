@@ -44,7 +44,7 @@ export function useConfirmEmailForm() {
             const res = await confirmEmail({ emailConfirmToken, token }).unwrap();
             if (res && (res.isSuccess || !res.isFailed)) {
                 dispatch(clearUserData());
-                navigate('/account/login');
+                navigate('/account/login?redirect=/account');
             } else {
                 const msg = res?.errors?.[0]?.message || res?.reasons?.[0]?.message || 'Confirmation failed';
                 setErrors((prev) => ({ ...prev, server: msg }));

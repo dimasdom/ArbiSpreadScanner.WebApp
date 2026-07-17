@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 interface SuccessProps {
     message: string;
     title?: string;

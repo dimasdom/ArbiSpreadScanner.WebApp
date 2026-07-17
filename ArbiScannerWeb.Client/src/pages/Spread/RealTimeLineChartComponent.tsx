@@ -27,7 +27,6 @@ export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker 
             background: 'transparent',
             animations: {
                 enabled: true,
-                easing: 'linear',
                 dynamicAnimation: {
                     speed: 1000,
                 },
@@ -48,11 +47,6 @@ export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker 
                 enabled: true,
                 type: 'xy',
                 autoScaleYaxis: false,
-            },
-            pan: {
-                enabled: true,
-                type: 'xy',
-                freeMove: true,
             },
         },
         theme: {

@@ -3,6 +3,7 @@ using ArbiScannerWeb.Abstractions.Interfaces.Repositories;
 using ArbiScannerWeb.Domain.Models;
 using ArbiScannerWeb.Domain.Models.DTOs;
 using ArbiScannerWeb.Infrastructure.DbContext;
+using ArbiScannerWeb.Infrastructure.Extensions;
 using ArbiScannerWeb.Infrastructure.Settings;
 using FluentResults;
 using Microsoft.AspNetCore.Http;
@@ -86,7 +87,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                             EmailConfirmToken = emailConfirmation?.Id.ToString() ?? string.Empty
                         });
                     }
-                    return Result.Fail("User is not allowed to sign in.");
+                    return Result.Fail(TypedErrors.Forbidden("User is not allowed to sign in."));
                 }
                 if (res.Succeeded)
                 {
@@ -99,7 +100,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                         ClaimsIdentity.DefaultRoleClaimType);
 
                     var now = DateTime.UtcNow;
-                    // создаем JWT-токен
+                    
                     var jwt = new JwtSecurityToken(
                             issuer: _jwtOptions.Issuer,
                             audience: _jwtOptions.Audience,
@@ -108,8 +109,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     expires: now.Add(TimeSpan.FromMinutes(_jwtOptions.AccessTokenExpirationMinutes)),
                             signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtOptions.SigningKey)), SecurityAlgorithms.HmacSha256));
                     var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
-                    
-                    // Generate refresh token
+
                     var ipAddress = GetClientIpAddress();
                     var userAgent = _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"].ToString();
                     var refreshTokenModel = await GenerateRefreshToken(User.Id, ipAddress, userAgent);
@@ -122,20 +122,16 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     accountDto.UserSettings = accountSource.UserSettings;
                     accountDto.Token = encodedJwt;
                     accountDto.AccessToken = encodedJwt;
-                    accountDto.RefreshToken = refreshTokenModel.TokenHash; // TokenHash contains the actual token after GenerateRefreshToken
+                    accountDto.RefreshToken = refreshTokenModel.TokenHash;
                     accountDto.Email = User.Email;
                     accountDto.EmailConfirmed = User.EmailConfirmed;
                     await _redis.StringSetAsync($"userEntity:{User.Id}", SerializeCachedAccount(accountSource), TimeSpan.FromHours(1));
                     return Result.Ok(accountDto);
                 }
             }
-            return Result.Fail("No User");
+            return Result.Fail(TypedErrors.Unauthorized("Invalid username or password."));
 
         }
-        /// <summary>
-        /// Generates a random username with 8 alphabetic characters
-        /// </summary>
-        /// <returns>8-character username string</returns>
         static string GenerateUsername()
         {
             Random random = new Random();
@@ -150,10 +146,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
             return username.ToString();
         }
 
-        /// <summary>
-        /// Generates a random password with 8 alphanumeric characters
-        /// </summary>
-        /// <returns>8-character password string</returns>
         static string GeneratePassword()
         {
             Random random = new Random();
@@ -175,7 +167,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 var user = await _userManager.FindByEmailAsync(model.Login);
                 if (user != null)
                 {
-                    return Result.Fail("User with such email already exists");
+                    return Result.Fail(TypedErrors.Conflict("User with such email already exists"));
                 }
                 var newUser = new AccountModel();
                 newUser.UserName = model.Login;
@@ -193,7 +185,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 }
                 else
                 {
-                    return Result.Fail(string.Join("; ", res.Errors.Select(e => e.Description)));
+                    return Result.Fail(TypedErrors.Validation(string.Join("; ", res.Errors.Select(e => e.Description))));
                 }
             }
             catch(Exception ex)
@@ -215,20 +207,20 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 
                 if (emailConfirmation == null)
                 {
-                    return Result.Fail("Invalid confirmation code.");
+                    return Result.Fail(TypedErrors.Unauthorized("Invalid confirmation code."));
                 }
                 if (emailConfirmation.ExpirationTime < DateTime.UtcNow)
                 {
-                    return Result.Fail("Confirmation code has expired.");
+                    return Result.Fail(TypedErrors.Unauthorized("Confirmation code has expired."));
                 }
                 if(emailConfirmation.Code != code)
                 {
-                    return Result.Fail("Invalid confirmation code.");
+                    return Result.Fail(TypedErrors.Unauthorized("Invalid confirmation code."));
                 }
                 var user =  await _userManager.FindByIdAsync(emailConfirmation.UserId);
                 if(user == null)
                 {
-                    return Result.Fail("User not found.");
+                    return Result.Fail(TypedErrors.NotFound("User not found."));
                 }
                 user.UserName = emailConfirmation.Email;
                 user.Email = emailConfirmation.Email;
@@ -255,7 +247,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
             {
-                return Result.Fail("User with such email does not exist.");
+                return Result.Fail(TypedErrors.NotFound("User with such email does not exist."));
             }
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
             var forgetPasswordRequest = new ForgetPasswordRequest
@@ -277,12 +269,12 @@ namespace ArbiScannerWeb.Infrastructure.Services
             var ForgetPasswordRequest = await _accountRepository.GetForgetPasswordRequestByIdAsync(Guid.Parse(changePasswordDTO.Token));
             if(ForgetPasswordRequest == null)
             {
-                return Result.Fail("Invalid or expired password reset token.");
+                return Result.Fail(TypedErrors.Unauthorized("Invalid or expired password reset token."));
             }
             var user = await _userManager.FindByIdAsync(ForgetPasswordRequest.UserId);
             if (user == null)
             {
-                return Result.Fail("User with such email does not exist.");
+                return Result.Fail(TypedErrors.NotFound("User with such email does not exist."));
             }
             var result = await _userManager.ResetPasswordAsync(user, ForgetPasswordRequest.Token, changePasswordDTO.NewPassword);
             if (result.Succeeded)
@@ -291,7 +283,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
             else
             {
-                return Result.Fail(string.Join("; ", result.Errors.Select(e => e.Description)));
+                return Result.Fail(TypedErrors.Validation(string.Join("; ", result.Errors.Select(e => e.Description))));
             }
         }
 
@@ -300,14 +292,14 @@ namespace ArbiScannerWeb.Infrastructure.Services
             var userIdString = _httpContextAccessor.HttpContext?.User?.Identity?.Name;
             if (string.IsNullOrEmpty(userIdString))
             {
-                return Result.Fail("User is not authenticated.");
+                return Result.Fail(TypedErrors.Unauthorized("User is not authenticated."));
             }
             var account = await _context.Users
                 .Include(a => a.UserSettings)
                     .ThenInclude(s => s.Exchanges)
                 .FirstOrDefaultAsync(a => a.Id == userIdString);
             if (account is null)
-                return Result.Fail("There are no user");
+                return Result.Fail(TypedErrors.NotFound("There are no user"));
             MapAccountEditDTOToAccountModel(accountDTO, account);
             var exchangeNames = accountDTO.Exchanges
                 .Select(e => e.Exchange?.Name)
@@ -317,7 +309,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 .Where(e => exchangeNames.Contains(e.Name))
                 .ToListAsync();
 
-            // Remove all existing exchange rows so removals take effect and duplicates cannot form
             _context.UserExchanges.RemoveRange(account.UserSettings.Exchanges);
             account.UserSettings.Exchanges = exchangeModels
                 .Select(e => new UserExchangeModel { ExchangeId = e.Id, UserAccountId = account.Id, Exchange = e })
@@ -336,7 +327,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
             model.UserSettings.FuturesSpread = dto.FuturesSpread;
             model.UserSettings.FundingSpread = dto.FundingSpread;
             model.UserSettings.SpotSpread = dto.SpotSpread;
-            // Exchanges are mapped separately in UpdateDetails via DB lookup
         }
 
         public async Task<Result<EmailConfirmationCodes>> SendConfirmationEmail(string email, AccountModel account)
@@ -363,17 +353,17 @@ namespace ArbiScannerWeb.Infrastructure.Services
             var userId = _httpContextAccessor.HttpContext?.User?.Identity?.Name;
             if (string.IsNullOrEmpty(userId))
             {
-                return Result.Fail("User is not authenticated.");
+                return Result.Fail(TypedErrors.Unauthorized("User is not authenticated."));
             }
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                return Result.Fail("User not found.");
+                return Result.Fail(TypedErrors.NotFound("User not found."));
             }
             var existing = await _userManager.FindByEmailAsync(newEmail);
             if (existing != null && existing.Id != userId)
             {
-                return Result.Fail("A user with this email address already exists.");
+                return Result.Fail(TypedErrors.Conflict("A user with this email address already exists."));
             }
             var emailRes = await SendConfirmationEmail(newEmail, user);
             if(emailRes.IsFailed)
@@ -388,12 +378,12 @@ namespace ArbiScannerWeb.Infrastructure.Services
             var emailConfirmation = await _accountRepository.GetEmailConfirmationByIdAsync(Guid.Parse(EmailConfirmToken));
             if(emailConfirmation == null)
             {
-                return Result.Fail("Invalid email confirmation token.");
+                return Result.Fail(TypedErrors.Unauthorized("Invalid email confirmation token."));
             }
             var user = await _userManager.FindByIdAsync(emailConfirmation.UserId);
             if(user == null)
             {
-                return Result.Fail("User not found.");
+                return Result.Fail(TypedErrors.NotFound("User not found."));
             }
             emailConfirmation.ExpirationTime = DateTime.UtcNow.AddMinutes(10);
             emailConfirmation.Code = GenerateConfirmationCode().ToString();
@@ -422,12 +412,12 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
             if (string.IsNullOrEmpty(userId))
             { 
-                return Result.Fail("User is not authenticated.");
+                return Result.Fail(TypedErrors.Unauthorized("User is not authenticated."));
             }
             var user = await _context.Users.Include(u => u.UserSettings).ThenInclude(u=>u.Exchanges).ThenInclude(e => e.Exchange).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
-                return Result.Fail("User not found.");
+                return Result.Fail(TypedErrors.NotFound("User not found."));
             }
             var accountDto = new AccountDto();
             accountDto.UserSettings = user.UserSettings;
@@ -473,17 +463,8 @@ namespace ArbiScannerWeb.Infrastructure.Services
             };
         }
 
-        /// <summary>
-        /// Generates a new refresh token for the given user.
-        /// </summary>
-        /// <param name="userId">The user ID to generate the token for.</param>
-        /// <param name="ipAddress">The IP address where the token is being created.</param>
-        /// <param name="userAgent">The user agent of the requesting client.</param>
-        /// <param name="deviceId">Optional device identifier for session management.</param>
-        /// <returns>The generated refresh token model.</returns>
         public async Task<RefreshTokenModel> GenerateRefreshToken(string userId, string? ipAddress = null, string? userAgent = null, string? deviceId = null)
         {
-            // Generate a cryptographically secure random token
             var tokenBytes = new byte[64];
             using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
             {
@@ -505,94 +486,59 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
             await _accountRepository.AddRefreshTokenAsync(refreshToken, detachAfterSave: true);
 
-            // Preserve plaintext token only for response payload.
-            refreshToken.TokenHash = token; // safe: entity is no longer tracked
+            refreshToken.TokenHash = token;
             return refreshToken;
         }
 
-        /// <summary>
-        /// Validates a refresh token and checks if it is still active.
-        /// </summary>
-        /// <param name="userId">The user ID that owns the token.</param>
-        /// <param name="token">The refresh token to validate.</param>
-        /// <returns>The refresh token record if valid, null otherwise.</returns>
         public async Task<RefreshTokenModel?> ValidateRefreshToken(string userId, string token)
         {
             var tokenHash = HashToken(token);
 
             var refreshToken = await _accountRepository.GetRefreshTokenByUserAndHashAsync(userId, tokenHash);
 
-            // Token not found
             if (refreshToken == null)
                 return null;
 
-            // Token has expired
             if (refreshToken.ExpiresAt <= DateTime.UtcNow)
                 return null;
 
-            // Token has been revoked
             if (refreshToken.RevokedAt.HasValue)
                 return null;
 
             return refreshToken;
         }
 
-        /// <summary>
-        /// Validates a refresh token and rotates it if valid.
-        /// On rotation: revokes old token, generates new token, stores replacement link.
-        /// On invalid/reused token: revokes entire token family.
-        /// </summary>
-        /// <param name="userId">The user ID.</param>
-        /// <param name="token">The refresh token.</param>
-        /// <param name="ipAddress">The IP address making the request.</param>
-        /// <param name="userAgent">The user agent of the client.</param>
-        /// <returns>New refresh token if valid, null if invalid/reused.</returns>
         public async Task<RefreshTokenModel?> ValidateAndRotateRefreshToken(string userId, string token, string? ipAddress = null, string? userAgent = null)
         {
             var tokenHash = HashToken(token);
             var refreshToken = await _accountRepository.GetRefreshTokenByUserAndHashAsync(userId, tokenHash);
 
-            // Token not found — the token is unknown for this user (expired, already cleaned up,
-            // or from a different session). Return null without revoking valid tokens: an unknown
-            // token cannot be traced to a token family, so a mass-revocation would incorrectly
-            // invalidate legitimate sessions (e.g. a second browser tab that rotated first).
             if (refreshToken == null)
             {
                 return null;
             }
 
-            // Token has been revoked or has a replacement - suspicious reuse
             if (refreshToken.RevokedAt.HasValue || refreshToken.ReplacedByTokenId.HasValue)
             {
-                // Revoke the entire token family
                 await RevokeTokenChain(refreshToken, "suspicious_reuse_detected", ipAddress);
                 return null;
             }
 
-            // Token has expired
             if (refreshToken.ExpiresAt <= DateTime.UtcNow)
                 return null;
 
-            // Valid token - revoke it and issue a new one
             refreshToken.RevokedAt = DateTime.UtcNow;
             refreshToken.RevocationReason = "token_rotated";
             refreshToken.RevokedByIp = ipAddress;
 
             var newToken = await GenerateRefreshToken(userId, ipAddress, userAgent);
-            
-            // Link the new token to the old one (replacement chain)
+
             refreshToken.ReplacedByTokenId = newToken.Id;
             await _accountRepository.UpdateRefreshTokenAsync(refreshToken);
 
             return newToken;
         }
 
-        /// <summary>
-        /// Revokes a specific refresh token (used for logout).
-        /// </summary>
-        /// <param name="tokenId">The ID of the token to revoke.</param>
-        /// <param name="ipAddress">The IP address where revocation was requested.</param>
-        /// <returns>True if revoked, false if token not found.</returns>
         public async Task<bool> RevokeToken(Guid tokenId, string? ipAddress = null)
         {
             var refreshToken = await _accountRepository.GetRefreshTokenByIdAsync(tokenId);
@@ -600,7 +546,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 return false;
 
             if (refreshToken.IsRevoked)
-                return true; // Already revoked
+                return true;
 
             refreshToken.RevokedAt = DateTime.UtcNow;
             refreshToken.RevocationReason = "logout";
@@ -611,29 +557,17 @@ namespace ArbiScannerWeb.Infrastructure.Services
             return true;
         }
 
-        /// <summary>
-        /// Revokes an entire token chain starting from a given token (for suspicious activity).
-        /// Follows the replacement chain back to the root and revokes all in the chain.
-        /// </summary>
-        /// <param name="token">The token to start the revocation chain from.</param>
-        /// <param name="reason">The reason for revocation.</param>
-        /// <param name="ipAddress">The IP address where revocation was triggered.</param>
         public async Task RevokeTokenChain(RefreshTokenModel token, string reason, string? ipAddress = null)
         {
             var tokenToRevoke = token;
 
-            // Revoke current and all related tokens in the chain
             var tokensInChain = new List<RefreshTokenModel> { token };
-
-            // Find the root token by walking back through the chain (if needed)
-            // For now, just revoke the given token and any that reference it
 
             tokenToRevoke.RevokedAt = DateTime.UtcNow;
             tokenToRevoke.RevocationReason = reason;
             tokenToRevoke.RevokedByIp = ipAddress;
             await _accountRepository.UpdateRefreshTokenAsync(tokenToRevoke);
 
-            // Also revoke any tokens that replaced this one
             var replacedTokens = await _accountRepository.GetRefreshTokensByReplacedByTokenIdAsync(tokenToRevoke.Id);
 
             foreach (var replacedToken in replacedTokens)
@@ -645,12 +579,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        /// <summary>
-        /// Revokes all active refresh tokens for a user (global logout/security breach).
-        /// </summary>
-        /// <param name="userId">The user ID whose tokens should be revoked.</param>
-        /// <param name="reason">The reason for revoking all tokens.</param>
-        /// <param name="ipAddress">The IP address where the revocation was requested.</param>
         public async Task RevokeAllUserTokens(string userId, string reason, string? ipAddress = null)
         {
             var activeTokens = await _accountRepository.GetActiveRefreshTokensForUserAsync(userId, DateTime.UtcNow);
@@ -664,11 +592,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        /// <summary>
-        /// Hashes a refresh token using SHA256 for secure storage.
-        /// </summary>
-        /// <param name="token">The token to hash.</param>
-        /// <returns>Base64-encoded SHA256 hash of the token.</returns>
         private string HashToken(string token)
         {
             using (var sha = System.Security.Cryptography.SHA256.Create())
@@ -678,18 +601,11 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        /// <summary>
-        /// Refreshes an access token by resolving user from refresh token.
-        /// </summary>
-        /// <param name="refreshToken">The refresh token.</param>
-        /// <param name="ipAddress">The IP address of the request.</param>
-        /// <param name="userAgent">The user agent of the request.</param>
-        /// <returns>RefreshTokenResponse with new tokens or error.</returns>
         public async Task<Result<RefreshTokenResponse>> RefreshAccessToken(string refreshToken, string? ipAddress = null, string? userAgent = null)
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
-                return Result.Fail("Refresh token is required.");
+                return Result.Fail(TypedErrors.Validation("Refresh token is required."));
             }
 
             var tokenHash = HashToken(refreshToken);
@@ -697,20 +613,12 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
             if (tokenEntity == null)
             {
-                return Result.Fail("Invalid or expired refresh token.");
+                return Result.Fail(TypedErrors.Unauthorized("Invalid or expired refresh token."));
             }
 
             return await RefreshAccessToken(tokenEntity.UserId, refreshToken, ipAddress, userAgent);
         }
 
-        /// <summary>
-        /// Refreshes an access token using a valid refresh token.
-        /// </summary>
-        /// <param name="userId">The user ID.</param>
-        /// <param name="refreshToken">The refresh token.</param>
-        /// <param name="ipAddress">The IP address of the request.</param>
-        /// <param name="userAgent">The user agent of the request.</param>
-        /// <returns>RefreshTokenResponse with new tokens or error.</returns>
         public async Task<Result<RefreshTokenResponse>> RefreshAccessToken(string userId, string refreshToken, string? ipAddress = null, string? userAgent = null)
         {
             try
@@ -718,18 +626,16 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 ipAddress ??= GetClientIpAddress();
                 userAgent ??= _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"].ToString();
 
-                // Validate and rotate the refresh token
                 var rotatedToken = await ValidateAndRotateRefreshToken(userId, refreshToken, ipAddress, userAgent);
                 if (rotatedToken == null)
                 {
-                    return Result.Fail("Invalid or expired refresh token.");
+                    return Result.Fail(TypedErrors.Unauthorized("Invalid or expired refresh token."));
                 }
 
-                // Generate new access token
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    return Result.Fail("User not found.");
+                    return Result.Fail(TypedErrors.NotFound("User not found."));
                 }
 
                 var claims = new List<Claim>
@@ -753,7 +659,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 var response = new RefreshTokenResponse
                 {
                     AccessToken = encodedJwt,
-                    RefreshToken = rotatedToken.TokenHash, // Contains actual token value
+                    RefreshToken = rotatedToken.TokenHash,
                     ExpiresIn = new DateTimeOffset(expiresAt).ToUnixTimeSeconds()
                 };
 
@@ -766,12 +672,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        /// <summary>
-        /// Logs out the user by revoking their refresh token.
-        /// </summary>
-        /// <param name="tokenId">The ID of the refresh token to revoke.</param>
-        /// <param name="ipAddress">The IP address of the request.</param>
-        /// <returns>Success result or error.</returns>
         public async Task<Result> Logout(Guid tokenId, string? ipAddress = null)
         {
             try
@@ -785,7 +685,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 }
                 else
                 {
-                    return Result.Fail("Token not found or already revoked.");
+                    return Result.Fail(TypedErrors.NotFound("Token not found or already revoked."));
                 }
             }
             catch (Exception ex)
@@ -795,13 +695,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        /// <summary>
-        /// Logs out the user by revoking a refresh token using its value.
-        /// </summary>
-        /// <param name="userId">The user ID.</param>
-        /// <param name="refreshToken">The refresh token value to revoke.</param>
-        /// <param name="ipAddress">The IP address of the request.</param>
-        /// <returns>Success result or error.</returns>
         public async Task<Result> LogoutByToken(string userId, string refreshToken, string? ipAddress = null)
         {
             try
@@ -815,7 +708,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 }
                 else
                 {
-                    return Result.Fail("Token not found or already revoked.");
+                    return Result.Fail(TypedErrors.NotFound("Token not found or already revoked."));
                 }
             }
             catch (Exception ex)
@@ -825,14 +718,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        /// <summary>
-        /// Revokes a refresh token by its value (for logout).
-        /// Finds the token and marks it as revoked.
-        /// </summary>
-        /// <param name="userId">The user ID that owns the token.</param>
-        /// <param name="tokenValue">The refresh token value.</param>
-        /// <param name="ipAddress">The IP address where revocation was requested.</param>
-        /// <returns>True if revoked, false if token not found or already revoked.</returns>
         public async Task<bool> RevokeTokenByValue(string userId, string tokenValue, string? ipAddress = null)
         {
             var tokenHash = HashToken(tokenValue);
@@ -842,7 +727,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 return false;
 
             if (refreshToken.IsRevoked)
-                return true; // Already revoked
+                return true;
 
             refreshToken.RevokedAt = DateTime.UtcNow;
             refreshToken.RevocationReason = "logout";
@@ -853,25 +738,18 @@ namespace ArbiScannerWeb.Infrastructure.Services
             return true;
         }
 
-        /// <summary>
-        /// Gets the client IP address from the HTTP context.
-        /// Handles X-Forwarded-For header for proxy scenarios.
-        /// </summary>
-        /// <returns>The client IP address or null if unavailable.</returns>
         private string? GetClientIpAddress()
         {
             var context = _httpContextAccessor.HttpContext;
             if (context == null)
                 return null;
 
-            // Try X-Forwarded-For header first (for proxied requests)
             var xForwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
             if (!string.IsNullOrEmpty(xForwardedFor))
             {
                 return xForwardedFor.Split(',')[0].Trim();
             }
 
-            // Fall back to RemoteIpAddress
             return context.Connection.RemoteIpAddress?.ToString();
         }
     }

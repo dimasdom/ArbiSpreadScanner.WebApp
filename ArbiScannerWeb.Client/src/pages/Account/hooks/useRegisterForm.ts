@@ -40,7 +40,7 @@ export function useRegisterForm() {
     const [showEulaModal, setShowEulaModal] = useState(false);
 
     useEffect(() => { dispatch(clearError()); }, [dispatch]);
-    useEffect(() => { if (isLoggedIn) navigate('/'); }, [isLoggedIn, navigate]);
+    useEffect(() => { if (isLoggedIn) navigate('/spreads'); }, [isLoggedIn, navigate]);
 
     const clearFieldError = (field: keyof RegisterErrors) =>
         setErrors((prev) => ({ ...prev, [field]: '' }));

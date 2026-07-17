@@ -1,8 +1,13 @@
+import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router';
 import TuneIcon from '@mui/icons-material/Tune';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import SecurityIcon from '@mui/icons-material/Security';
 import GuideModal from '../../components/GuideModal';
 import type { GuideStep } from '../../components/GuideModal';
+import LiveDemoWidget from './LiveDemoWidget';
+import type { IRootStore } from '../../store/store';
 
 const mainGuideSteps: GuideStep[] = [
     {
@@ -55,6 +60,17 @@ const exchanges = [
 ];
 
 function MainPage() {
+    const navigate = useNavigate();
+    const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
+    const sessionChecked = useSelector((state: IRootStore) => state.account.sessionChecked);
+
+    useEffect(() => {
+        if (!sessionChecked || !isLoggedIn) return;
+        if (sessionStorage.getItem('redirected_to_spreads_this_session')) return;
+        sessionStorage.setItem('redirected_to_spreads_this_session', 'true');
+        navigate('/spreads');
+    }, [sessionChecked, isLoggedIn, navigate]);
+
     return (
         <div className="max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8 pb-12">
             <GuideModal storageKey="guide_main_seen" title="How ArbiScanner Works" steps={mainGuideSteps} />
@@ -72,6 +88,12 @@ function MainPage() {
                 </div>
 
                 <div className="p-8 md:p-12">
+                    {sessionChecked && !isLoggedIn && (
+                        <div className="mb-16">
+                            <LiveDemoWidget />
+                        </div>
+                    )}
+
                     <div className="mb-16 text-center">
                         <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">Supported Exchanges</h2>
                         <div className="flex flex-wrap justify-center gap-4">

@@ -54,7 +54,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
             tradeOpportunityMeta.Add(3, nameof(TradeOpportunityModel.ExchangeRateB));
             tradeOpportunityMeta.Add(4, nameof(TradeOpportunityModel.ExchangeShort));
             tradeOpportunityMeta.Add(5, nameof(TradeOpportunityModel.ExchangeLong));
-            tradeOpportunityMeta.Add(6, nameof(TradeOpportunityModel.Volatility));
             tradeOpportunityMeta.Add(7, nameof(TradeOpportunityModel.SummaryTarrif));
             tradeOpportunityMeta.Add(8, nameof(TradeOpportunityModel.PossibleProfit));
             tradeOpportunityMeta.Add(9, nameof(TradeOpportunityModel.TotalFunding));
@@ -82,6 +81,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 var factory = new ConnectionFactory()
                 {
                     HostName = _settings.Value.Host,
+                    Port = _settings.Value.Port ?? AmqpTcpEndpoint.UseDefaultPort,
                     UserName = _settings.Value.Username,
                     Password = _settings.Value.Password
                 };
@@ -129,19 +129,16 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
                         _logger.LogInformation("Received message: {Message}", position.Spread);
 
-                        // Trigger the event to notify subscribers
                         if (OnMessageReceived != null)
                         {
                             var _ = OnMessageReceived.Invoke(position);
                         }
 
-                        // Acknowledge the message after successful processing
                         await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error processing message");
-                        // Optionally, you can negatively acknowledge the message
                         await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
                     }
                 };

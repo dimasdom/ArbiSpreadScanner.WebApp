@@ -9,7 +9,7 @@ namespace ArbiScannerWeb.Abstractions.Interfaces.Repositories
 {
     public interface ITradeOpportunityRepository
     {
-        Task InsertAsync(TradeOpportunityModel model);
+        Task UpsertAsync(TradeOpportunityModel model);
         Task SetStatusClosedAsync(Guid guid);
         Task<List<TradeOpportunityModel>> GetAllAsync();
         Task<TradeOpportunityModel?> GetByGuidAsync(Guid guid);

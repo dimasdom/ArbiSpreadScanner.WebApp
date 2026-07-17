@@ -7,7 +7,6 @@ public class TradeOpportunityModel
     public required ExchangeRateModel ExchangeRateB { get; set; }
     public required ExchangeRateModel ExchangeShort { get; set; }
     public required ExchangeRateModel ExchangeLong { get; set; }
-    public double Volatility { get; set; }
     public double SummaryTarrif { get; set; }
     public double PossibleProfit { get; set; }
     public double TotalFunding { get; set; }

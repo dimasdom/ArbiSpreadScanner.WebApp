@@ -4,9 +4,10 @@ using ArbiScannerWeb.Infrastructure;
 using ArbiScannerWeb.Infrastructure.DbContext;
 using ArbiScannerWeb.Infrastructure.Services;
 using ArbiScannerWeb.Infrastructure.Settings;
+using ArbiScannerWeb.Infrastructure.Filters;
 using ArbiScannerWeb.API.Filters;
 using ArbiScannerWeb.API.Hubs;
-using ArbiScannerWeb.API.Middleware;
+using ArbiScannerWeb.Infrastructure.Middleware;
 using ArbiScannerWeb.API.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -32,9 +33,7 @@ try
         cfg.ReadFrom.Configuration(ctx.Configuration)
            .Enrich.WithSpan());
 
-    // Add services to the container.
-
-    builder.Services.AddControllers(opts => opts.Filters.Add<ResultFailLoggingFilter>());
+    builder.Services.AddControllers(opts => opts.Filters.Add<ResultStatusCodeFilter>());
     builder.Services.AddOpenApi();
     builder.Services.AddSignalR();
     builder.Services.AddDbContext(builder.Configuration.GetConnectionString("SqlServer")!);
@@ -54,7 +53,6 @@ try
         options.WorkerCount = 2;
         options.Queues = ["default"];
     });
-    // Register custom services
     builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>();
     builder.Services.AddScoped<IRealtimeNotifier, SignalRService>();
     builder.Services.AddHostedService<MessageProcessingService>();
@@ -126,7 +124,6 @@ try
     app.UseDefaultFiles();
     app.MapStaticAssets();
 
-    // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
@@ -157,3 +154,5 @@ finally
 {
     await Log.CloseAndFlushAsync();
 }
+
+public partial class Program { }

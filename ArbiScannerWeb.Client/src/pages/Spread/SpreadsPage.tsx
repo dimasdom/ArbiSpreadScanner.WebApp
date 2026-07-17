@@ -1,6 +1,7 @@
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import GuideModal from '../../components/GuideModal';
 import type { GuideStep } from '../../components/GuideModal';
+import ErrorState from '../../components/ErrorState';
 import { useSpreadsPage } from './hooks/useSpreadsPage';
 
 const spreadsGuideSteps: GuideStep[] = [
@@ -42,7 +43,7 @@ const spreadsGuideSteps: GuideStep[] = [
 ];
 
 function SpreadsPage() {
-    const { rows, isLoading, handleRowDoubleClick, handleRowClick } = useSpreadsPage();
+    const { rows, isLoading, isError, handleRowDoubleClick, handleRowClick } = useSpreadsPage();
 
     const columns: GridColDef[] = [
         { field: 'spread', headerName: 'Spread', width: 110 },
@@ -56,28 +57,40 @@ function SpreadsPage() {
         { field: 'fundingRateShort', headerName: 'Funding Rate Short', width: 140 },
     ];
 
-    return (
-        <div className="shadow-inner max-w-7xl mx-auto mt-6 rounded-4xl p-4 md:p-5 bg-white dark:bg-gray-900 min-h-screen md:min-h-auto relative transition-colors duration-200">
-            <GuideModal storageKey="guide_spreads_seen" title="Using the Spreads Table" steps={spreadsGuideSteps} />
-            {isLoading ? (
+    const renderContent = () => {
+        if (isLoading) {
+            return (
                 <div className="flex items-center justify-center h-64">
                     <div className="w-10 h-10 border-4 border-gray-200 dark:border-gray-700 border-t-indigo-500 rounded-full animate-spin" />
                 </div>
-            ) : (
-                <div className="rounded-4xl shadow-2xl w-full px-2 md:px-5 py-5">
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        pageSizeOptions={[10, 25, 50]}
-                        initialState={{
-                            pagination: { paginationModel: { pageSize: 10, page: 0 } },
-                        }}
-                        disableRowSelectionOnClick
-                        onRowDoubleClick={handleRowDoubleClick}
-                        onRowClick={handleRowClick}
-                    />
-                </div>
-            )}
+            );
+        }
+
+        if (isError) {
+            return <ErrorState message="Failed to load spreads. Please try again later." />;
+        }
+
+        return (
+            <div className="rounded-4xl shadow-2xl w-full px-2 md:px-5 py-5">
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    pageSizeOptions={[10, 25, 50]}
+                    initialState={{
+                        pagination: { paginationModel: { pageSize: 10, page: 0 } },
+                    }}
+                    disableRowSelectionOnClick
+                    onRowDoubleClick={handleRowDoubleClick}
+                    onRowClick={handleRowClick}
+                />
+            </div>
+        );
+    };
+
+    return (
+        <div className="shadow-inner max-w-7xl mx-auto mt-6 rounded-4xl p-4 md:p-5 bg-white dark:bg-gray-900 min-h-screen md:min-h-auto relative transition-colors duration-200">
+            <GuideModal storageKey="guide_spreads_seen" title="Using the Spreads Table" steps={spreadsGuideSteps} />
+            {renderContent()}
         </div>
     );
 }

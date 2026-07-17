@@ -1,11 +1,10 @@
-using System.Collections;
 using System.Net;
-using System.Runtime.InteropServices.Marshalling;
 using System.Text.Json;
-using ccxt;
-using FluentResults;
+using ArbiScannerWeb.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
-namespace ArbiScannerWeb.API.Middleware;
+namespace ArbiScannerWeb.Infrastructure.Middleware;
 
 public class ExceptionHandlingMiddleware
 {
@@ -34,8 +33,17 @@ public class ExceptionHandlingMiddleware
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
 
-            var result = Result.Fail("An unexpected error occurred.");
-            await context.Response.WriteAsync(JsonSerializer.Serialize(result, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+            var payload = new
+            {
+                isSuccess = false,
+                isFailed = true,
+                errorCode = ErrorCodes.InternalError,
+                message = "An unexpected error occurred.",
+                value = (object?)null,
+                reasons = Array.Empty<object>()
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
         }
     }
 }

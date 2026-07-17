@@ -15,6 +15,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
         private readonly IRabbitMqService _rabbitMqService;
         private readonly ILogger<MessageProcessingService> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly SemaphoreSlim _concurrencyLimiter = new(30);
 
         public MessageProcessingService(
             IRabbitMqService rabbitMqService,
@@ -69,6 +70,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
         {
             _ = Task.Run(async () =>
             {
+                await _concurrencyLimiter.WaitAsync();
                 try
                 {
                     using var scope = _serviceScopeFactory.CreateScope();
@@ -95,6 +97,10 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error processing RabbitMQ message");
+                }
+                finally
+                {
+                    _concurrencyLimiter.Release();
                 }
             });
 

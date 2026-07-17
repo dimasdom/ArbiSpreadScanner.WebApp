@@ -164,51 +164,6 @@ namespace ArbiScannerWeb.Infrastructure.Migrations
                     b.ToTable("Exchanges");
                 });
 
-            modelBuilder.Entity("ArbiScannerWeb.Domain.Models.ExchangeRateModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Exchange")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<double>("ExchangeRate")
-                        .HasColumnType("double precision");
-
-                    b.Property<double?>("FundingRateValue")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("SlippageLong")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("SlippageShort")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("SummarySlipage")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("Symbol")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<double>("Volatility")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("VolumeAsk")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("VolumeBid")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ExchangeRates", (string)null);
-                });
-
             modelBuilder.Entity("ArbiScannerWeb.Domain.Models.ForgetPasswordRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -293,145 +248,6 @@ namespace ArbiScannerWeb.Infrastructure.Migrations
                     b.ToTable("TelegramLinkRequests");
                 });
 
-            modelBuilder.Entity("ArbiScannerWeb.Domain.Models.TradeOpportunityModel", b =>
-                {
-                    b.Property<Guid>("Guid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ActionType")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("AsksExchangeA")
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("AsksExchangeB")
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("BidsExchangeA")
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("BidsExchangeB")
-                        .HasColumnType("jsonb");
-
-                    b.Property<DateTime>("DateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ExchangeLongId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ExchangeRateAId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ExchangeRateBId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ExchangeShortId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OrderStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("PossibleProfit")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("Spread")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("StartSpread")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("SummaryTarrif")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("Symbol")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<double>("TotalFunding")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("Volatility")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("Guid");
-
-                    b.HasIndex("ExchangeLongId");
-
-                    b.HasIndex("ExchangeRateAId");
-
-                    b.HasIndex("ExchangeRateBId");
-
-                    b.HasIndex("ExchangeShortId");
-
-                    b.ToTable("CurrentSpreads", (string)null);
-                });
-
-            modelBuilder.Entity("ArbiScannerWeb.Domain.Models.TradeOpportunityTickerModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AsksExchangeA")
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("AsksExchangeB")
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("BidsExchangeA")
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("BidsExchangeB")
-                        .HasColumnType("jsonb");
-
-                    b.Property<DateTime>("DateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("EchangeA")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ExchangeB")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ExchangeLong")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ExchangeShort")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("Guid")
-                        .HasColumnType("uuid");
-
-                    b.Property<double>("RateA")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("RateB")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("Spread")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("Symbol")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Guid");
-
-                    b.ToTable("SpreadsTicker", (string)null);
-                });
-
             modelBuilder.Entity("ArbiScannerWeb.Domain.Models.UserExchangeModel", b =>
                 {
                     b.Property<int>("Id")
@@ -499,6 +315,21 @@ namespace ArbiScannerWeb.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("IX_UserSettings_AccountId");
+
+                    b.HasIndex("ChatId")
+                        .HasDatabaseName("IX_UserSettings_ChatId");
+
+                    b.HasIndex(new[] { "SpreadSize" }, "IX_UserSettings_Active_Funding_SpreadSize")
+                        .HasFilter("\"Active\" = true AND \"FundingSpread\" = true");
+
+                    b.HasIndex(new[] { "SpreadSize" }, "IX_UserSettings_Active_Futures_SpreadSize")
+                        .HasFilter("\"Active\" = true AND \"FuturesSpread\" = true");
+
+                    b.HasIndex(new[] { "SpreadSize" }, "IX_UserSettings_Active_Spot_SpreadSize")
+                        .HasFilter("\"Active\" = true AND \"SpotSpread\" = true");
 
                     b.ToTable("UserSettings", (string)null);
                 });
@@ -662,50 +493,6 @@ namespace ArbiScannerWeb.Infrastructure.Migrations
                     b.Navigation("ReplacedByToken");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ArbiScannerWeb.Domain.Models.TradeOpportunityModel", b =>
-                {
-                    b.HasOne("ArbiScannerWeb.Domain.Models.ExchangeRateModel", "ExchangeLong")
-                        .WithMany()
-                        .HasForeignKey("ExchangeLongId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ArbiScannerWeb.Domain.Models.ExchangeRateModel", "ExchangeRateA")
-                        .WithMany()
-                        .HasForeignKey("ExchangeRateAId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ArbiScannerWeb.Domain.Models.ExchangeRateModel", "ExchangeRateB")
-                        .WithMany()
-                        .HasForeignKey("ExchangeRateBId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ArbiScannerWeb.Domain.Models.ExchangeRateModel", "ExchangeShort")
-                        .WithMany()
-                        .HasForeignKey("ExchangeShortId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ExchangeLong");
-
-                    b.Navigation("ExchangeRateA");
-
-                    b.Navigation("ExchangeRateB");
-
-                    b.Navigation("ExchangeShort");
-                });
-
-            modelBuilder.Entity("ArbiScannerWeb.Domain.Models.TradeOpportunityTickerModel", b =>
-                {
-                    b.HasOne("ArbiScannerWeb.Domain.Models.TradeOpportunityModel", null)
-                        .WithMany()
-                        .HasForeignKey("Guid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("ArbiScannerWeb.Domain.Models.UserExchangeModel", b =>

@@ -3,6 +3,7 @@ using ArbiScannerWeb.Abstractions.Interfaces.Repositories;
 using ArbiScannerWeb.Domain.Models;
 using ArbiScannerWeb.Domain.Models.DTOs;
 using ArbiScannerWeb.Infrastructure.DbContext;
+using ArbiScannerWeb.Infrastructure.Extensions;
 using FluentResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -46,7 +47,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             try
             {
                 model.DateTime = DateTime.UtcNow;
-                await _spreadRepo.InsertAsync(model);
+                await _spreadRepo.UpsertAsync(model);
 
                 var ticker = new TradeOpportunityTickerModel(model);
                 await _tickerRepo.InsertAsync(ticker);
@@ -97,7 +98,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
         {
             if (!await _subscriptionService.CheckIfUserHasActiveSubscriptionAsync())
             {
-                return Result.Fail<TradeOpportunityDetailsDTO>("No active subscription");
+                return Result.Fail<TradeOpportunityDetailsDTO>(TypedErrors.Forbidden("No active subscription"));
             }
             try
             {
@@ -121,30 +122,29 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 _logger.LogError(ex, "Failed to get spread info for {Id}", id);
                 return Result.Fail(ex.Message);
             }
-            return Result.Fail("Error");
+            return Result.Fail<TradeOpportunityDetailsDTO>(TypedErrors.NotFound("Spread not found"));
         }
 
         public async Task<Result<List<TradeOpportunityDetailsDTO>>> GetSpreadsForUser(string userId)
         {
             if (!await _subscriptionService.CheckIfUserHasActiveSubscriptionAsync())
             {
-                return Result.Fail<List<TradeOpportunityDetailsDTO>>("No active subscription");
+                return Result.Fail<List<TradeOpportunityDetailsDTO>>(TypedErrors.Forbidden("No active subscription"));
             }
             try
             {
                 long userSettingsId;
                 bool futuresSpread, fundingSpread, spotSpread;
 
-                // Resolve user data in a short-lived context that is disposed before the parallel work starts
                 await using (var context = await _dbContextFactory.CreateDbContextAsync())
                 {
                     var user = await context.Users.FindAsync(userId);
                     if (user == null)
-                        return Result.Fail<List<TradeOpportunityDetailsDTO>>("User not found");
+                        return Result.Fail<List<TradeOpportunityDetailsDTO>>(TypedErrors.NotFound("User not found"));
 
                     var userSettings = await context.UsersSettings.FirstOrDefaultAsync(x => x.Id == user.UserSettingsId);
                     if (userSettings == null)
-                        return Result.Fail<List<TradeOpportunityDetailsDTO>>("Telegram user not found");
+                        return Result.Fail<List<TradeOpportunityDetailsDTO>>(TypedErrors.NotFound("Telegram user not found"));
 
                     userSettingsId = user.UserSettingsId;
                     futuresSpread = userSettings.FuturesSpread;
@@ -165,7 +165,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
                 var failures = results.Where(r => r.IsFailed).ToList();
                 if (failures.Count == results.Length)
-                    return Result.Fail<List<TradeOpportunityDetailsDTO>>(failures[0].Errors[0].Message);
+                    return Result.Fail<List<TradeOpportunityDetailsDTO>>(failures[0].Errors[0]);
 
                 var combined = results
                     .Where(r => r.IsSuccess)
@@ -203,8 +203,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
                 if (existing is not null)
                 {
-                    // Late-arriving update messages after CloseSpread was already processed
-                    // would insert orphaned tickers that are never cleaned up. Skip silently.
                     if (existing.OrderStatus == OrderStatus.Closed)
                         return Result.Ok();
 
@@ -286,7 +284,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                         .Include(u => u.Exchanges).ThenInclude(e => e.Exchange)
                         .FirstOrDefaultAsync(x => x.Id == chatId);
                     if (userSettings == null)
-                        return Result.Fail<List<TradeOpportunityModel>>("Telegram user not found");
+                        return Result.Fail<List<TradeOpportunityModel>>(TypedErrors.NotFound("Telegram user not found"));
 
                     var exchangeNames = userSettings.Exchanges.Select(e => e.Exchange.Name).ToList();
                     var candidates = await _spreadRepo.GetOpenByTypeAsync(type);

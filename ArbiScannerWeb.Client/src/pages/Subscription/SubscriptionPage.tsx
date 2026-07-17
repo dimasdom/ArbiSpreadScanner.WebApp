@@ -2,6 +2,7 @@ import SubscriptionElement from "./SubcriptionElement";
 import { CircularProgress } from "@mui/material";
 import type { SubscriptionModel } from '../../types/accountType';
 import { useSubscriptionPage } from '../../hooks/useSubscriptionPage';
+import ErrorState from '../../components/ErrorState';
 
 function SubscriptionPage() {
     const { subscriptions, isLoading, error } = useSubscriptionPage();
@@ -15,13 +16,7 @@ function SubscriptionPage() {
      }
 
      if (error) {
-         return (
-             <div className="flex h-[80vh] items-center justify-center">
-                 <div className="text-xl text-red-500 font-semibold bg-red-50 dark:bg-red-900/20 px-6 py-4 rounded-xl border border-red-200 dark:border-red-800">
-                     Failed to load subscriptions. Please try again later.
-                 </div>
-             </div>
-         );
+         return <ErrorState message="Failed to load subscriptions. Please try again later." />;
      }
 
     return (

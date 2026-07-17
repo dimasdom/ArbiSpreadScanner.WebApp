@@ -23,8 +23,11 @@ namespace ArbiScannerWeb.Abstractions.Interfaces.Repositories
                     new CreateIndexOptions { Background = true, Name = "idx_orderstatus_type" }));
         }
 
-        public Task InsertAsync(TradeOpportunityModel model)
-            => _collection.InsertOneAsync(model);
+        public Task UpsertAsync(TradeOpportunityModel model)
+            => _collection.ReplaceOneAsync(
+                Builders<TradeOpportunityModel>.Filter.Eq(x => x.Guid, model.Guid),
+                model,
+                new ReplaceOptions { IsUpsert = true });
 
         public Task SetStatusClosedAsync(Guid guid)
         {

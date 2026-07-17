@@ -8,7 +8,7 @@ import { logger } from '../../../services/loggerService';
 import type { TradeOpportunityDetailsDTO } from '../../../types/tradeOpportunityModel';
 import type { MessageDTO, PossiblePositionTickerModel } from '../../../types/tickerType';
 import { PositionAction } from '../../../types/PositionAction';
-import { SpreadType } from '../../../types/SpreadType';
+import { SpreadType, SpreadTypeNames } from '../../../types/SpreadType';
 import { calcVolatility, calcSlippage } from '../../../utils/spreadUtils';
 
 const SpreadTypeColors: Record<string, string> = {
@@ -41,7 +41,7 @@ export function useSpreadPage() {
         const last = tickers[tickers.length - 1];
         setShortRate(last.exchangeShort === last.echangeA ? last.rateA : last.rateB);
         setLongRate(last.exchangeLong === last.echangeA ? last.rateA : last.rateB);
-        setSpreadVal(last.spread);
+        setSpreadVal(Math.abs(last.spread));
     }, [tickers]);
 
     useEffect(() => {
@@ -55,7 +55,7 @@ export function useSpreadPage() {
                 const spread = data.value;
                 setPossiblePositionDTO(spread);
                 setTickers([...spread.tickers].reverse());
-                setSpreadVal(spread.positionModel.spread);
+                setSpreadVal(Math.abs(spread.positionModel.spread));
                 setGroupName(spread.groupName);
                 setLoading(false);
                 return;
@@ -114,11 +114,11 @@ export function useSpreadPage() {
     };
 
     const displayedVolatility = useMemo(() => {
-        if (tickers.length < 2) return possiblePositionDTO?.positionModel.volatility;
+        if (tickers.length < 2) return 0;
         const volA = calcVolatility(tickers.map((t) => t.rateA));
         const volB = calcVolatility(tickers.map((t) => t.rateB));
         return Math.max(volA, volB);
-    }, [tickers, possiblePositionDTO?.positionModel.volatility]);
+    }, [tickers]);
 
     const pos = possiblePositionDTO?.positionModel;
     const lastTicker = tickers.length ? tickers[tickers.length - 1] : null;
@@ -136,13 +136,11 @@ export function useSpreadPage() {
             : null;
 
     const spreadType = possiblePositionDTO?.positionModel.type;
-    const spreadLabel = spreadType === undefined ? undefined : SpreadType[spreadType];
+    const spreadLabel = spreadType === undefined ? undefined : SpreadTypeNames[spreadType];
     const spreadClass = spreadLabel ? SpreadTypeColors[spreadLabel] : 'bg-gray-100 text-gray-700';
 
     const isSpotSpread = spreadType === SpreadType.Spot;
 
-    // For spot spread we display price from the orderbook (best bid for short, best ask for long)
-    // because the ticker price often differs significantly from the actual executable price in the book.
     const shortBids = shortExchangeIsA ? bidsA : bidsB;
     const longAsks = shortExchangeIsA ? asksB : asksA;
     const spotShortRate = isSpotSpread

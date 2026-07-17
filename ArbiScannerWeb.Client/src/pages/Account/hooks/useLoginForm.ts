@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { useSelector } from 'react-redux';
 import { clearError } from '../../../store/slices/accountSlice';
 import { useLoginMutation } from '../../../store/services/account';
@@ -15,6 +15,7 @@ interface LoginErrors {
 
 export function useLoginForm() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const dispatch = useAppDispatch();
     const [login] = useLoginMutation();
 
@@ -29,7 +30,11 @@ export function useLoginForm() {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => { dispatch(clearError()); }, [dispatch]);
-    useEffect(() => { if (isLoggedIn) navigate('/'); }, [isLoggedIn, navigate]);
+    useEffect(() => {
+        if (!isLoggedIn) return;
+        const redirect = searchParams.get('redirect');
+        navigate(redirect?.startsWith('/') ? redirect : '/spreads');
+    }, [isLoggedIn, navigate, searchParams]);
     useEffect(() => {
         if (needsEmailConfirmation) {
             const url = emailConfirmToken

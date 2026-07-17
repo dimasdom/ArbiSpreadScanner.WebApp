@@ -10,6 +10,7 @@ import {
     setLoading,
 } from '../slices/accountSlice';
 import { baseQueryWithReauth } from './baseQuery';
+import { normalizeApiError } from '../../utils/normalizeApiError';
 
 interface AccountLoginDTO {
     login: string;
@@ -20,15 +21,13 @@ const getResultMessage = (result: FluentResult<unknown> | FluentResult | undefin
     return result?.errors?.[0]?.message || result?.reasons?.[0]?.message || fallback;
 };
 
-const getErrorMessage = (error: unknown, fallback: string) => {
-    if (typeof error === 'object' && error !== null && 'error' in error) {
-        const nestedError = (error as { error?: unknown }).error;
-        if (typeof nestedError === 'string') {
-            return nestedError;
-        }
-    }
+const getErrorMessage = (rejection: unknown, fallback: string) => {
+    const nestedError =
+        typeof rejection === 'object' && rejection !== null && 'error' in rejection
+            ? (rejection as { error: unknown }).error
+            : rejection;
 
-    return fallback;
+    return normalizeApiError(nestedError as Parameters<typeof normalizeApiError>[0]).message || fallback;
 };
 
 export const accountApi = createApi({

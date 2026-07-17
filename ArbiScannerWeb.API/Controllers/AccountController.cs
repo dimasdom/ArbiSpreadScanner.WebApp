@@ -54,14 +54,14 @@ namespace ArbiScannerWeb.API.Controllers
         [HttpPost("ForgotPassword")]
         public async Task<ActionResult<Result>> SendForgetPasswordCode([FromBody] ForgotPasswordDTO forgotPasswordDTO)
         {
-            return await _accountService.SendForgetPasswordCode(forgotPasswordDTO.Email);
+            return (await _accountService.SendForgetPasswordCode(forgotPasswordDTO.Email)).ToSerializable();
         }
 
         [AllowAnonymous]
         [HttpPost("ResetPassword")]
         public async Task<ActionResult<Result>> ResetPassword([FromBody] ChangePasswordDTO changePasswordDTO)
         {
-            return await _accountService.ResetPassword(changePasswordDTO);
+            return (await _accountService.ResetPassword(changePasswordDTO)).ToSerializable();
         }
         [Authorize]
         [HttpPost("UpdateDetails")]
@@ -74,7 +74,7 @@ namespace ArbiScannerWeb.API.Controllers
         [HttpPost("ConfirmEmail")]
         public async Task<ActionResult<Result>> ConfirmEmail([FromBody] ConfirmEmailDTO emailConfirmationDTO)
         {
-            return await _accountService.CheckConfirmationCodeEmail(emailConfirmationDTO.EmailConfirmToken,emailConfirmationDTO.Token);
+            return (await _accountService.CheckConfirmationCodeEmail(emailConfirmationDTO.EmailConfirmToken,emailConfirmationDTO.Token)).ToSerializable();
         }
         [HttpPost("ChangeEmailRequest")]
         public async Task<ActionResult<Result<EmailConfirmationCodes>>> ChangeEmailRequest([FromBody] ChangeEmailRequestDTO changeEmailRequestDTO)
@@ -84,9 +84,9 @@ namespace ArbiScannerWeb.API.Controllers
         [AllowAnonymous]
         [HttpPost("ResendEmailConfirmation")]
         public async Task<ActionResult<Result>> ResendEmailConfirmation([FromBody] ConfirmEmailDTO emailConfirmationDTO)
-        
+
         {
-            return await _accountService.ResendEmailConfirmation(emailConfirmationDTO.EmailConfirmToken);
+            return (await _accountService.ResendEmailConfirmation(emailConfirmationDTO.EmailConfirmToken)).ToSerializable();
         }
         [Authorize]
         [HttpGet("GetUserData")]
@@ -106,7 +106,7 @@ namespace ArbiScannerWeb.API.Controllers
         [HttpPost("RemoveTelegramLink")]
         public async Task<ActionResult<Result>> RemoveTelegramLink()
         {
-            return await _telegramUserService.RemoveTelegramLinkAsyncForAuthUser();
+            return (await _telegramUserService.RemoveTelegramLinkAsyncForAuthUser()).ToSerializable();
         }
 
         [AllowAnonymous]
@@ -116,7 +116,7 @@ namespace ArbiScannerWeb.API.Controllers
             var refreshToken = ResolveRefreshToken(request);
             if (string.IsNullOrEmpty(refreshToken))
             {
-                return BadRequest("Refresh token is required.");
+                return BadRequest(Result.Fail(TypedErrors.Validation("Refresh token is required.")).ToResult<RefreshTokenResponse>().ToSerializable());
             }
 
             var result = await _accountService.RefreshAccessToken(refreshToken);
@@ -137,19 +137,19 @@ namespace ArbiScannerWeb.API.Controllers
             var userId = User.Identity?.Name;
             if (string.IsNullOrEmpty(userId))
             {
-                return BadRequest("User ID not found in token");
+                return Unauthorized(Result.Fail(TypedErrors.Unauthorized("User ID not found in token")).ToSerializable());
             }
 
             var refreshToken = ResolveRefreshToken(request);
             if (string.IsNullOrEmpty(refreshToken))
             {
                 ClearAuthCookies();
-                return Result.Ok();
+                return Result.Ok().ToSerializable();
             }
 
             var result = await _accountService.LogoutByToken(userId, refreshToken);
             ClearAuthCookies();
-            return result;
+            return result.ToSerializable();
         }
 
         private string? ResolveRefreshToken(RefreshTokenRequest? request)

@@ -37,9 +37,6 @@ namespace ArbiScannerWeb.Domain.Models
         [ProtoMember(8)]
         public double SummarySlipage { get; set; }
 
-        [ProtoMember(9)]
-        public double Volatility { get; set; }
-
         [ProtoMember(10)]
         public double? FundingRateValue { get; set; }
     }

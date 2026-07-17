@@ -56,12 +56,22 @@ namespace ArbiScannerWeb.Infrastructure
                 });
             }
 
+            if (!BsonClassMap.IsClassMapRegistered(typeof(ExchangeRateModel)))
+            {
+                BsonClassMap.RegisterClassMap<ExchangeRateModel>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.SetIgnoreExtraElements(true);
+                });
+            }
+
             if (!BsonClassMap.IsClassMapRegistered(typeof(TradeOpportunityModel)))
             {
                 BsonClassMap.RegisterClassMap<TradeOpportunityModel>(cm =>
                 {
                     cm.AutoMap();
                     cm.MapIdProperty(x => x.Guid);
+                    cm.SetIgnoreExtraElements(true);
                 });
             }
 

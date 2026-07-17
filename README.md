@@ -13,7 +13,9 @@ The main user-facing web application for the ArbiScanner platform. It displays r
 - [Prerequisites](#prerequisites)
 - [Running Locally](#running-locally)
 - [Environment Variables](#environment-variables)
+- [Error Handling](#error-handling)
 - [Database Migrations](#database-migrations)
+- [Testing](#testing)
 - [Docker](#docker)
 - [Project Structure](#project-structure)
 
@@ -95,6 +97,7 @@ Responsibilities:
 - **RabbitMQ consumer** (`RabbitMqService`) via `RabbitMQ.Client` 7 — binds to `spread_fanout_exchange`, queue `spread_api`
 - **Email service** — SMTP via Gmail
 - `MessageProcessingService` — deserializes incoming RabbitMQ messages and orchestrates MongoDB writes + SignalR push
+- **Error handling** (`Extensions/ErrorCodes.cs`, `Extensions/TypedErrors.cs`, `Filters/ResultStatusCodeFilter.cs`, `Middleware/ExceptionHandlingMiddleware.cs`) — see [Error Handling](#error-handling)
 
 ### ArbiScannerWeb.API
 
@@ -109,16 +112,17 @@ Controllers:
 Other:
 - `TradeOpportunityHub` — SignalR hub for real-time spread push
 - `SignalRService` — implements `IRealtimeNotifier`, calls hub methods
-- `ExceptionHandlingMiddleware` — global error handling
-- `ResultFailLoggingFilter` — logs FluentResults failures
 - Swagger/Scalar API documentation at `/scalar`
 - Serilog structured logging, shipped to Grafana Loki
+
+Global error handling (`ExceptionHandlingMiddleware`, `ResultStatusCodeFilter`, `TypedErrors`/`ErrorCodes`) lives in `ArbiScannerWeb.Infrastructure` rather than the API project — see [Error Handling](#error-handling).
 
 ### ArbiScannerWeb.Client
 
 React 19 + Vite + TypeScript single-page application. Built with Vite and served in production behind an nginx reverse proxy.
 
 Pages:
+- `MainPage` — landing page; includes `LiveDemoWidget`, a self-contained simulated-data preview (fake ticker feed via `useLiveDemoWidget`) of the real-time chart and order book so visitors can see the product before signing up
 - `SpreadsPage` — real-time spread table with filtering
 - `SpreadPage` — individual spread detail with live chart and order book
 - `AccountPage` — profile, email change, password change, Telegram linking
@@ -127,6 +131,10 @@ Pages:
 - `FaqPage` — FAQ accordion
 
 State management: Redux Toolkit with RTK Query (services: `account`, `spread`, `subscription`). SignalR connection is managed by `signalrService.ts`. Token refresh coordination is handled by `refreshCoordinator.ts` to prevent concurrent refresh races.
+
+Error handling: `normalizeApiError.ts` converts any RTK Query `FetchBaseQueryError`/`SerializedError` into a `{ code, message }` shape, reading the `errorCode`/`message` fields the API's `TypedErrors` envelope always returns (see [Error Handling](#error-handling)); `ErrorState.tsx` renders that shape consistently wherever a query fails.
+
+Enums shared with the wire format (`SpreadType`, `PositionAction`, `Exchange` in `src/types/`) are defined as `as const` objects with a derived union type rather than TypeScript `enum` — the project's `tsconfig.app.json` sets `erasableSyntaxOnly`, which rejects real `enum` declarations because they emit runtime code instead of erasing away. `SpreadType.ts` also exports `SpreadTypeNames`, a reverse `value -> key` lookup, since plain objects (unlike numeric enums) don't get that mapping for free.
 
 ---
 
@@ -332,6 +340,34 @@ Or pass as a Docker build argument (see [Docker](#docker)).
 
 ---
 
+## Error Handling
+
+All service interfaces return FluentResults' `Result`/`Result<T>` rather than throwing (see the monorepo-wide layering convention). This API turns that into a single, predictable JSON error envelope for both expected failures (`Result.Fail`) and unhandled exceptions:
+
+```json
+{
+  "isSuccess": false,
+  "isFailed": true,
+  "errorCode": "NOT_FOUND",
+  "message": "Trade opportunity not found.",
+  "value": null,
+  "reasons": []
+}
+```
+
+How it's produced:
+
+- **`TypedErrors`** (`Infrastructure/Extensions/TypedErrors.cs`) — factory methods (`NotFound`, `Validation`, `Unauthorized`, `Forbidden`, `Conflict`) that build a FluentResults `Error` tagged with an HTTP status code and an `ErrorCode` string (from `Infrastructure/Extensions/ErrorCodes.cs`) as metadata. Services call these instead of constructing `Error` objects ad hoc, so every failure carries a status code from the point it's raised.
+- **`ResultExtensions.ToSerializable()`** (`Infrastructure/Extensions/ResultExtensions.cs`) — controllers call this on the `Result`/`Result<T>` they get back from a service before returning it, flattening it into a `SerializableResult`/`SerializableResult<T>` with plain `IsSuccess`/`Value`/`ErrorCode`/`Message`/`Reasons` properties that serialize predictably (FluentResults' own `Result` type doesn't serialize cleanly to JSON).
+- **`ResultStatusCodeFilter`** (`Infrastructure/Filters/ResultStatusCodeFilter.cs`) — an `IAsyncActionFilter` registered globally in `Program.cs` (`AddControllers(opts => opts.Filters.Add<ResultStatusCodeFilter>())`). After the action executes, it reflects over the returned object for `IsSuccess`/`Reasons`, and on failure reads the `HttpStatusCode` metadata off the first reason to set the actual HTTP status code on the response — so a controller can simply return `Ok(result.ToSerializable())` and still get a 404/401/403/409 as appropriate. It also logs every failed result with the request method, path, and error messages.
+- **`ExceptionHandlingMiddleware`** (`Infrastructure/Middleware/ExceptionHandlingMiddleware.cs`) — registered in `Program.cs` via `app.UseMiddleware<ExceptionHandlingMiddleware>()`. Catches anything that escapes the filter/controller layer, logs it, and writes the same JSON shape with `errorCode: "INTERNAL_ERROR"` and a generic message (no internal exception details leak to the client).
+
+On the client, `normalizeApiError.ts` reads `errorCode`/`message` off this envelope and `ErrorState.tsx` renders it consistently — see the `ArbiScannerWeb.Client` entry under [Project Responsibilities](#project-responsibilities) above.
+
+Note that both the middleware and the filter/error-code helpers live in `ArbiScannerWeb.Infrastructure`, not the API project, so the same error contract is reusable if another host project is ever added.
+
+---
+
 ## Database Migrations
 
 Migrations are managed with EF Core and live in `ArbiScannerWeb.Infrastructure/Migrations/`.
@@ -356,6 +392,77 @@ dotnet ef migrations add <MigrationName> --project ../ArbiScannerWeb.Infrastruct
 cd ArbiScannerWeb.API
 dotnet ef migrations remove --project ../ArbiScannerWeb.Infrastructure
 ```
+
+**Notable migrations:**
+
+| Migration | What it does |
+|---|---|
+| `RemoveVolatility` | Drops the long-unused legacy Postgres tables `ExchangeRates`, `CurrentSpreads`, and `SpreadsTicker`. These predate the move to MongoDB for spread/ticker storage and had been dead schema ever since; the Mongo collections of the same name are the ones actually in use (see [Architecture](#architecture)). Named for the accompanying removal of the `Volatility` field from `TradeOpportunityModel`/`ExchangeRateModel` — the 30-minute OHLCV-based volatility and "risk level" scoring it fed was cut platform-wide (ArbitrageScanner, this API, and the Telegram Notifier) as it wasn't reliable enough to keep computing on every cycle. |
+| `AddUserSettingsNotificationIndexes` | Adds indexes on `UserSettings` (`AccountId`, `ChatId`, and three partial indexes on `SpreadSize` filtered by `Active` + each spread-type flag) to speed up the per-user, per-strategy criteria matching that `ArbiScanner.TelegramNotifierApp`'s `SpreadService` runs on every incoming spread event. |
+
+---
+
+## Testing
+
+Three .NET test projects and a client-side Vitest suite were added alongside the error-handling and test-coverage push described above. None of the three .NET suites are required for `dotnet build` (they're excluded from the "just build" flow only in the sense that a slow/no-Docker environment can skip `IntegrationTests`/`LoadTests`), but all three are part of `ArbiScannerWebApp.sln` and run with `dotnet test`.
+
+### ArbiScannerWeb.Tests (unit)
+
+Fast, no-I/O unit tests (xUnit + FluentAssertions + Moq):
+
+| File | Coverage |
+|---|---|
+| `API/AccountControllerTests` | Controller behavior against mocked `IAccountService` |
+| `API/ExceptionHandlingMiddlewareTests` | Middleware produces the expected JSON envelope for thrown exceptions |
+| `API/ResultStatusCodeFilterTests` | Filter maps `Result` failures to the correct HTTP status code from `TypedErrors` metadata |
+| `Domain/RefreshTokenModelTests`, `Domain/UserSettingsModelTests` | Domain model invariants |
+| `Infrastructure/AccountServiceTests`, `SubscriptionServiceTests`, `TradeOpportunityServiceTests` | Service-layer logic against mocked repositories |
+
+```bash
+dotnet test ArbiScannerWeb.Tests/ArbiScannerWeb.Tests.csproj
+```
+
+### ArbiScannerWeb.IntegrationTests
+
+Testcontainers-backed tests using `Microsoft.AspNetCore.Mvc.Testing`'s `WebApplicationFactory` to host the real API in-process against real Postgres, MongoDB, RabbitMQ, and Redis containers. **Docker must be running locally.** The AdminPanel dependency is faked with WireMock.Net rather than run for real.
+
+| File | Coverage |
+|---|---|
+| `Api/AccountFlowTests` | End-to-end registration/login/refresh flows against a real Postgres-backed Identity store |
+| `Api/TradeOpportunityControllerTests` | Spread endpoints against real Mongo data |
+| `Api/ClientLogSmokeTests` | The frontend error-logging endpoint |
+| `AdminPanel/AdminPanelIntegrationTests` | Subscription data sourced from a WireMock-stubbed AdminPanel API |
+| `RabbitMq/RabbitMqIntegrationTests` | `RabbitMqService` consuming real messages from a `Testcontainers.RabbitMq` broker |
+
+```bash
+dotnet test ArbiScannerWeb.IntegrationTests/ArbiScannerWeb.IntegrationTests.csproj
+```
+
+### ArbiScannerWeb.LoadTests
+
+A separate, not-part-of-the-normal-test-run project (per the monorepo's CLAUDE.md) with a small hand-rolled throttled load runner (`Support/LoadRunner.cs` — a `SemaphoreSlim`-bounded request loop, not a dependency like NBomber) rather than pass/fail assertions:
+
+- `LoadTests/AccountUpdateLoadTest`, `LoadTests/SpreadFetchLoadTest` — sustained-throughput smoke tests against a running instance of the API
+
+Uses `Xunit.SkippableFact` so these can be skipped by default and only run explicitly against an environment configured for load testing.
+
+### Client-side (Vitest)
+
+```bash
+cd ArbiScannerWeb.Client
+npm run test           # vitest run
+npm run test:coverage  # vitest run --coverage (v8 provider)
+```
+
+Configuration in `vitest.config.ts` (jsdom environment, `src/test/setup.ts` for global setup). Coverage:
+
+| File | Coverage |
+|---|---|
+| `components/ErrorBoundary.test.tsx` | React error boundary fallback rendering |
+| `components/ProtectedRoute.test.tsx` | Auth-gated routing redirects |
+| `hooks/useIsMobile.test.ts` | Responsive breakpoint hook across `resize` events |
+| `store/slices/accountSlice.test.ts` | Redux slice reducers/selectors |
+| `utils/chartUtils.test.ts`, `utils/spreadUtils.test.ts`, `utils/validationUtils.test.ts` | Chart data shaping, spread math, and form validation helpers |
 
 ---
 
@@ -431,38 +538,59 @@ ArbiScannerWebApp/
 │
 ├── ArbiScannerWeb.Infrastructure/      # Concrete implementations
 │   ├── DbContext/                      # AppDbContext (EF Core + PostgreSQL)
-│   ├── EntityConfigurations/           # EF model configuration
 │   ├── Migrations/                     # EF Core migration files
 │   ├── Repositories/                   # MongoDB and PostgreSQL repositories
 │   ├── Services/                       # RabbitMqService, AccountService, EmailService, etc.
 │   ├── Settings/                       # JwtOptions, MongoDbSettings, RabbitMqConfiguration
+│   ├── Middleware/                     # ExceptionHandlingMiddleware (see Error Handling)
+│   ├── Filters/                        # ResultStatusCodeFilter
+│   ├── Extensions/                     # ResultExtensions, ErrorCodes, TypedErrors
 │   └── StartupSetup.cs                 # DI registration extension method
 │
 ├── ArbiScannerWeb.API/                 # ASP.NET Core 10 Web API host
 │   ├── Controllers/                    # AccountController, TradeOpportunityController, etc.
 │   ├── Hubs/                           # TradeOpportunityHub (SignalR)
-│   ├── Middleware/                     # ExceptionHandlingMiddleware
-│   ├── Filters/                        # ResultFailLoggingFilter
 │   ├── Services/                       # SignalRService (IRealtimeNotifier)
-│   ├── Extensions/                     # ResultExtensions
 │   ├── Program.cs                      # Application entry point
-│   └── appsettings.json                # Configuration file
+│   ├── appsettings.json                # Configuration file
+│   └── CHANGELOG.md                    # Visual Studio project-scaffolding log
+│
+├── ArbiScannerWeb.Tests/                # Unit tests (xUnit + FluentAssertions + Moq) — see Testing
+│   ├── API/                             # Controller, middleware, filter tests
+│   ├── Domain/                          # Domain model tests
+│   └── Infrastructure/                  # Service-layer tests against mocked repositories
+│
+├── ArbiScannerWeb.IntegrationTests/     # Testcontainers-backed API tests — see Testing
+│   ├── Api/                             # Account/spread/client-log flow tests
+│   ├── AdminPanel/                      # WireMock-stubbed AdminPanel dependency tests
+│   ├── RabbitMq/                        # Real-broker consumer tests
+│   ├── Fixtures/                        # WebApiTestFixture, AdminPanelTestFixture, etc.
+│   └── Support/                         # CustomWebApplicationFactory and helpers
+│
+├── ArbiScannerWeb.LoadTests/             # Throttled load tests (not part of the normal test run)
+│   ├── LoadTests/                       # Account update / spread fetch load scenarios
+│   ├── Settings/
+│   └── Support/                         # Hand-rolled LoadRunner
 │
 ├── ArbiScannerWeb.Client/              # React 19 + Vite + TypeScript SPA
 │   ├── src/
-│   │   ├── components/                 # Shared UI components (NavBar, Footer, modals)
+│   │   ├── components/                 # Shared UI components (NavBar, Footer, ErrorState, modals)
 │   │   ├── hooks/                      # Custom React hooks
 │   │   ├── pages/                      # Page components organized by feature
+│   │   │   ├── Main/                   # MainPage, LiveDemoWidget (simulated-data preview)
 │   │   │   ├── Account/                # Login, Register, Profile, email/password flows
 │   │   │   ├── Spread/                 # SpreadsPage, SpreadPage, real-time chart
 │   │   │   ├── Subscription/           # Plans, payment pages
 │   │   │   └── Faq/                    # FAQ page
 │   │   ├── services/                   # authTokenService, signalrService, refreshCoordinator
 │   │   ├── store/                      # Redux store, RTK Query services, slices
-│   │   ├── types/                      # TypeScript type definitions
-│   │   └── utils/                      # Chart, spread, and validation utilities
+│   │   ├── test/                       # Vitest global setup
+│   │   ├── types/                      # TypeScript type definitions (ApiError, SpreadType, etc.)
+│   │   └── utils/                      # Chart, spread, validation utilities, normalizeApiError
 │   ├── vite.config.ts                  # Dev Vite config (SPA proxy to API)
-│   └── vite.config.prod.ts             # Production Vite config
+│   ├── vite.config.prod.ts             # Production Vite config
+│   ├── vitest.config.ts                # Vitest config (jsdom, coverage)
+│   └── CHANGELOG.md / ARCHITECTURE_REVIEW.md  # Scaffolding log / prior architecture review notes
 │
 ├── ArbiScannerWebApp.sln               # Visual Studio solution file
 ├── Dockerfile                          # API multi-stage build (.NET 10 SDK + Node 20)
@@ -471,8 +599,9 @@ ArbiScannerWebApp/
 ├── nginx.conf                          # nginx config for SPA + reverse proxy
 └── grafana/
     └── provisioning/
-        └── datasources/
-            ├── loki.yaml               # Grafana Loki datasource (uid: loki)
-            ├── tempo.yaml              # Grafana Tempo datasource (trace-to-log, service map)
-            └── prometheus.yaml         # Grafana Prometheus datasource (uid: prometheus)
+        ├── datasources/
+        │   ├── loki.yaml               # Grafana Loki datasource (uid: loki)
+        │   ├── tempo.yaml              # Grafana Tempo datasource (trace-to-log, service map)
+        │   └── prometheus.yaml         # Grafana Prometheus datasource (uid: prometheus)
+        └── dashboards/                 # Dashboard provisioning directory (empty; add JSON here)
 ```

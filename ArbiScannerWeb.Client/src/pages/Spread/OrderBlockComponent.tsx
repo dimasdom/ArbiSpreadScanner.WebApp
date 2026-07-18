@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { OrderBlock as OrderBlockItem } from '../../types/tradeOpportunityModel';
 
 interface OrderBlockProps {
@@ -8,6 +9,7 @@ interface OrderBlockProps {
 }
 
 const OrderBlock: React.FC<OrderBlockProps> = ({ title, bids = [], asks = [] }) => {
+    const { t } = useTranslation('spreads');
     // Asks: highest price at top, lowest (best) at bottom → sort descending, auto-scroll pins best at bottom
     const sortedAsks = [...asks].sort((a, b) => b.price - a.price);
     // Bids: highest price at top (nearest spread) → sort descending, render top→bottom
@@ -36,16 +38,23 @@ const OrderBlock: React.FC<OrderBlockProps> = ({ title, bids = [], asks = [] }) 
             ? ((Math.abs(price - bestPrice) / bestPrice) * 100)
             : null;
 
+        let diffLabel = '—';
+        if (diffPct != null) {
+            diffLabel = diffPct === 0 ? t('orderBlock.best') : t('orderBlock.diffValue', { value: diffPct.toFixed(2) });
+        }
+
+        const sideLabel = side === 'buy' ? t('orderBlock.buy') : t('orderBlock.sell');
+
         return (
             <div
                 key={`${side}-${i}`}
                 className={`flex justify-between px-4 py-2 ${rowClass} text-sm rounded mb-1`}
             >
-                <span className="w-1/4 capitalize font-medium">{side}</span>
+                <span className="w-1/4 capitalize font-medium">{sideLabel}</span>
                 <span className="w-1/4 text-right">${sumUsd.toFixed(2)}</span>
                 <span className="w-1/4 text-right">{price.toFixed(4)}</span>
                 <span className="w-1/4 text-right opacity-60 text-xs">
-                    {diffPct != null ? (diffPct === 0 ? 'best' : `+${diffPct.toFixed(2)}%`) : '—'}
+                    {diffLabel}
                 </span>
             </div>
         );
@@ -62,10 +71,10 @@ const OrderBlock: React.FC<OrderBlockProps> = ({ title, bids = [], asks = [] }) 
                     {title}
                 </h3>
                 <div className="flex justify-between px-4 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    <span className="w-1/4">Side</span>
-                    <span className="w-1/4 text-right">Sum ($)</span>
-                    <span className="w-1/4 text-right">Price</span>
-                    <span className="w-1/4 text-right">Diff</span>
+                    <span className="w-1/4">{t('orderBlock.headers.side')}</span>
+                    <span className="w-1/4 text-right">{t('orderBlock.headers.sum')}</span>
+                    <span className="w-1/4 text-right">{t('orderBlock.headers.price')}</span>
+                    <span className="w-1/4 text-right">{t('orderBlock.headers.diff')}</span>
                 </div>
 
                 {/* Asks — scroll up to see higher prices, lowest ask pinned at bottom */}

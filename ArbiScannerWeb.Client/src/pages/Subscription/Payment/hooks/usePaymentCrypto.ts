@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router';
+import { useSearchParams } from 'react-router';
 import {
     subscriptionsAPI,
     useCancelPaymentMutation,
@@ -10,10 +10,11 @@ import {
 import { PaymentStatus } from '../../../../types/accountType';
 import { useAppDispatch } from '../../../../hooks';
 import { logger } from '../../../../services/loggerService';
+import { useLocalizedNavigate } from '../../../../i18n/routing';
 
 export function usePaymentCrypto() {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
+    const navigate = useLocalizedNavigate();
     const dispatch = useAppDispatch();
 
     const subscriptionId = Number(searchParams.get('id')) || 0;

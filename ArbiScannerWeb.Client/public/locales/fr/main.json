@@ -1,0 +1,50 @@
+{
+  "guide": {
+    "title": "Comment fonctionne ArbiScanner",
+    "steps": {
+      "welcome": {
+        "title": "Bienvenue sur ArbiScanner",
+        "description": "ArbiScanner surveille les écarts de prix entre plusieurs exchanges en temps réel, vous aidant à repérer des opportunités de spread trading rentables — funding, spot et futures."
+      },
+      "spreadTypes": {
+        "title": "Trois types de spread",
+        "description": "<strong>Futures</strong> — écart de prix entre des contrats futures sur deux exchanges.<br/><strong>Funding</strong> — arbitrage du taux de financement perpétuel entre positions longues et courtes.<br/><strong>Spot</strong> — écart de prix d'un même actif sur deux marchés spot."
+      },
+      "smartAlerts": {
+        "title": "Alertes intelligentes",
+        "description": "Définissez votre seuil de spread minimum dans les paramètres du compte. Vous serez notifié instantanément — via le tableau de bord et Telegram — dès qu'un spread dépasse votre objectif."
+      },
+      "getStarted": {
+        "title": "Bien démarrer",
+        "description": "Créez un compte, abonnez-vous à un plan, puis configurez vos préférences dans les paramètres du compte : choisissez vos exchanges, définissez votre seuil de spread et connectez Telegram pour recevoir des alertes instantanées."
+      }
+    }
+  },
+  "hero": {
+    "title": "Bienvenue sur ArbiScanner",
+    "subtitle": "L'application web ultime pour trader différents types de spreads, notamment <highlight>funding</highlight>, <highlight>spot</highlight> et <highlight>futures</highlight>."
+  },
+  "exchanges": {
+    "heading": "Exchanges pris en charge"
+  },
+  "features": {
+    "personalize": {
+      "title": "Personnalisez votre expérience",
+      "description": "Adaptez votre tableau de bord en sélectionnant uniquement les exchanges que vous appréciez et en qui vous avez confiance. Concentrez-vous sur ce qui compte pour vous."
+    },
+    "riskManagement": {
+      "title": "Gestion des risques",
+      "description": "Définissez une taille de position personnalisée, ajustée automatiquement à votre portefeuille et à votre tolérance au risque."
+    },
+    "smartAlerts": {
+      "title": "Alertes intelligentes",
+      "description": "Définissez vos seuils de spread minimum pour être notifié instantanément dès qu'une opportunité rentable apparaît."
+    }
+  },
+  "liveDemo": {
+    "title": "Voir en action",
+    "badge": "Exemple en direct — Données simulées",
+    "description": "Voici à quoi ressemble un vrai spread sur ArbiScanner — mis à jour en temps réel avec un graphique en direct et la profondeur du carnet d'ordres.",
+    "spreadLabel": "Spread : {{value}} %"
+  }
+}

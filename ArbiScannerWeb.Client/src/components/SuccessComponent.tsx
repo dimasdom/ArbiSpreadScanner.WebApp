@@ -1,10 +1,13 @@
+import { useTranslation } from 'react-i18next';
+
 interface SuccessProps {
     message: string;
     title?: string;
     className?: string;
 }
 
-export default function SuccessComponent({ message, title = 'Success', className = '' }: SuccessProps) {
+export default function SuccessComponent({ message, title, className = '' }: SuccessProps) {
+    const { t } = useTranslation('common');
     return (
         <div className={`w-full max-w-md ${className}`}>
             <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md ring-1 ring-gray-50 dark:ring-gray-700 ring-inset p-6">
@@ -16,7 +19,7 @@ export default function SuccessComponent({ message, title = 'Success', className
                     </div>
 
                     <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{title}</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{title ?? t('successState.defaultTitle')}</h3>
                         <p className="mt-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-md px-3 py-2 shadow-md ring-1 ring-green-100 dark:ring-green-800 ring-inset">{message}</p>
                     </div>
                 </div>

@@ -1,0 +1,50 @@
+{
+  "guide": {
+    "title": "How ArbiScanner Works",
+    "steps": {
+      "welcome": {
+        "title": "Welcome to ArbiScanner",
+        "description": "ArbiScanner monitors price differences across multiple exchanges in real time, helping you spot profitable spread trading opportunities — including funding, spot, and futures spreads."
+      },
+      "spreadTypes": {
+        "title": "Three Spread Types",
+        "description": "<strong>Futures</strong> — price gap between futures contracts on two exchanges.<br/><strong>Funding</strong> — perpetual funding rate arbitrage between longs and shorts.<br/><strong>Spot</strong> — price difference for the same asset on two spot markets."
+      },
+      "smartAlerts": {
+        "title": "Smart Alerts",
+        "description": "Set your minimum spread threshold in Account Settings. You will get notified instantly — via dashboard and Telegram — whenever a spread exceeds your target."
+      },
+      "getStarted": {
+        "title": "Get Started",
+        "description": "Register an account, subscribe to a plan, then configure your preferences in Account Settings: choose your exchanges, set your spread size threshold, and connect Telegram for instant alerts."
+      }
+    }
+  },
+  "hero": {
+    "title": "Welcome to ArbiScanner",
+    "subtitle": "The ultimate web app to trade different types of spreads including <highlight>funding</highlight>, <highlight>spot</highlight>, and <highlight>futures spreads</highlight>."
+  },
+  "exchanges": {
+    "heading": "Supported Exchanges"
+  },
+  "features": {
+    "personalize": {
+      "title": "Personalize Experience",
+      "description": "Tailor your dashboard by selecting only the exchanges you like and trust. Focus on what matters to you."
+    },
+    "riskManagement": {
+      "title": "Risk Management",
+      "description": "Define your custom position size to match your portfolio and risk tolerance automatically."
+    },
+    "smartAlerts": {
+      "title": "Smart Alerts",
+      "description": "Set your minimum spread thresholds to get notified instantly when profitable opportunities arise."
+    }
+  },
+  "liveDemo": {
+    "title": "See It In Action",
+    "badge": "Live Example — Simulated Data",
+    "description": "This is what a real spread looks like on ArbiScanner — updating in real time with a live chart and order book depth.",
+    "spreadLabel": "Spread: {{value}}%"
+  }
+}

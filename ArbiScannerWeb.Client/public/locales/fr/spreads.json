@@ -1,0 +1,119 @@
+{
+  "guide": {
+    "spreadsPage": {
+      "title": "Utiliser le tableau des écarts",
+      "steps": {
+        "table": {
+          "title": "Tableau des écarts en direct",
+          "description": "Ce tableau affiche toutes les opportunités d'arbitrage actuellement actives détectées entre les plateformes. Chaque ligne est un écart en direct — les données se rafraîchissent automatiquement selon l'évolution du marché."
+        },
+        "columns": {
+          "title": "Comprendre les colonnes",
+          "spreadLabel": "Écart",
+          "spreadDescription": "l'opportunité de profit (%) après frais.",
+          "typeLabel": "Type",
+          "typeDescription": "écart de futures, de financement ou au comptant.",
+          "symbolLabel": "Symbole",
+          "symbolDescription": "la paire de trading (ex. BTC/USDT).",
+          "exchangeLabel": "Plateforme Long/Short",
+          "exchangeDescription": "où placer chaque jambe.",
+          "rateLabel": "Taux Long/Short",
+          "rateDescription": "prix actuels de chaque côté."
+        },
+        "opening": {
+          "title": "Ouvrir un écart",
+          "description": "Double-cliquez sur une ligne (ou touchez-la sur mobile) pour ouvrir la page de détail complète de l'écart avec un graphique en direct, la profondeur du carnet d'ordres, les taux de financement et les indicateurs de volatilité."
+        }
+      }
+    },
+    "spreadPage": {
+      "title": "Lire le détail d'un écart",
+      "steps": {
+        "chart": {
+          "title": "Graphique de prix en direct",
+          "description": "Le graphique montre les mouvements de prix en temps réel des deux plateformes. Surveillez la convergence ou la divergence — un écart qui se resserre signifie que l'opportunité pourrait se refermer."
+        },
+        "badges": {
+          "title": "Badges d'écart et de volatilité",
+          "spreadLabel": "Écart %",
+          "spreadDescription": "potentiel de profit actuel après frais. Vert = positif, rouge = négatif.",
+          "volatilityLabel": "Volatilité",
+          "volatilityDescription": "fluctuation de prix récente. Une volatilité plus élevée signifie un risque plus élevé mais une clôture potentiellement plus rapide."
+        },
+        "exchanges": {
+          "title": "Plateformes Short & Long",
+          "shortLabel": "Plateforme Short",
+          "shortDescription": "vendez (short) l'actif ici, là où le prix est plus élevé.",
+          "longLabel": "Plateforme Long",
+          "longDescription": "achetez (long) l'actif ici, là où le prix est plus bas.",
+          "fundingNote": "Pour les écarts de financement, la direction indique aussi si vous <em>payez</em> ou <em>recevez</em> le taux de financement."
+        },
+        "orderBook": {
+          "title": "Profondeur du carnet d'ordres",
+          "description": "Les panneaux du carnet d'ordres affichent les meilleures offres d'achat et de vente pour chaque plateforme. Des ordres plus importants près de votre prix cible signifient une meilleure liquidité et moins de glissement à l'entrée."
+        }
+      }
+    }
+  },
+  "spreadsPage": {
+    "columns": {
+      "spread": "Écart",
+      "type": "Type",
+      "symbol": "Symbole",
+      "exchangeLong": "Plateforme Long",
+      "exchangeShort": "Plateforme Short",
+      "rateLong": "Taux Long",
+      "rateShort": "Taux Short",
+      "fundingRateLong": "Taux de financement Long",
+      "fundingRateShort": "Taux de financement Short"
+    },
+    "notAvailable": "N/D",
+    "errorLoading": "Impossible de charger les écarts. Veuillez réessayer plus tard."
+  },
+  "spreadType": {
+    "Futures": "Futures",
+    "Funding": "Financement",
+    "Spot": "Spot"
+  },
+  "spreadPage": {
+    "closedDialog": {
+      "title": "Écart clôturé",
+      "message": "Cet écart a été clôturé et n'est plus disponible.",
+      "ok": "OK"
+    },
+    "badges": {
+      "volatility": "Volatilité : {{value}}%",
+      "spread": "Écart : {{value}}%"
+    },
+    "details": {
+      "startSpread": "Écart initial : {{value}}%",
+      "summaryTariff": "Frais totaux : {{value}}%",
+      "estimatedProfit": "Profit estimé : {{value}}%",
+      "estSlippage": "Glissement estimé : {{value}}%",
+      "forPosition": "pour une position de {{amount}} $"
+    },
+    "tip": "Astuce : cliquez sur le nom d'une plateforme pour ouvrir directement sa page de trading.",
+    "shortExchange": "Plateforme Short",
+    "longExchange": "Plateforme Long",
+    "fundingLine": "Financement : {{value}}% ({{direction}})",
+    "fundingDirection": {
+      "pay": "Vous payez",
+      "receive": "Vous recevez"
+    },
+    "chart": {
+      "defaultTitle": "Graphique en temps réel"
+    }
+  },
+  "orderBlock": {
+    "headers": {
+      "side": "Côté",
+      "sum": "Somme ($)",
+      "price": "Prix",
+      "diff": "Diff."
+    },
+    "buy": "achat",
+    "sell": "vente",
+    "best": "meilleur",
+    "diffValue": "+{{value}}%"
+  }
+}

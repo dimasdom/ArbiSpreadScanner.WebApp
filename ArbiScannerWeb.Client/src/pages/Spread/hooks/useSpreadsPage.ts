@@ -1,19 +1,21 @@
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import type { GridRowParams } from '@mui/x-data-grid';
 import { useGetSpreadsQuery } from '../../../store/services/spread';
 import { useIsMobile } from '../../../hooks/useIsMobile';
+import { useLocalizedNavigate } from '../../../i18n/routing';
 
-const typeLabels: Record<number, string> = {
-    2: 'Spot',
-    0: 'Futures',
-    1: 'Funding',
+const typeKeys: Record<number, string> = {
+    2: 'spreadType.Spot',
+    0: 'spreadType.Futures',
+    1: 'spreadType.Funding',
 };
 
 export function useSpreadsPage() {
     const { data, isLoading, isError } = useGetSpreadsQuery();
-    const navigate = useNavigate();
+    const navigate = useLocalizedNavigate();
     const isMobile = useIsMobile();
+    const { t } = useTranslation('spreads');
 
     const possiblePositions = useMemo(() => data?.value ?? [], [data]);
 
@@ -25,19 +27,19 @@ export function useSpreadsPage() {
                 spread: Math.abs(item.spread).toFixed(4),
                 type:
                     item.type != null && item.type !== undefined
-                        ? typeLabels[Number(item.type)]
+                        ? t(typeKeys[Number(item.type)])
                         : item.type,
                 symbol: item.symbol,
                 exchangeLong: item.exchangeLong.exchange,
                 exchangeShort: item.exchangeShort.exchange,
                 exchangeRateLong: item.exchangeLong.exchangeRate.toFixed(6),
                 exchangeRateShort: item.exchangeShort.exchangeRate.toFixed(6),
-                fundingRateLong: item.exchangeLong.fundingRateValue ? (item.exchangeLong.fundingRateValue * 100).toFixed(4) + '%' : 'N/A',
+                fundingRateLong: item.exchangeLong.fundingRateValue ? (item.exchangeLong.fundingRateValue * 100).toFixed(4) + '%' : t('spreadsPage.notAvailable'),
                 fundingRateShort: item.exchangeShort.fundingRateValue
                     ? (item.exchangeShort.fundingRateValue * 100).toFixed(4) + '%'
-                    : 'N/A',
+                    : t('spreadsPage.notAvailable'),
             })),
-        [possiblePositions],
+        [possiblePositions, t],
     );
 
     const handleRowDoubleClick = (params: GridRowParams) => {

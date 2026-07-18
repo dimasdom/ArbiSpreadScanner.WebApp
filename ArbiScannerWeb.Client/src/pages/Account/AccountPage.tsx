@@ -1,65 +1,14 @@
 import React, { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
+import { Trans, useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { IRootStore } from '../../store/store';
 import SettingsIcon from '@mui/icons-material/Settings';
 import GuideModal from '../../components/GuideModal';
 import type { GuideStep } from '../../components/GuideModal';
 import type { AccountUpdateDTO } from '../../types/accountType';
-
-const accountGuideSteps: GuideStep[] = [
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-        ),
-        title: 'Email & Spread Size',
-        description: (
-            <span>
-                Keep your <strong>email</strong> up to date for account notifications.<br />
-                Set a <strong>Spread Size Threshold</strong> — only spreads above this % will be shown and flagged as opportunities. Example: 0.5 means you only care about spreads ≥ 0.5%.
-            </span>
-        ),
-    },
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        ),
-        title: 'Position Size',
-        description: 'Choose your trading position size — this is the dollar amount per trade leg. It is used to estimate your potential profit for each spread opportunity. Pick an amount that matches your risk tolerance.',
-    },
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
-        ),
-        title: 'Monitoring Preferences',
-        description: 'Toggle which spread types you want to track: Futures, Funding, or Spot. Select only the types you actively trade to reduce noise and focus on relevant opportunities.',
-    },
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-        ),
-        title: 'Active Exchanges',
-        description: 'Choose which exchanges to monitor. Only pairs involving your selected exchanges will be included in the live spread feed. Deselect exchanges you do not have accounts on.',
-    },
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-        ),
-        title: 'Telegram Notifications',
-        description: 'Connect your Telegram account to receive instant alerts when spreads matching your criteria appear. Click "Link Telegram" and follow the bot instructions. You can unlink at any time from this page.',
-    },
-];
-import { useNavigate } from 'react-router';
+import { useLocalizedNavigate } from '../../i18n/routing';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InfoIcon from '@mui/icons-material/Info';
 import TelegramLinkModal from '../../components/TelegramLinkModal';
@@ -74,7 +23,67 @@ import {
 } from '../../store/services/account';
 import { useGetUserActiveSubscriptionsQuery } from '../../store/services/subscription';
 
+function buildAccountGuideSteps(t: TFunction<'account'>): GuideStep[] {
+    return [
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            ),
+            title: t('accountPage.guide.steps.emailAndSpread.title'),
+            description: (
+                <span>
+                    <Trans
+                        i18nKey="accountPage.guide.steps.emailAndSpread.description"
+                        ns="account"
+                        components={{ bold: <strong />, br: <br /> }}
+                    />
+                </span>
+            ),
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            ),
+            title: t('accountPage.guide.steps.positionSize.title'),
+            description: t('accountPage.guide.steps.positionSize.description'),
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+            ),
+            title: t('accountPage.guide.steps.monitoring.title'),
+            description: t('accountPage.guide.steps.monitoring.description'),
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            ),
+            title: t('accountPage.guide.steps.exchanges.title'),
+            description: t('accountPage.guide.steps.exchanges.description'),
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+            ),
+            title: t('accountPage.guide.steps.telegram.title'),
+            description: t('accountPage.guide.steps.telegram.description'),
+        },
+    ];
+}
+
 export function AccountPage() {
+    const { t, i18n } = useTranslation(['account', 'common']);
+    const accountGuideSteps = buildAccountGuideSteps(t);
     const userAccount = useSelector((state: IRootStore) => state.account.account);
     const userSettings = useSelector((state: IRootStore) => state.account.account.userSettings);
     const loading = useSelector((state: IRootStore) => state.account.loading);
@@ -97,7 +106,7 @@ export function AccountPage() {
     const [telegramActionLoading, setTelegramActionLoading] = React.useState(false);
     const [telegramActionError, setTelegramActionError] = React.useState('');
 
-    const navigate = useNavigate();
+    const navigate = useLocalizedNavigate();
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
     const [updateAccountDetails] = useUpdateAccountDetailsMutation();
     const [changeEmailRequest] = useChangeEmailRequestMutation();
@@ -124,7 +133,7 @@ export function AccountPage() {
     const validateEmail = () => {
         const re = /^\S+@\S+\.\S+$/;
         if (!email || !re.test(email)) {
-            setEmailError('Please enter a valid email address.');
+            setEmailError(t('common:validation.email.invalid'));
             return false;
         }
         setEmailError('');
@@ -150,8 +159,8 @@ export function AccountPage() {
             setEmailDialogOpen(true);
         } else {
             void updateAccountDetails(payload).unwrap()
-                .then(() => toast.success('Settings saved!'))
-                .catch(() => toast.error('Failed to save settings.'));
+                .then(() => toast.success(t('accountPage.toasts.saveSuccess')))
+                .catch(() => toast.error(t('accountPage.toasts.saveError')));
         }
     };
 
@@ -167,10 +176,10 @@ export function AccountPage() {
                 await updateAccountDetails(pendingData);
                 navigate('/account/confirmemail?emailConfirmToken=' + res.value.id);
             } else {
-                setEmailChangeError(res?.errors?.[0]?.message || 'Failed to change email.');
+                setEmailChangeError(res?.errors?.[0]?.message || t('accountPage.emailChangeDialog.confirmError'));
             }
         } catch (err) {
-            setEmailChangeError(err instanceof Error ? err.message : 'Network error. Please try again.');
+            setEmailChangeError(err instanceof Error ? err.message : t('errors.networkError'));
         } finally {
             setEmailChangeLoading(false);
         }
@@ -208,11 +217,11 @@ export function AccountPage() {
             if (res?.isSuccess) {
                 return;
             }
-            setTelegramActionError(res?.errors?.[0]?.message || 'Failed to unlink Telegram account.');
+            setTelegramActionError(res?.errors?.[0]?.message || t('accountPage.telegram.unlinkError'));
         } catch (err) {
             const details = err instanceof Error ? err.message : 'Unknown telegram unlink error';
             logger.error('Failed to remove telegram link', 'AccountPage', details);
-            setTelegramActionError('Failed to unlink Telegram account.');
+            setTelegramActionError(t('accountPage.telegram.unlinkError'));
         } finally {
             setTelegramActionLoading(false);
         }
@@ -222,13 +231,13 @@ export function AccountPage() {
 
     return (
         <>
-        <GuideModal storageKey="guide_account_seen" title="Account Settings Guide" steps={accountGuideSteps} />
+        <GuideModal storageKey="guide_account_seen" title={t('accountPage.guide.title')} steps={accountGuideSteps} />
         {emailDialogOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/50 dark:bg-black/50">
                 <button
                     className="absolute opacity-0 inset-0 w-full h-full cursor-default"
                     onClick={handleEmailChangeCancel}
-                    aria-label="Close"
+                    aria-label={t('common:actions.close')}
                     tabIndex={-1}
                 />
                 <dialog
@@ -240,12 +249,12 @@ export function AccountPage() {
                             <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
-                            <h2 className="text-base font-bold tracking-wide">Confirm Email Change</h2>
+                            <h2 className="text-base font-bold tracking-wide">{t('accountPage.emailChangeDialog.title')}</h2>
                         </div>
                         <button
                             onClick={handleEmailChangeCancel}
                             className="text-white/70 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
-                            aria-label="Close"
+                            aria-label={t('common:actions.close')}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -259,7 +268,12 @@ export function AccountPage() {
                             </svg>
                         </div>
                         <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed max-w-sm">
-                            To use <span className="font-semibold text-gray-900 dark:text-gray-100">{email}</span> to sign in next time, you need to confirm it first. A confirmation code will be sent to this address.
+                            <Trans
+                                i18nKey="accountPage.emailChangeDialog.body"
+                                ns="account"
+                                values={{ email }}
+                                components={{ bold: <span className="font-semibold text-gray-900 dark:text-gray-100" /> }}
+                            />
                         </p>
                         {emailChangeError && (
                             <p className="w-full text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2 ring-1 ring-red-100 dark:ring-red-800">{emailChangeError}</p>
@@ -271,14 +285,14 @@ export function AccountPage() {
                             disabled={emailChangeLoading}
                             className="px-5 py-2 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                         >
-                            Cancel
+                            {t('common:actions.cancel')}
                         </button>
                         <button
                             onClick={handleEmailChangeConfirm}
                             disabled={emailChangeLoading}
                             className="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
                         >
-                            {emailChangeLoading ? 'Sending...' : 'Confirm'}
+                            {emailChangeLoading ? t('accountPage.emailChangeDialog.sending') : t('accountPage.emailChangeDialog.confirm')}
                         </button>
                     </div>
                 </dialog>
@@ -293,10 +307,10 @@ export function AccountPage() {
             {/* Header Section */}
             <div className="text-center mb-16 space-y-4">
                 <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
-                    Account Settings
+                    {t('accountPage.header.title')}
                 </h1>
                 <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-                    Manage your profile, trading preferences, and exchange connections.
+                    {t('accountPage.header.subtitle')}
                 </p>
             </div>
 
@@ -307,16 +321,16 @@ export function AccountPage() {
                             <CheckCircleIcon sx={{ fontSize: 48, color: '#10b981' }} />
                         </div>
                         <div className="flex-1">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Active Subscription</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('accountPage.subscription.active.title')}</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Subscription Type</p>
-                                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{userSubscription.subscription?.type || 'Premium'}</p>
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{t('accountPage.subscription.active.typeLabel')}</p>
+                                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{userSubscription.subscription?.type || t('accountPage.subscription.active.premiumFallback')}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Expires On</p>
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{t('accountPage.subscription.active.expiresLabel')}</p>
                                     <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                        {new Date(userSubscription.endDate).toLocaleDateString('en-US', {
+                                        {new Date(userSubscription.endDate).toLocaleDateString(i18n.language, {
                                             year: 'numeric',
                                             month: 'long',
                                             day: 'numeric'
@@ -335,15 +349,15 @@ export function AccountPage() {
                             <InfoIcon sx={{ fontSize: 48, color: '#3b82f6' }} />
                         </div>
                         <div className="flex-1">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">No Active Subscription</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('accountPage.subscription.none.title')}</h2>
                             <p className="text-gray-700 dark:text-gray-300 mb-4">
-                                You don't currently have an active subscription. Explore our available options to unlock premium features.
+                                {t('accountPage.subscription.none.body')}
                             </p>
                             <button
                                 onClick={() => navigate('/subscriptions')}
                                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md"
                             >
-                                View Available Subscriptions →
+                                {t('accountPage.subscription.none.viewButton')}
                             </button>
                         </div>
                     </div>
@@ -361,7 +375,7 @@ export function AccountPage() {
 
                     {/* Telegram Integration */}
                     <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6">Telegram Notifications</h3>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6">{t('accountPage.telegram.sectionTitle')}</h3>
                         <div className="bg-linear-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-2xl p-6 border border-blue-100 dark:border-blue-800 overflow-x-hidden">
                             {isTelegramLinked ? (
                                 <div className="flex items-center gap-4">
@@ -369,11 +383,11 @@ export function AccountPage() {
                                         <TelegramIcon sx={{ fontSize: 28, color: 'white' }} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Telegram Connected</p>
+                                        <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{t('accountPage.telegram.connected.label')}</p>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
                                             {userSettings?.userName
                                                 ? `@${userSettings.userName}`
-                                                : `Chat ID: ${userSettings?.chatId}`}
+                                                : t('accountPage.telegram.connected.chatIdLabel', { chatId: userSettings?.chatId })}
                                         </p>
                                         {telegramActionError && (
                                             <p className="mt-2 text-sm text-red-600">{telegramActionError}</p>
@@ -384,7 +398,7 @@ export function AccountPage() {
                                         onClick={handleUnlinkTelegram}
                                         disabled={telegramActionLoading}
                                         className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title="Unlink Telegram"
+                                        title={t('accountPage.telegram.unlinkAria')}
                                     >
                                         {telegramActionLoading ? (
                                             <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
@@ -401,16 +415,16 @@ export function AccountPage() {
                                             <TelegramIcon sx={{ fontSize: 28, color: '#3b82f6' }} />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Connect Telegram</p>
+                                            <p className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('accountPage.telegram.notConnected.label')}</p>
                                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                                Link your Telegram account to receive instant notifications about trading opportunities.
+                                                {t('accountPage.telegram.notConnected.description')}
                                             </p>
                                             <button
                                                 onClick={handleLinkTelegram}
                                                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm"
                                             >
                                                 <TelegramIcon sx={{ fontSize: 20 }} />
-                                                Link Telegram Account
+                                                {t('accountPage.telegram.notConnected.linkButton')}
                                             </button>
                                         </div>
                                     </div>
@@ -424,14 +438,14 @@ export function AccountPage() {
                     {/* General Settings */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('accountPage.form.emailLabel')}</label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 onBlur={validateEmail}
                                 className="block w-full rounded-xl border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
-                                placeholder="your@email.com"
+                                placeholder={t('accountPage.form.emailPlaceholder')}
                             />
                             {emailError && (
                                 <p className="mt-2 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 px-3 py-1 rounded-lg">{emailError}</p>
@@ -439,7 +453,7 @@ export function AccountPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Spread Size Threshold</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('accountPage.form.spreadSizeLabel')}</label>
                             <div className="relative rounded-md shadow-sm">
                                 <input
                                     type="number"
@@ -447,7 +461,7 @@ export function AccountPage() {
                                     value={spreadSize}
                                     onChange={(e) => setSpreadSize(e.target.value)}
                                     className="block w-full rounded-xl border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
-                                    placeholder="0.5"
+                                    placeholder={t('accountPage.form.spreadSizePlaceholder')}
                                 />
                                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-8">
                                     <span className="text-gray-500 dark:text-gray-400 sm:text-sm">%</span>
@@ -456,13 +470,13 @@ export function AccountPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Position Size</label>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('accountPage.form.positionSizeLabel')}</label>
                             <select
                                 value={positionSize as string | number}
                                 onChange={(e) => setPositionSize(e.target.value === '' ? '' : Number(e.target.value))}
                                 className="block w-full rounded-xl border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
                             >
-                                <option value="">Select Size</option>
+                                <option value="">{t('accountPage.form.positionSizeSelectPlaceholder')}</option>
                                 <option value={100}>$100</option>
                                 <option value={300}>$300</option>
                                 <option value={500}>$500</option>
@@ -476,14 +490,14 @@ export function AccountPage() {
 
                     {/* Spread Types */}
                     <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6">Monitoring Preferences</h3>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6">{t('accountPage.form.monitoringTitle')}</h3>
                         <div className="flex flex-wrap gap-4">
                             {[
-                                { label: 'Futures Spreads', state: futuresSpread, setter: setFuturesSpread, color: 'indigo' },
-                                { label: 'Funding Rates', state: fundingSpread, setter: setFundingSpread, color: 'indigo' },
-                                { label: 'Spot Spreads', state: spotSpread, setter: setSpotSpread, color: 'indigo' },
+                                { key: 'futures', label: t('accountPage.form.futuresSpreads'), state: futuresSpread, setter: setFuturesSpread, color: 'indigo' },
+                                { key: 'funding', label: t('accountPage.form.fundingRates'), state: fundingSpread, setter: setFundingSpread, color: 'indigo' },
+                                { key: 'spot', label: t('accountPage.form.spotSpreads'), state: spotSpread, setter: setSpotSpread, color: 'indigo' },
                             ].map((item) => (
-                                <label key={item.label} className={`
+                                <label key={item.key} className={`
                                     cursor-pointer px-6 py-3 rounded-xl border transition-all duration-200 flex items-center gap-3
                                     ${item.state
                                         ? `bg-${item.color}-50 dark:bg-${item.color}-900/30 border-${item.color}-200 dark:border-${item.color}-700 text-${item.color}-700 dark:text-${item.color}-300 shadow-sm`
@@ -506,7 +520,7 @@ export function AccountPage() {
 
                     {/* Exchanges */}
                     <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6">Active Exchanges</h3>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6">{t('accountPage.form.exchangesTitle')}</h3>
                         <div className="flex flex-wrap gap-3">
                             {[
                                 'Binance', 'Bybit', 'OKX', 'KuCoin Futures', 'MEXC', 'Bitget', 'HTX', 'XT', 'CoinEX', 'LBank', 'WhiteBit', 'Gate.io', 'BingX'
@@ -551,7 +565,7 @@ export function AccountPage() {
                                 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
                             `}
                         >
-                            {loading ? 'Saving...' : 'Save Changes'}
+                            {loading ? t('accountPage.actions.saving') : t('accountPage.actions.save')}
                         </button>
                     </div>
                 </div>

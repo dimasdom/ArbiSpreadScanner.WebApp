@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import type { IRootStore } from '../../../store/store';
 import { useResetPasswordMutation } from '../../../store/services/account';
 import { validatePassword } from '../../../utils/validationUtils';
+import { useLocalizedNavigate } from '../../../i18n/routing';
 
 interface ResetPasswordErrors {
     password: string;
@@ -12,7 +13,8 @@ interface ResetPasswordErrors {
 }
 
 export function useResetPasswordForm() {
-    const navigate = useNavigate();
+    const { t } = useTranslation(['account', 'common']);
+    const navigate = useLocalizedNavigate();
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
     const [resetPassword] = useResetPasswordMutation();
 
@@ -32,19 +34,19 @@ export function useResetPasswordForm() {
 
     const validate = (): boolean => {
         if (!token) {
-            setErrors((prev) => ({ ...prev, server: 'Confirmation token is missing from URL.' }));
+            setErrors((prev) => ({ ...prev, server: t('resetPassword.errors.tokenMissing') }));
             return false;
         }
         const password = passwordRef.current?.value ?? '';
         const confirmPassword = confirmPasswordRef.current?.value ?? '';
 
-        const passwordErr = validatePassword(password);
-        if (passwordErr) {
-            setErrors((prev) => ({ ...prev, password: passwordErr }));
+        const passwordErrKey = validatePassword(password);
+        if (passwordErrKey) {
+            setErrors((prev) => ({ ...prev, password: t(`common:${passwordErrKey}`) }));
             return false;
         }
         if (password !== confirmPassword) {
-            setErrors((prev) => ({ ...prev, password: 'Password and confirmation do not match.' }));
+            setErrors((prev) => ({ ...prev, password: t('resetPassword.errors.passwordMismatch') }));
             return false;
         }
         return true;
@@ -61,11 +63,11 @@ export function useResetPasswordForm() {
             if (res && (res.isSuccess || !res.isFailed)) {
                 navigate('/account/login');
             } else {
-                const msg = res?.errors?.[0]?.message || res?.reasons?.[0]?.message || 'Failed to reset password';
+                const msg = res?.errors?.[0]?.message || res?.reasons?.[0]?.message || t('resetPassword.errors.resetFailed');
                 setErrors((prev) => ({ ...prev, server: msg }));
             }
         } catch (err) {
-            const details = err instanceof Error ? err.message : 'Network error. Please try again.';
+            const details = err instanceof Error ? err.message : t('errors.networkError');
             setErrors((prev) => ({ ...prev, server: details }));
         } finally {
             setLoading(false);

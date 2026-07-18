@@ -1,14 +1,16 @@
 import './App.css';
 import { Toaster } from 'react-hot-toast';
 import NavBar from './components/NavBar';
-import { Route, Routes, useNavigate, useLocation } from 'react-router';
+import { Route, Routes, useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import SpreadsPage from './pages/Spread/SpreadsPage';
 import SpreadPage from './pages/Spread/SpreadPage';
 import AccountPage from './pages/Account/AccountPage';
 import LoginPage from './pages/Account/LoginPage';
 import { useSelector } from 'react-redux';
-import { clearUserData } from './store/slices/accountSlice';
+import { useEffect } from 'react';
+import { clearUserData, hasStoredSession, markSessionChecked } from './store/slices/accountSlice';
 import type { IRootStore } from './store/store';
 import RegisterPage from './pages/Account/RegisterPage';
 import ConfirmEmailPage from './pages/Account/ConfirmEmailPage';
@@ -22,7 +24,9 @@ import FaqPage from './pages/Faq/FaqPage';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import CookieConsentModal from './components/CookieConsentModal';
+import { LangGuard, RootRedirect } from './components/LangGuard';
 import { useAppDispatch } from './hooks';
+import { useLocalizedNavigate, stripLangPrefix } from './i18n/routing';
 import { useGetUserDataQuery, useLogoutMutation } from './store/services/account';
 import { useGetUserActiveSubscriptionsQuery } from './store/services/subscription';
 
@@ -41,15 +45,23 @@ const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 function App() {
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
-    useGetUserDataQuery(undefined, { refetchOnMountOrArgChange: true });
+    const dispatch = useAppDispatch();
+    const hadSession = hasStoredSession();
+    useGetUserDataQuery(undefined, { skip: !hadSession, refetchOnMountOrArgChange: true });
+    useEffect(() => {
+        if (!hadSession) {
+            dispatch(markSessionChecked());
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const { data: activeSubscriptionData } = useGetUserActiveSubscriptionsQuery(undefined, {
         skip: !isLoggedIn,
     });
     const isActiveSubscription = activeSubscriptionData?.value?.isActive || false;
-    const dispatch = useAppDispatch();
     const location = useLocation();
-    const navigate = useNavigate();
+    const navigate = useLocalizedNavigate();
     const [logout] = useLogoutMutation();
+    const { t } = useTranslation('common');
 
     return (
         <div className="flex flex-col min-h-screen dark:bg-gray-950 transition-colors duration-200">
@@ -57,23 +69,26 @@ function App() {
 
             <main className="flex-1 pt-20">
                 <AnimatePresence mode="wait">
-                    <Routes location={location} key={location.pathname}>
-                        <Route path="account">
-                            <Route index element={<ProtectedRoute><PageWrapper><AccountPage /></PageWrapper></ProtectedRoute>} />
-                            <Route path="login" element={<PageWrapper><LoginPage /></PageWrapper>} />
-                            <Route path="register" element={<PageWrapper><RegisterPage /></PageWrapper>} />
-                            <Route path="confirmemail" element={<PageWrapper><ConfirmEmailPage /></PageWrapper>} />
-                            <Route path="resetpassword" element={<PageWrapper><ResetPasswordPage /></PageWrapper>} />
-                            <Route path="forgotpassword" element={<PageWrapper><ForgotPasswordPage /></PageWrapper>} />
+                    <Routes location={location} key={stripLangPrefix(location.pathname)}>
+                        <Route path="/" element={<RootRedirect />} />
+                        <Route path=":lang" element={<LangGuard />}>
+                            <Route path="account">
+                                <Route index element={<ProtectedRoute><PageWrapper><AccountPage /></PageWrapper></ProtectedRoute>} />
+                                <Route path="login" element={<PageWrapper><LoginPage /></PageWrapper>} />
+                                <Route path="register" element={<PageWrapper><RegisterPage /></PageWrapper>} />
+                                <Route path="confirmemail" element={<PageWrapper><ConfirmEmailPage /></PageWrapper>} />
+                                <Route path="resetpassword" element={<PageWrapper><ResetPasswordPage /></PageWrapper>} />
+                                <Route path="forgotpassword" element={<PageWrapper><ForgotPasswordPage /></PageWrapper>} />
+                            </Route>
+                            <Route index element={<PageWrapper><MainPage /></PageWrapper>} />
+                            <Route path="spreads" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadsPage /></PageWrapper></ProtectedRoute>} />
+                            <Route path="spread" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadPage /></PageWrapper></ProtectedRoute>} />
+                            <Route path="subscriptions" element={<PageWrapper><SubscriptionPage /></PageWrapper>} />
+                            <Route path="payment" element={<PageWrapper><PaymentInfoPage /></PageWrapper>} />
+                            <Route path="payment/pay" element={<PageWrapper><PaymentCryptoPage /></PageWrapper>} />
+                            <Route path="faq" element={<PageWrapper><FaqPage /></PageWrapper>} />
+                            <Route path="*" element={<PageWrapper><div className="p-4">{t('notFound')}</div></PageWrapper>} />
                         </Route>
-                        <Route index element={<PageWrapper><MainPage /></PageWrapper>} />
-                        <Route path="spreads" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadsPage /></PageWrapper></ProtectedRoute>} />
-                        <Route path="spread" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadPage /></PageWrapper></ProtectedRoute>} />
-                        <Route path="subscriptions" element={<PageWrapper><SubscriptionPage /></PageWrapper>} />
-                        <Route path="*" element={<PageWrapper><div className="p-4">Page Not Found</div></PageWrapper>} />
-                        <Route path="payment" element={<PageWrapper><PaymentInfoPage /></PageWrapper>} />
-                        <Route path="payment/pay" element={<PageWrapper><PaymentCryptoPage /></PageWrapper>} />
-                        <Route path="faq" element={<PageWrapper><FaqPage /></PageWrapper>} />
                     </Routes>
                 </AnimatePresence>
             </main>

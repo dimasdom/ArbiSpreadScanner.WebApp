@@ -1,0 +1,155 @@
+{
+  "errors": {
+    "networkError": "Netzwerkfehler. Bitte versuche es erneut."
+  },
+  "accountPage": {
+    "guide": {
+      "title": "Anleitung zu den Kontoeinstellungen",
+      "steps": {
+        "emailAndSpread": {
+          "title": "E-Mail & Spread-Schwelle",
+          "description": "Halte deine <bold>E-Mail-Adresse</bold> für Kontobenachrichtigungen aktuell.<br></br>Lege eine <bold>Spread-Größenschwelle</bold> fest — nur Spreads oberhalb dieses Prozentsatzes werden angezeigt und als Gelegenheiten markiert. Beispiel: 0.5 bedeutet, dass dich nur Spreads ≥ 0.5 % interessieren."
+        },
+        "positionSize": {
+          "title": "Positionsgröße",
+          "description": "Wähle deine Trading-Positionsgröße — das ist der Dollarbetrag pro Handelsbein. Sie wird verwendet, um deinen potenziellen Gewinn für jede Spread-Gelegenheit zu schätzen. Wähle einen Betrag, der zu deiner Risikobereitschaft passt."
+        },
+        "monitoring": {
+          "title": "Überwachungseinstellungen",
+          "description": "Wähle aus, welche Spread-Typen du verfolgen möchtest: Futures, Funding oder Spot. Wähle nur die Typen aus, die du aktiv handelst, um Rauschen zu reduzieren und dich auf relevante Gelegenheiten zu konzentrieren."
+        },
+        "exchanges": {
+          "title": "Aktive Börsen",
+          "description": "Wähle aus, welche Börsen überwacht werden sollen. Nur Paare mit deinen ausgewählten Börsen werden in den Live-Spread-Feed aufgenommen. Deaktiviere Börsen, bei denen du kein Konto hast."
+        },
+        "telegram": {
+          "title": "Telegram-Benachrichtigungen",
+          "description": "Verbinde dein Telegram-Konto, um sofortige Benachrichtigungen zu erhalten, wenn Spreads erscheinen, die deinen Kriterien entsprechen. Klicke auf \"Telegram verknüpfen\" und folge den Bot-Anweisungen. Du kannst die Verknüpfung jederzeit auf dieser Seite aufheben."
+        }
+      }
+    },
+    "emailChangeDialog": {
+      "title": "E-Mail-Änderung bestätigen",
+      "body": "Um dich beim nächsten Mal mit <bold>{{email}}</bold> anzumelden, musst du sie zuerst bestätigen. An diese Adresse wird ein Bestätigungscode gesendet.",
+      "confirm": "Bestätigen",
+      "sending": "Wird gesendet...",
+      "confirmError": "E-Mail-Änderung fehlgeschlagen."
+    },
+    "header": {
+      "title": "Kontoeinstellungen",
+      "subtitle": "Verwalte dein Profil, deine Handelspräferenzen und deine Börsenverbindungen."
+    },
+    "subscription": {
+      "active": {
+        "title": "Aktives Abonnement",
+        "typeLabel": "Abonnementtyp",
+        "premiumFallback": "Premium",
+        "expiresLabel": "Läuft ab am"
+      },
+      "none": {
+        "title": "Kein aktives Abonnement",
+        "body": "Du hast derzeit kein aktives Abonnement. Entdecke unsere verfügbaren Optionen, um Premium-Funktionen freizuschalten.",
+        "viewButton": "Verfügbare Abonnements ansehen →"
+      }
+    },
+    "telegram": {
+      "sectionTitle": "Telegram-Benachrichtigungen",
+      "connected": {
+        "label": "Telegram verbunden",
+        "chatIdLabel": "Chat-ID: {{chatId}}"
+      },
+      "unlinkAria": "Telegram trennen",
+      "unlinkError": "Telegram-Konto konnte nicht getrennt werden.",
+      "notConnected": {
+        "label": "Telegram verbinden",
+        "description": "Verknüpfe dein Telegram-Konto, um sofortige Benachrichtigungen über Handelsgelegenheiten zu erhalten.",
+        "linkButton": "Telegram-Konto verknüpfen"
+      }
+    },
+    "form": {
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "deine@email.com",
+      "spreadSizeLabel": "Spread-Größenschwelle",
+      "spreadSizePlaceholder": "0.5",
+      "positionSizeLabel": "Positionsgröße",
+      "positionSizeSelectPlaceholder": "Größe wählen",
+      "monitoringTitle": "Überwachungseinstellungen",
+      "futuresSpreads": "Futures-Spreads",
+      "fundingRates": "Funding-Raten",
+      "spotSpreads": "Spot-Spreads",
+      "exchangesTitle": "Aktive Börsen"
+    },
+    "actions": {
+      "save": "Änderungen speichern",
+      "saving": "Wird gespeichert..."
+    },
+    "toasts": {
+      "saveSuccess": "Einstellungen gespeichert!",
+      "saveError": "Einstellungen konnten nicht gespeichert werden."
+    }
+  },
+  "login": {
+    "title": "In dein Konto anmelden",
+    "emailLabel": "E-Mail",
+    "passwordLabel": "Passwort",
+    "submitButton": "Anmelden",
+    "submitting": "Anmeldung läuft...",
+    "forgotPasswordLink": "Passwort vergessen?",
+    "registerLink": "Registrieren"
+  },
+  "register": {
+    "title": "Konto erstellen",
+    "emailLabel": "E-Mail",
+    "confirmEmailLabel": "E-Mail bestätigen",
+    "passwordLabel": "Passwort",
+    "confirmPasswordLabel": "Passwort bestätigen",
+    "submitButton": "Registrieren",
+    "submitting": "Wird registriert...",
+    "forgotPasswordLink": "Passwort vergessen?",
+    "signInLink": "Anmelden",
+    "errors": {
+      "emailMismatch": "Die E-Mail-Adressen stimmen nicht überein.",
+      "passwordMismatch": "Die Passwörter stimmen nicht überein.",
+      "registrationFailed": "Registrierung fehlgeschlagen"
+    }
+  },
+  "confirmEmail": {
+    "title": "Bestätige deine E-Mail",
+    "tokenLabel": "Bestätigungscode",
+    "submitButton": "E-Mail bestätigen",
+    "confirming": "Wird bestätigt...",
+    "resendButton": "Code erneut senden",
+    "resending": "Wird erneut gesendet...",
+    "errors": {
+      "tokenRequired": "Der Bestätigungscode ist erforderlich.",
+      "confirmationFailed": "Bestätigung fehlgeschlagen",
+      "resendTokenRequired": "Zum erneuten Senden des Bestätigungscodes ist ein E-Mail-Bestätigungstoken erforderlich.",
+      "resendFailed": "Bestätigungscode konnte nicht erneut gesendet werden."
+    }
+  },
+  "forgotPassword": {
+    "title": "Passwort zurücksetzen",
+    "emailLabel": "E-Mail",
+    "submitButton": "Code senden",
+    "sending": "Wird gesendet...",
+    "signInLink": "Anmelden",
+    "registerLink": "Registrieren",
+    "successTitle": "E-Mail gesendet",
+    "successMessage": "Link zum Zurücksetzen des Passworts wurde an {{email}} gesendet",
+    "errors": {
+      "sendFailed": "Link zum Zurücksetzen konnte nicht gesendet werden."
+    }
+  },
+  "resetPassword": {
+    "title": "Passwort zurücksetzen",
+    "newPasswordLabel": "Neues Passwort",
+    "confirmPasswordLabel": "Passwort bestätigen",
+    "submitButton": "Passwort zurücksetzen",
+    "submitting": "Wird gesendet...",
+    "errors": {
+      "tokenMissing": "Der Bestätigungscode fehlt in der URL.",
+      "passwordMismatch": "Passwort und Bestätigung stimmen nicht überein.",
+      "resetFailed": "Passwort konnte nicht zurückgesetzt werden"
+    }
+  }
+}

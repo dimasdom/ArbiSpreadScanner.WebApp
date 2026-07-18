@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { clearError } from '../../../store/slices/accountSlice';
 import { useRegisterMutation } from '../../../store/services/account';
 import { useAppDispatch } from '../../../hooks';
 import type { IRootStore } from '../../../store/store';
 import { validateEmail, validatePassword } from '../../../utils/validationUtils';
+import { useLocalizedNavigate } from '../../../i18n/routing';
 
 interface RegisterErrors {
     email: string;
@@ -17,7 +18,8 @@ interface RegisterErrors {
 }
 
 export function useRegisterForm() {
-    const navigate = useNavigate();
+    const { t } = useTranslation(['account', 'common']);
+    const navigate = useLocalizedNavigate();
     const dispatch = useAppDispatch();
     const [register] = useRegisterMutation();
 
@@ -51,10 +53,12 @@ export function useRegisterForm() {
         const password = passwordRef.current?.value ?? '';
         const confirmPassword = confirmPasswordRef.current?.value ?? '';
 
-        const emailErr = validateEmail(email);
-        const confirmEmailErr = email === confirmEmail ? '' : 'Emails do not match.';
-        const passwordErr = validatePassword(password);
-        const confirmPasswordErr = password === confirmPassword ? '' : 'Passwords do not match.';
+        const emailErrKey = validateEmail(email);
+        const emailErr = emailErrKey ? t(`common:${emailErrKey}`) : '';
+        const confirmEmailErr = email === confirmEmail ? '' : t('register.errors.emailMismatch');
+        const passwordErrKey = validatePassword(password);
+        const passwordErr = passwordErrKey ? t(`common:${passwordErrKey}`) : '';
+        const confirmPasswordErr = password === confirmPassword ? '' : t('register.errors.passwordMismatch');
 
         setErrors((prev) => ({
             ...prev,
@@ -84,11 +88,11 @@ export function useRegisterForm() {
             if (res && (res.isSuccess || !res.isFailed)) {
                 navigate('/account/confirmemail?emailConfirmToken=' + res.value.id);
             } else {
-                const msg = res?.errors?.[0]?.message || res?.reasons?.[0]?.message || 'Registration failed';
+                const msg = res?.errors?.[0]?.message || res?.reasons?.[0]?.message || t('register.errors.registrationFailed');
                 setErrors((prev) => ({ ...prev, server: msg }));
             }
         } catch (err) {
-            const details = err instanceof Error ? err.message : 'Network error. Please try again.';
+            const details = err instanceof Error ? err.message : t('errors.networkError');
             setErrors((prev) => ({ ...prev, server: details }));
         } finally {
             setLoading(false);

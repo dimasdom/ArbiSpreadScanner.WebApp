@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { useSelector } from 'react-redux';
+import { useLocalizedNavigate } from '../../../i18n/routing';
 import type { IRootStore } from '../../../store/store';
 import { useGetSpreadInfoQuery } from '../../../store/services/spread';
 import { signalRService } from '../../../services/signalrService';
@@ -8,7 +9,7 @@ import { logger } from '../../../services/loggerService';
 import type { TradeOpportunityDetailsDTO } from '../../../types/tradeOpportunityModel';
 import type { MessageDTO, PossiblePositionTickerModel } from '../../../types/tickerType';
 import { PositionAction } from '../../../types/PositionAction';
-import { SpreadType, SpreadTypeNames } from '../../../types/SpreadType';
+import { SpreadType } from '../../../types/SpreadType';
 import { calcVolatility, calcSlippage } from '../../../utils/spreadUtils';
 
 const SpreadTypeColors: Record<string, string> = {
@@ -18,7 +19,7 @@ const SpreadTypeColors: Record<string, string> = {
 };
 
 export function useSpreadPage() {
-    const navigate = useNavigate();
+    const navigate = useLocalizedNavigate();
     const [searchParams] = useSearchParams();
     const positionSize = useSelector((state: IRootStore) => state.account.account.userSettings?.positionSize ?? 0);
 
@@ -136,7 +137,7 @@ export function useSpreadPage() {
             : null;
 
     const spreadType = possiblePositionDTO?.positionModel.type;
-    const spreadLabel = spreadType === undefined ? undefined : SpreadTypeNames[spreadType];
+    const spreadLabel = spreadType === undefined ? undefined : SpreadType[spreadType];
     const spreadClass = spreadLabel ? SpreadTypeColors[spreadLabel] : 'bg-gray-100 text-gray-700';
 
     const isSpotSpread = spreadType === SpreadType.Spot;

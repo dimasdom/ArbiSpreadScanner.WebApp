@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import type { IRootStore } from '../store/store';
 import { useGetUserActiveSubscriptionsQuery } from '../store/services/subscription';
+import { withLang } from '../i18n/routing';
 
 interface ProtectedRouteProps {
     children: ReactNode;
@@ -10,6 +12,7 @@ interface ProtectedRouteProps {
 }
 
 function ProtectedRoute({ children, requireActiveSubscription = false }: Readonly<ProtectedRouteProps>) {
+    const { i18n } = useTranslation();
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
     const sessionChecked = useSelector((state: IRootStore) => state.account.sessionChecked);
     const { data: activeSubscriptionData, isLoading, isFetching } = useGetUserActiveSubscriptionsQuery(undefined, {
@@ -21,7 +24,7 @@ function ProtectedRoute({ children, requireActiveSubscription = false }: Readonl
     }
 
     if (!isLoggedIn) {
-        return <Navigate to="/account/login" replace />;
+        return <Navigate to={withLang('/account/login', i18n.language)} replace />;
     }
 
     if (requireActiveSubscription && (isLoading || isFetching)) {
@@ -29,7 +32,7 @@ function ProtectedRoute({ children, requireActiveSubscription = false }: Readonl
     }
 
     if (requireActiveSubscription && !activeSubscriptionData?.value?.isActive) {
-        return <Navigate to="/subscriptions" replace />;
+        return <Navigate to={withLang('/subscriptions', i18n.language)} replace />;
     }
 
     return <>{children}</>;

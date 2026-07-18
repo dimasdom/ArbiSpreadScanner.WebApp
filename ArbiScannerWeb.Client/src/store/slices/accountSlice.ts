@@ -21,6 +21,13 @@ const initialState: AccountState = {
     sessionChecked: false,
 };
 
+// Auth cookies are HttpOnly, so the client can't read them directly to know
+// whether a session might still exist. This marker is the client-visible
+// proxy for "we were logged in on this browser" set alongside login.
+const HAS_SESSION_KEY = 'arbiscanner.has_session';
+
+export const hasStoredSession = () => localStorage.getItem(HAS_SESSION_KEY) === 'true';
+
 const accountSlice = createSlice({
     name: 'account',
     initialState,
@@ -33,6 +40,7 @@ const accountSlice = createSlice({
             state.emailConfirmToken = null;
             state.needsEmailConfirmation = false;
             state.sessionChecked = true;
+            localStorage.setItem(HAS_SESSION_KEY, 'true');
         },
         requireEmailConfirmation(state, action: PayloadAction<string | null>) {
             state.account = createEmptyAccountModel();
@@ -59,6 +67,7 @@ const accountSlice = createSlice({
             state.loading = false;
             state.error = null;
             state.sessionChecked = true;
+            localStorage.removeItem(HAS_SESSION_KEY);
         },
         clearEmailConfirmation(state) {
             state.emailConfirmToken = null;

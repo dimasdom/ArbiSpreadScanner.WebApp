@@ -1,0 +1,56 @@
+{
+  "header": {
+    "title": "Foire aux questions",
+    "subtitle": "Tout ce que vous devez savoir sur <brand>ArbiScanner</brand>, ses fonctionnalités et comment démarrer avec le spread trading."
+  },
+  "items": {
+    "whatIs": {
+      "question": "Qu'est-ce qu'ArbiScanner ?",
+      "answer": "ArbiScanner est une application web de trading complète conçue pour vous aider à identifier et exploiter des opportunités de spread. Nous prenons en charge différents types de spreads, notamment les taux de funding, l'arbitrage spot et les spreads futures sur plusieurs exchanges majeurs."
+    },
+    "exchanges": {
+      "question": "Quels exchanges sont actuellement pris en charge ?",
+      "answer": "Nous prenons actuellement en charge un large éventail d'exchanges de premier plan, notamment <bold>Binance, Bybit, OKX, KuCoin Futures, MEXC, Bitget, HTX, XT, CoinEX, LBank, WhiteBit, Gate.io et BingX</bold>. Nous travaillons en permanence à ajouter de nouvelles intégrations."
+    },
+    "smartAlerts": {
+      "question": "Comment fonctionnent les alertes intelligentes ?",
+      "answer": "Les alertes intelligentes vous permettent de définir des critères de seuil spécifiques pour les spreads. Dès qu'un spread atteint vos exigences de profit minimum, vous êtes notifié instantanément via le tableau de bord ou les canaux de notification configurés, afin de ne jamais manquer une opportunité rentable."
+    },
+    "riskManagement": {
+      "question": "Existe-t-il un système de gestion des risques ?",
+      "answer": "Oui ! ArbiScanner intègre des outils de gestion des risques. Vous pouvez définir des règles personnalisées de taille de position qui calculent automatiquement les montants des transactions en fonction de la valeur totale de votre portefeuille et de votre tolérance au risque."
+    },
+    "personalize": {
+      "question": "Puis-je choisir les exchanges que je vois ?",
+      "answer": "Absolument. Notre fonctionnalité « Personnalisez votre expérience » vous permet d'activer ou de désactiver des exchanges spécifiques. Si vous n'avez de compte que sur certains exchanges, ou ne faites confiance qu'à certains d'entre eux, vous pouvez filtrer le tableau de bord pour n'afficher que les données pertinentes."
+    },
+    "spreadThreshold": {
+      "question": "Que signifie le seuil de taille de spread ?",
+      "answer": "Le <strong>seuil de taille de spread</strong> (défini dans les paramètres du compte) est le pourcentage de spread minimum pour lequel vous souhaitez être notifié. Par exemple, en le réglant sur <strong>0,5</strong>, vous ne verrez que les spreads de 0,5 % ou plus. Cela filtre les opportunités faibles et peu rentables et réduit le bruit dans le flux."
+    },
+    "shortLongExchange": {
+      "question": "Que sont l'exchange short et l'exchange long ?",
+      "answer": "Chaque spread implique deux positions opposées ouvertes simultanément :<br/><br/><strong>Exchange short</strong> — l'exchange où le prix de l'actif est le plus élevé. Vous y vendez (short) l'actif.<br/><strong>Exchange long</strong> — l'exchange où le prix de l'actif est le plus bas. Vous y achetez (long) l'actif.<br/><br/>Le profit provient de la différence de prix entre les deux côtés, moins les frais de transaction."
+    },
+    "orderBook": {
+      "question": "Comment lire le carnet d'ordres sur la page de détail du spread ?",
+      "answer": "Le carnet d'ordres affiche les <strong>asks</strong> (ordres de vente) et les <strong>bids</strong> (ordres d'achat) actuels pour chaque exchange.<br/><br/><strong>Asks</strong> — les prix auxquels les vendeurs sont prêts à vendre. Vous achèterez au prix ask sur l'exchange long.<br/><strong>Bids</strong> — les prix auxquels les acheteurs sont prêts à payer. Vous vendrez au prix bid sur l'exchange short.<br/><br/>Repérez les gros volumes d'ordres proches de votre prix cible : cela indique une meilleure <strong>liquidité</strong> et moins de <strong>slippage</strong> à l'entrée ou à la sortie de la position."
+    },
+    "volatility": {
+      "question": "Que signifie la volatilité sur la page du spread ?",
+      "answer": "La <strong>volatilité</strong> mesure l'ampleur des fluctuations récentes du prix sur les deux exchanges. Elle est calculée à partir des données de ticker en direct de la session en cours.<br/><br/>Une volatilité plus élevée signifie que les prix évoluent rapidement — cela peut entraîner une convergence plus rapide du spread (profit plus rapide), mais aussi un risque accru que le spread s'élargisse encore davantage contre vous. Une volatilité plus faible indique généralement un spread plus stable et prévisible."
+    },
+    "fundingRate": {
+      "question": "Comment fonctionnent les spreads de funding rate ?",
+      "answer": "Sur les marchés de futures perpétuels, les exchanges appliquent un <strong>taux de financement</strong> périodique entre les positions longues et courtes afin de maintenir le prix ancré au marché spot.<br/><br/>Lorsque le taux de financement est <strong>positif</strong> : les longs paient les shorts. Le côté short <em>reçoit</em> le financement ; le côté long le <em>paie</em>.<br/>Lorsque le taux de financement est <strong>négatif</strong> : les shorts paient les longs. Le côté long <em>reçoit</em> le financement.<br/><br/>ArbiScanner indique directement sur la page de détail du spread dans quel sens vous payez ou recevez le financement."
+    }
+  },
+  "contact": {
+    "prompt": "Vous ne trouvez pas ce que vous cherchez ?",
+    "button": "Contacter le support",
+    "emailNote": "Envoyez-nous un e-mail à <email>arbiscannerweb@atomicmail.io</email>"
+  },
+  "guides": {
+    "seeAgain": "Revoir les guides"
+  }
+}

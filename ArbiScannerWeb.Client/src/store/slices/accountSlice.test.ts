@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import accountReducer, {
     setAuthenticatedAccount,
     requireEmailConfirmation,
@@ -9,6 +9,7 @@ import accountReducer, {
     clearEmailConfirmation,
     clearUserData,
     clearError,
+    hasStoredSession,
     type AccountState,
 } from './accountSlice';
 import { createEmptyAccountModel } from '../../types/accountType';
@@ -46,7 +47,30 @@ const testAccount: AccountModel = {
     },
 };
 
+const createLocalStorageMock = (): Storage => {
+    const store = new Map<string, string>();
+    return {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => { store.set(key, value); },
+        removeItem: (key: string) => { store.delete(key); },
+        clear: () => { store.clear(); },
+        key: (index: number) => Array.from(store.keys())[index] ?? null,
+        get length() { return store.size; },
+    } as Storage;
+};
+
 describe('accountSlice reducer', () => {
+    let localStorageMock: Storage;
+
+    beforeEach(() => {
+        localStorageMock = createLocalStorageMock();
+        vi.spyOn(globalThis, 'localStorage', 'get').mockReturnValue(localStorageMock);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('returns initial state for unknown action', () => {
         const state = accountReducer(undefined, { type: '@@INIT' });
         expect(state.isLoggedIn).toBe(false);
@@ -78,6 +102,12 @@ describe('accountSlice reducer', () => {
             const state = accountReducer(confirmingState, setAuthenticatedAccount(testAccount));
             expect(state.emailConfirmToken).toBeNull();
             expect(state.needsEmailConfirmation).toBe(false);
+        });
+
+        it('marks a stored session so future loads know a login exists', () => {
+            expect(hasStoredSession()).toBe(false);
+            accountReducer(initialState, setAuthenticatedAccount(testAccount));
+            expect(hasStoredSession()).toBe(true);
         });
     });
 
@@ -155,6 +185,12 @@ describe('accountSlice reducer', () => {
             expect(state.loading).toBe(false);
             expect(state.error).toBeNull();
             expect(state.sessionChecked).toBe(true);
+        });
+
+        it('clears the stored session marker', () => {
+            localStorageMock.setItem('arbiscanner.has_session', 'true');
+            accountReducer(initialState, logout());
+            expect(hasStoredSession()).toBe(false);
         });
     });
 

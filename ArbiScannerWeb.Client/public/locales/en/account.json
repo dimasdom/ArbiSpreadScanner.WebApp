@@ -1,0 +1,155 @@
+{
+  "errors": {
+    "networkError": "Network error. Please try again."
+  },
+  "accountPage": {
+    "guide": {
+      "title": "Account Settings Guide",
+      "steps": {
+        "emailAndSpread": {
+          "title": "Email & Spread Size",
+          "description": "Keep your <bold>email</bold> up to date for account notifications.<br></br>Set a <bold>Spread Size Threshold</bold> — only spreads above this % will be shown and flagged as opportunities. Example: 0.5 means you only care about spreads ≥ 0.5%."
+        },
+        "positionSize": {
+          "title": "Position Size",
+          "description": "Choose your trading position size — this is the dollar amount per trade leg. It is used to estimate your potential profit for each spread opportunity. Pick an amount that matches your risk tolerance."
+        },
+        "monitoring": {
+          "title": "Monitoring Preferences",
+          "description": "Toggle which spread types you want to track: Futures, Funding, or Spot. Select only the types you actively trade to reduce noise and focus on relevant opportunities."
+        },
+        "exchanges": {
+          "title": "Active Exchanges",
+          "description": "Choose which exchanges to monitor. Only pairs involving your selected exchanges will be included in the live spread feed. Deselect exchanges you do not have accounts on."
+        },
+        "telegram": {
+          "title": "Telegram Notifications",
+          "description": "Connect your Telegram account to receive instant alerts when spreads matching your criteria appear. Click \"Link Telegram\" and follow the bot instructions. You can unlink at any time from this page."
+        }
+      }
+    },
+    "emailChangeDialog": {
+      "title": "Confirm Email Change",
+      "body": "To use <bold>{{email}}</bold> to sign in next time, you need to confirm it first. A confirmation code will be sent to this address.",
+      "confirm": "Confirm",
+      "sending": "Sending...",
+      "confirmError": "Failed to change email."
+    },
+    "header": {
+      "title": "Account Settings",
+      "subtitle": "Manage your profile, trading preferences, and exchange connections."
+    },
+    "subscription": {
+      "active": {
+        "title": "Active Subscription",
+        "typeLabel": "Subscription Type",
+        "premiumFallback": "Premium",
+        "expiresLabel": "Expires On"
+      },
+      "none": {
+        "title": "No Active Subscription",
+        "body": "You don't currently have an active subscription. Explore our available options to unlock premium features.",
+        "viewButton": "View Available Subscriptions →"
+      }
+    },
+    "telegram": {
+      "sectionTitle": "Telegram Notifications",
+      "connected": {
+        "label": "Telegram Connected",
+        "chatIdLabel": "Chat ID: {{chatId}}"
+      },
+      "unlinkAria": "Unlink Telegram",
+      "unlinkError": "Failed to unlink Telegram account.",
+      "notConnected": {
+        "label": "Connect Telegram",
+        "description": "Link your Telegram account to receive instant notifications about trading opportunities.",
+        "linkButton": "Link Telegram Account"
+      }
+    },
+    "form": {
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "your@email.com",
+      "spreadSizeLabel": "Spread Size Threshold",
+      "spreadSizePlaceholder": "0.5",
+      "positionSizeLabel": "Position Size",
+      "positionSizeSelectPlaceholder": "Select Size",
+      "monitoringTitle": "Monitoring Preferences",
+      "futuresSpreads": "Futures Spreads",
+      "fundingRates": "Funding Rates",
+      "spotSpreads": "Spot Spreads",
+      "exchangesTitle": "Active Exchanges"
+    },
+    "actions": {
+      "save": "Save Changes",
+      "saving": "Saving..."
+    },
+    "toasts": {
+      "saveSuccess": "Settings saved!",
+      "saveError": "Failed to save settings."
+    }
+  },
+  "login": {
+    "title": "Sign in to your account",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "submitButton": "Login",
+    "submitting": "Signing in...",
+    "forgotPasswordLink": "Forgot password?",
+    "registerLink": "Register"
+  },
+  "register": {
+    "title": "Create an account",
+    "emailLabel": "Email",
+    "confirmEmailLabel": "Confirm Email",
+    "passwordLabel": "Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "submitButton": "Register",
+    "submitting": "Registering...",
+    "forgotPasswordLink": "Forgot password?",
+    "signInLink": "Sign in",
+    "errors": {
+      "emailMismatch": "Emails do not match.",
+      "passwordMismatch": "Passwords do not match.",
+      "registrationFailed": "Registration failed"
+    }
+  },
+  "confirmEmail": {
+    "title": "Confirm your email",
+    "tokenLabel": "Confirmation token",
+    "submitButton": "Confirm Email",
+    "confirming": "Confirming...",
+    "resendButton": "Resend Code",
+    "resending": "Resending...",
+    "errors": {
+      "tokenRequired": "Confirmation token is required.",
+      "confirmationFailed": "Confirmation failed",
+      "resendTokenRequired": "Email confirmation token is required to resend confirmation code.",
+      "resendFailed": "Failed to resend confirmation code."
+    }
+  },
+  "forgotPassword": {
+    "title": "Reset your password",
+    "emailLabel": "Email",
+    "submitButton": "Send code",
+    "sending": "Sending...",
+    "signInLink": "Sign in",
+    "registerLink": "Register",
+    "successTitle": "Email Sent",
+    "successMessage": "Link to restore password sent to {{email}}",
+    "errors": {
+      "sendFailed": "Unable to send reset link."
+    }
+  },
+  "resetPassword": {
+    "title": "Reset password",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm password",
+    "submitButton": "Reset password",
+    "submitting": "Submitting...",
+    "errors": {
+      "tokenMissing": "Confirmation token is missing from URL.",
+      "passwordMismatch": "Password and confirmation do not match.",
+      "resetFailed": "Failed to reset password"
+    }
+  }
+}

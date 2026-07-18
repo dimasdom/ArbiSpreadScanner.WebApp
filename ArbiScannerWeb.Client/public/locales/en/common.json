@@ -1,0 +1,105 @@
+{
+  "nav": {
+    "main": "Main",
+    "account": "Account",
+    "subscriptions": "Subscriptions",
+    "faq": "FAQ",
+    "spreads": "Spreads",
+    "toggleMenu": "Toggle menu",
+    "menu": "Menu",
+    "closeMenu": "Close menu"
+  },
+  "auth": {
+    "logIn": "Log in",
+    "logOut": "Log out"
+  },
+  "theme": {
+    "toggleAria": "Toggle dark mode"
+  },
+  "language": {
+    "switchAria": "Change language"
+  },
+  "footer": {
+    "copyright": "© {{year}} <brand>ArbiScanner</brand>. All rights reserved.",
+    "faq": "FAQ"
+  },
+  "notFound": "Page Not Found",
+  "validation": {
+    "email": {
+      "invalid": "Please enter a valid email address."
+    },
+    "password": {
+      "tooShort": "Password must be at least 12 characters long.",
+      "needsDigit": "Password must include at least one numeric character.",
+      "needsSymbol": "Password must include at least one special symbol like @.",
+      "needsUpper": "Password must include at least one uppercase letter."
+    }
+  },
+  "actions": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "close": "Close"
+  },
+  "cookieConsent": {
+    "title": "Cookie Notice",
+    "body": "This site uses <strong>functional cookies only</strong> — they are strictly necessary for the site to work correctly. We do <strong>not</strong> collect, store, or share any personal data."
+  },
+  "eula": {
+    "title": "End User License Agreement",
+    "intro": "Please read this End User License Agreement carefully before using ArbiScanner.",
+    "agree": "I Agree",
+    "sections": {
+      "acceptance": {
+        "heading": "Acceptance of Terms",
+        "body": "By registering and using ArbiScanner, you agree to be bound by the terms and conditions of this agreement."
+      },
+      "useOfService": {
+        "heading": "Use of Service",
+        "body": "ArbiScanner provides spread trading information and analysis tools. The service is provided \"as is\" without warranties of any kind."
+      },
+      "financialDisclaimer": {
+        "heading": "Financial Disclaimer",
+        "body": "Trading cryptocurrencies involves substantial risk. ArbiScanner does not provide financial advice. All trading decisions are your own responsibility."
+      },
+      "dataPrivacy": {
+        "heading": "Data and Privacy",
+        "body": "We collect and process your data in accordance with our Privacy Policy. Your email and account information will be securely stored."
+      },
+      "accountResponsibilities": {
+        "heading": "Account Responsibilities",
+        "body": "You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account."
+      },
+      "termination": {
+        "heading": "Termination",
+        "body": "We reserve the right to terminate or suspend access to our service at any time for violations of this agreement."
+      }
+    }
+  },
+  "guide": {
+    "close": "Close guide",
+    "goToStep": "Go to step {{step}}",
+    "dontShowAgain": "Don't show again",
+    "back": "Back",
+    "gotIt": "Got it!",
+    "next": "Next"
+  },
+  "telegramLink": {
+    "title": "Link Telegram Account",
+    "intro": "Connect your Telegram account to receive instant notifications about profitable trading opportunities.",
+    "benefitsHeading": "What you'll get:",
+    "benefits": {
+      "realTime": "Real-time alerts for spread opportunities",
+      "customized": "Customized notifications based on your preferences",
+      "directAccess": "Direct access to trading insights"
+    },
+    "instructions": "Click the button below to open Telegram and complete the linking process with our bot.",
+    "openTelegram": "Open Telegram"
+  },
+  "errorState": {
+    "default": "Something went wrong. Please try again later.",
+    "tryAgain": "Try again"
+  },
+  "successState": {
+    "defaultTitle": "Success"
+  }
+}

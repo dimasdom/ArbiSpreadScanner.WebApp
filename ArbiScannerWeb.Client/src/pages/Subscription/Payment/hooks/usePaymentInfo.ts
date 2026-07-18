@@ -1,10 +1,11 @@
-import { useSearchParams, useNavigate } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { useCreatePaymentMutation, useGetSubscriptionDetailsQuery } from '../../../../store/services/subscription';
 import { logger } from '../../../../services/loggerService';
+import { useLocalizedNavigate } from '../../../../i18n/routing';
 
 export function usePaymentInfo() {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
+    const navigate = useLocalizedNavigate();
 
     const subscriptionId = Number(searchParams.get('id')) || 0;
     const { data, isLoading, error } = useGetSubscriptionDetailsQuery(subscriptionId);

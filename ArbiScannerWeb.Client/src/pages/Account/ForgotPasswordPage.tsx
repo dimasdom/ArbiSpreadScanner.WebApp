@@ -1,14 +1,16 @@
-import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import Link from '../../components/LocalizedLink';
 import SuccessComponent from '../../components/SuccessComponent';
 import { useForgotPasswordForm } from './hooks/useForgotPasswordForm';
 
 export default function ForgotPasswordPage() {
+    const { t } = useTranslation('account');
     const { emailRef, errors, loading, isSuccess, submittedEmail, handleEmailInput, handleSubmit } = useForgotPasswordForm();
 
     if (isSuccess) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center px-4 py-8">
-                <SuccessComponent message={`Link to restore password sent to ${submittedEmail}`} title="Email Sent" />
+                <SuccessComponent message={t('forgotPassword.successMessage', { email: submittedEmail })} title={t('forgotPassword.successTitle')} />
             </div>
         );
     }
@@ -17,11 +19,11 @@ export default function ForgotPasswordPage() {
         <form onSubmit={handleSubmit} className="min-h-[60vh] flex items-center justify-center px-4 py-8">
             <div className="w-full max-w-md">
                 <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md ring-1 ring-gray-50 dark:ring-gray-700 ring-inset p-6">
-                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Reset your password</h2>
+                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">{t('forgotPassword.title')}</h2>
 
                     <div className="space-y-4">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('forgotPassword.emailLabel')}</label>
                             <input
                                 ref={emailRef}
                                 type="email"

@@ -1,11 +1,13 @@
 import { configureStore, createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit';
 import accountReducer, { logout, clearUserData } from './slices/accountSlice';
+import languageReducer from './slices/languageSlice';
 import { accountApi } from './services/account';
 import { spreadApi } from './services/spread';
 import { subscriptionsAPI } from './services/subscription';
 
 const rootReducer = {
     account: accountReducer,
+    language: languageReducer,
     [accountApi.reducerPath]: accountApi.reducer,
     [spreadApi.reducerPath]: spreadApi.reducer,
     [subscriptionsAPI.reducerPath]: subscriptionsAPI.reducer,

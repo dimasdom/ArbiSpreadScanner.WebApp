@@ -1,0 +1,119 @@
+{
+  "guide": {
+    "spreadsPage": {
+      "title": "Using the Spreads Table",
+      "steps": {
+        "table": {
+          "title": "Live Spreads Table",
+          "description": "This table shows all currently active arbitrage opportunities detected across exchanges. Each row is a live spread — data refreshes automatically as market conditions change."
+        },
+        "columns": {
+          "title": "Understanding the Columns",
+          "spreadLabel": "Spread",
+          "spreadDescription": "the profit opportunity (%) after fees.",
+          "typeLabel": "Type",
+          "typeDescription": "Futures, Funding, or Spot spread.",
+          "symbolLabel": "Symbol",
+          "symbolDescription": "the trading pair (e.g. BTC/USDT).",
+          "exchangeLabel": "Exchange Long/Short",
+          "exchangeDescription": "where to place each leg.",
+          "rateLabel": "Rate Long/Short",
+          "rateDescription": "current prices on each side."
+        },
+        "opening": {
+          "title": "Opening a Spread",
+          "description": "Double-click any row (or tap on mobile) to open the full spread detail page with a live chart, order book depth, funding rates, and volatility metrics."
+        }
+      }
+    },
+    "spreadPage": {
+      "title": "Reading the Spread Detail",
+      "steps": {
+        "chart": {
+          "title": "Live Price Chart",
+          "description": "The chart shows real-time price movements for both exchanges. Watch for convergence or divergence — a narrowing spread means the opportunity may be closing."
+        },
+        "badges": {
+          "title": "Spread & Volatility Badges",
+          "spreadLabel": "Spread %",
+          "spreadDescription": "current profit potential after tariffs. Green = positive, red = negative.",
+          "volatilityLabel": "Volatility",
+          "volatilityDescription": "recent price fluctuation. Higher volatility = higher risk but potentially faster close."
+        },
+        "exchanges": {
+          "title": "Short & Long Exchanges",
+          "shortLabel": "Short Exchange",
+          "shortDescription": "sell (short) the asset here where the price is higher.",
+          "longLabel": "Long Exchange",
+          "longDescription": "buy (long) the asset here where the price is lower.",
+          "fundingNote": "For funding spreads, the direction also tells you whether you <em>pay</em> or <em>receive</em> the funding rate."
+        },
+        "orderBook": {
+          "title": "Order Book Depth",
+          "description": "The order book panels show the top bids (buyers) and asks (sellers) for each exchange. Larger order sizes at your target price mean better liquidity and less slippage when entering the trade."
+        }
+      }
+    }
+  },
+  "spreadsPage": {
+    "columns": {
+      "spread": "Spread",
+      "type": "Type",
+      "symbol": "Symbol",
+      "exchangeLong": "Exchange Long",
+      "exchangeShort": "Exchange Short",
+      "rateLong": "Rate Long",
+      "rateShort": "Rate Short",
+      "fundingRateLong": "Funding Rate Long",
+      "fundingRateShort": "Funding Rate Short"
+    },
+    "notAvailable": "N/A",
+    "errorLoading": "Failed to load spreads. Please try again later."
+  },
+  "spreadType": {
+    "Futures": "Futures",
+    "Funding": "Funding",
+    "Spot": "Spot"
+  },
+  "spreadPage": {
+    "closedDialog": {
+      "title": "Spread Closed",
+      "message": "This spread has been closed and is no longer available.",
+      "ok": "OK"
+    },
+    "badges": {
+      "volatility": "Volatility: {{value}}%",
+      "spread": "Spread: {{value}}%"
+    },
+    "details": {
+      "startSpread": "Start Spread: {{value}}%",
+      "summaryTariff": "Summary Tariff: {{value}}%",
+      "estimatedProfit": "Estimated Profit: {{value}}%",
+      "estSlippage": "Est. Slippage: {{value}}%",
+      "forPosition": "for ${{amount}} position"
+    },
+    "tip": "Tip: click an exchange name to open its trading page directly.",
+    "shortExchange": "Short Exchange",
+    "longExchange": "Long Exchange",
+    "fundingLine": "Funding: {{value}}% ({{direction}})",
+    "fundingDirection": {
+      "pay": "You pay",
+      "receive": "You receive"
+    },
+    "chart": {
+      "defaultTitle": "Realtime Chart"
+    }
+  },
+  "orderBlock": {
+    "headers": {
+      "side": "Side",
+      "sum": "Sum ($)",
+      "price": "Price",
+      "diff": "Diff"
+    },
+    "buy": "buy",
+    "sell": "sell",
+    "best": "best",
+    "diffValue": "+{{value}}%"
+  }
+}

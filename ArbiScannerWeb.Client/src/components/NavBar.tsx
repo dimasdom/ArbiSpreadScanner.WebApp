@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from "react-router";
+import Link from './LocalizedLink';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface HeaderProps {
     isLoggedIn: boolean;
@@ -10,21 +12,21 @@ interface HeaderProps {
 }
 
 const navLinksDefault = [
-    { label: 'Main', to: '/' },
-    { label: 'Subscriptions', to: '/subscriptions' },
-    { label: 'FAQ', to: '/faq' }
+    { key: 'nav.main', to: '/' },
+    { key: 'nav.subscriptions', to: '/subscriptions' },
+    { key: 'nav.faq', to: '/faq' }
 ];
 const navLinksLoggedInNotActive = [
-    { label: 'Main', to: '/' },
-    { label: 'Account', to: '/account' },
-    { label: 'Subscriptions', to: '/subscriptions' },
-    { label: 'FAQ', to: '/faq' }
+    { key: 'nav.main', to: '/' },
+    { key: 'nav.account', to: '/account' },
+    { key: 'nav.subscriptions', to: '/subscriptions' },
+    { key: 'nav.faq', to: '/faq' }
 ];
 const navLinksLoggedInActive = [
-    { label: 'Main', to: '/' },
-    { label: 'Spreads', to: '/spreads' },
-    { label: 'Account', to: '/account' },
-    { label: 'FAQ', to: '/faq' }
+    { key: 'nav.main', to: '/' },
+    { key: 'nav.spreads', to: '/spreads' },
+    { key: 'nav.account', to: '/account' },
+    { key: 'nav.faq', to: '/faq' }
 ];
 const HamburgerIcon = () => (
     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -54,6 +56,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, isActiveSubscription, onLog
     const [sideMenuOpen, setSideMenuOpen] = useState(false);
     const [navLinks,setNavLinks] = useState(navLinksDefault);
     const { theme, toggleTheme } = useTheme();
+    const { t } = useTranslation('common');
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -90,7 +93,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, isActiveSubscription, onLog
                                         pathname: link.to
                                     }}
                                 >
-                                    {link.label}
+                                    {t(link.key)}
                                 </Link>
                             ))}
                         </div>
@@ -100,7 +103,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, isActiveSubscription, onLog
                             <button
                                 onClick={toggleSideMenu}
                                 className="p-2 rounded-md bg-white dark:bg-gray-800 shadow-md transition-colors text-gray-700 dark:text-gray-300"
-                                aria-label="Toggle menu"
+                                aria-label={t('nav.toggleMenu')}
                             >
                                 <HamburgerIcon />
                             </button>
@@ -108,10 +111,11 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, isActiveSubscription, onLog
 
                         {/* Auth Buttons + Theme Toggle */}
                         <div className="flex items-center gap-2 ml-auto md:ml-0">
+                            <LanguageSwitcher />
                             <button
                                 onClick={toggleTheme}
                                 className="p-2 rounded-md bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow text-gray-700 dark:text-gray-300"
-                                aria-label="Toggle dark mode"
+                                aria-label={t('theme.toggleAria')}
                             >
                                 {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
                             </button>
@@ -120,14 +124,14 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, isActiveSubscription, onLog
                                     onClick={onLogout}
                                     className="rounded-md px-3 py-1 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow text-sm md:text-base dark:text-gray-200"
                                 >
-                                    Log out
+                                    {t('auth.logOut')}
                                 </button>
                             ) : (
                                 <button
                                     onClick={onLogin}
                                     className="rounded-md px-3 py-1 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow text-sm md:text-base dark:text-gray-200"
                                 >
-                                    Log in
+                                    {t('auth.logIn')}
                                 </button>
                             )}
                         </div>
@@ -151,11 +155,11 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, isActiveSubscription, onLog
             >
                 {/* Close Button */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-lg font-semibold dark:text-gray-100">Menu</h2>
+                    <h2 className="text-lg font-semibold dark:text-gray-100">{t('nav.menu')}</h2>
                     <button
                         onClick={closeSideMenu}
                         className="p-2 rounded-md bg-white dark:bg-gray-800 shadow-md transition-colors text-gray-700 dark:text-gray-300"
-                        aria-label="Close menu"
+                        aria-label={t('nav.closeMenu')}
                     >
                         <CloseIcon />
                     </button>
@@ -170,13 +174,16 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, isActiveSubscription, onLog
                             onClick={closeSideMenu}
                             className="px-6 py-3 border-b border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                         >
-                            {link.label}
+                            {t(link.key)}
                         </Link>
                     ))}
                 </div>
 
-                {/* Side Menu Auth Button */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                {/* Side Menu Language + Auth */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-col gap-3">
+                    <div className="flex justify-center">
+                        <LanguageSwitcher onSelect={closeSideMenu} />
+                    </div>
                     {isLoggedIn ? (
                         <button
                             onClick={() => {
@@ -185,7 +192,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, isActiveSubscription, onLog
                             }}
                             className="w-full rounded-md px-4 py-2 bg-white dark:bg-gray-700 text-black dark:text-gray-200 shadow-md hover:shadow-lg transition-colors"
                         >
-                            Log out
+                            {t('auth.logOut')}
                         </button>
                     ) : (
                         <button
@@ -195,7 +202,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, isActiveSubscription, onLog
                             }}
                             className="w-full rounded-md px-4 py-2 bg-white dark:bg-gray-700 text-black dark:text-gray-200 shadow-md hover:shadow-lg transition-colors"
                         >
-                            Log in
+                            {t('auth.logIn')}
                         </button>
                     )}
                 </div>

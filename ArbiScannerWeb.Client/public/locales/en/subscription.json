@@ -1,0 +1,60 @@
+{
+  "subscriptionPage": {
+    "title": "Select Your Plan",
+    "subtitle": "Unlock premium features including real-time spread data, advanced analytics, and priority support.",
+    "loadError": "Failed to load subscriptions. Please try again later."
+  },
+  "plan": {
+    "featureAccess": "Access to data",
+    "featureSupport": "Premium Support",
+    "featureDuration": "{{days}} days access"
+  },
+  "userSubscription": {
+    "loadError": "Failed to load your subscription status. Please try again later.",
+    "activePlanHeading": "{{type}} Plan Active",
+    "activeUntil": "Your subscription is active until <bold>{{date}}</bold>.",
+    "noActiveHeading": "No Active Subscription",
+    "noActiveBody": "You do not have an active subscription. Select a plan below to get started."
+  },
+  "payment": {
+    "info": {
+      "loadError": "Failed to load subscription details.",
+      "planHeading": "{{type}} Plan",
+      "confirmSubtitle": "Confirm your subscription details",
+      "billingCycle": "Billing Cycle",
+      "billingCycleValue": "{{days}} Days",
+      "price": "Price",
+      "featuresIncluded": "Includes access to real-time analytics, risk management tools, and unlimited alerts.",
+      "proceedButton": "Proceed to Payment"
+    },
+    "crypto": {
+      "loadError": "Failed to load subscription details.",
+      "subscriptionHeading": "{{type}} Subscription",
+      "perDuration": "/ {{days}} days",
+      "secureTitle": "OxaPay Secure Payment",
+      "instructions": "Use the link below to complete your payment.",
+      "payButton": "Pay with OxaPay",
+      "generatingLink": "Payment link is being generated. Please wait a moment.",
+      "cancelButton": "Cancel Payment",
+      "processedSecurely": "Payments are processed securely throughout Cryptomus.",
+      "thankYouHeading": "Thank You for Your Purchase!",
+      "thankYouBody": "Your subscription has been activated successfully.",
+      "thankYouSubBody": "You can now enjoy all the features of your subscription.",
+      "continueButton": "Continue"
+    },
+    "success": {
+      "heading": "Thank You for Your Purchase!",
+      "subheading": "Your subscription is now active.",
+      "body": "You've successfully unlocked user access. Get ready to elevate your trading game with our powerful tools.",
+      "features": {
+        "realTimeTitle": "Real-Time Data",
+        "realTimeDesc": "Live arbitrage opportunities.",
+        "riskTitle": "Risk Tools",
+        "riskDesc": "Advanced position sizing.",
+        "alertsTitle": "Instant Alerts",
+        "alertsDesc": "Never miss a trade."
+      },
+      "startTradingButton": "Start Trading Now"
+    }
+  }
+}

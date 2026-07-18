@@ -1,9 +1,11 @@
 import type { SubscriptionModel } from "../../types/accountType";
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { useNavigate } from "react-router";
+import { useTranslation } from 'react-i18next';
+import { useLocalizedNavigate } from '../../i18n/routing';
 
 function SubscriptionElement(subscription: SubscriptionModel) {
-    const navigate = useNavigate();
+    const { t } = useTranslation('subscription');
+    const navigate = useLocalizedNavigate();
 
     const handleSubscribe = () => {
         navigate(`/payment?id=${subscription.id}`);
@@ -23,15 +25,15 @@ function SubscriptionElement(subscription: SubscriptionModel) {
                 <ul className="space-y-2">
                     <li className="flex items-center justify-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                        Access to data
+                        {t('plan.featureAccess')}
                     </li>
                     <li className="flex items-center justify-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                        Premium Support
+                        {t('plan.featureSupport')}
                     </li>
                     <li className="flex items-center justify-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                        {subscription.durationInDays} days access
+                        {t('plan.featureDuration', { days: subscription.durationInDays })}
                     </li>
                 </ul>
             </div>

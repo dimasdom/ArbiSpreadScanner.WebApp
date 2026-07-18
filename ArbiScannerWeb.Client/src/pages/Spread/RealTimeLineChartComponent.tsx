@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import Chart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
+import { useTranslation } from 'react-i18next';
 import type { PossiblePositionTickerModel } from '../../types/tickerType';
 import { convertToSeries } from '../../utils/chartUtils';
 import { useChartWidth } from '../../hooks/useChartWidth';
@@ -14,6 +15,7 @@ interface RealtimeChartProps {
 export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker }) => {
     const chartWidth = useChartWidth(0.8);
     const { theme } = useTheme();
+    const { t } = useTranslation('spreads');
     const series = useMemo(
         () => [{ data: convertToSeries(ticker) }],
         [ticker],
@@ -27,6 +29,7 @@ export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker 
             background: 'transparent',
             animations: {
                 enabled: true,
+                easing: 'linear',
                 dynamicAnimation: {
                     speed: 1000,
                 },
@@ -48,12 +51,17 @@ export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker 
                 type: 'xy',
                 autoScaleYaxis: false,
             },
+            pan: {
+                enabled: true,
+                type: 'xy',
+                freeMove: true,
+            },
         },
         theme: {
             mode: theme,
         },
         title: {
-            text: title || 'Realtime Chart',
+            text: title || t('spreadPage.chart.defaultTitle'),
             align: 'left',
         },
         dataLabels: {

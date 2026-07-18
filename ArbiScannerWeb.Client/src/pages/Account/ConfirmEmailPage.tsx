@@ -1,17 +1,19 @@
+import { useTranslation } from 'react-i18next';
 import { useConfirmEmailForm } from './hooks/useConfirmEmailForm';
 
 export default function ConfirmEmailPage() {
+    const { t } = useTranslation('account');
     const { tokenRef, errors, loading, resending, handleTokenInput, handleSubmit, handleResendCode } = useConfirmEmailForm();
 
     return (
         <form onSubmit={handleSubmit} className="min-h-[60vh] flex items-center justify-center px-4 py-8">
             <div className="w-full max-w-md">
                 <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md ring-1 ring-gray-50 dark:ring-gray-700 ring-inset p-6">
-                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Confirm your email</h2>
+                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">{t('confirmEmail.title')}</h2>
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <label htmlFor="token" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirmation token</label>
+                            <label htmlFor="token" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('confirmEmail.tokenLabel')}</label>
                             <input
                                 ref={tokenRef}
                                 type="text"
@@ -31,7 +33,7 @@ export default function ConfirmEmailPage() {
                                 disabled={loading}
                                 className="w-full inline-flex justify-center rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 shadow-md hover:shadow-lg transition-shadow ring-1 ring-gray-50 dark:ring-gray-600 ring-inset disabled:opacity-60"
                             >
-                                {loading ? 'Confirming...' : 'Confirm Email'}
+                                {loading ? t('confirmEmail.confirming') : t('confirmEmail.submitButton')}
                             </button>
 
                             <button
@@ -40,7 +42,7 @@ export default function ConfirmEmailPage() {
                                 disabled={resending || loading}
                                 className="w-full inline-flex justify-center rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 mt-2 shadow-sm hover:shadow-lg transition-shadow ring-1 ring-gray-50 dark:ring-gray-600 ring-inset disabled:opacity-60"
                             >
-                                {resending ? 'Resending...' : 'Resend Code'}
+                                {resending ? t('confirmEmail.resending') : t('confirmEmail.resendButton')}
                             </button>
                             {errors.server && (
                                 <p className="mt-3 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-md px-3 py-2 shadow-md ring-1 ring-red-100 dark:ring-red-800 ring-inset">{errors.server}</p>

@@ -1,0 +1,105 @@
+{
+  "nav": {
+    "main": "Inicio",
+    "account": "Cuenta",
+    "subscriptions": "Suscripciones",
+    "faq": "Preguntas frecuentes",
+    "spreads": "Diferenciales",
+    "toggleMenu": "Alternar menú",
+    "menu": "Menú",
+    "closeMenu": "Cerrar menú"
+  },
+  "auth": {
+    "logIn": "Iniciar sesión",
+    "logOut": "Cerrar sesión"
+  },
+  "theme": {
+    "toggleAria": "Alternar modo oscuro"
+  },
+  "language": {
+    "switchAria": "Cambiar idioma"
+  },
+  "footer": {
+    "copyright": "© {{year}} <brand>ArbiScanner</brand>. Todos los derechos reservados.",
+    "faq": "Preguntas frecuentes"
+  },
+  "notFound": "Página no encontrada",
+  "validation": {
+    "email": {
+      "invalid": "Introduce una dirección de correo electrónico válida."
+    },
+    "password": {
+      "tooShort": "La contraseña debe tener al menos 12 caracteres.",
+      "needsDigit": "La contraseña debe incluir al menos un carácter numérico.",
+      "needsSymbol": "La contraseña debe incluir al menos un símbolo especial como @.",
+      "needsUpper": "La contraseña debe incluir al menos una letra mayúscula."
+    }
+  },
+  "actions": {
+    "ok": "Aceptar",
+    "cancel": "Cancelar",
+    "close": "Cerrar"
+  },
+  "cookieConsent": {
+    "title": "Aviso de cookies",
+    "body": "Este sitio utiliza <strong>únicamente cookies funcionales</strong>, estrictamente necesarias para su correcto funcionamiento. <strong>No</strong> recopilamos, almacenamos ni compartimos ningún dato personal."
+  },
+  "eula": {
+    "title": "Acuerdo de licencia de usuario final",
+    "intro": "Lee atentamente este Acuerdo de Licencia de Usuario Final antes de usar ArbiScanner.",
+    "agree": "Acepto",
+    "sections": {
+      "acceptance": {
+        "heading": "Aceptación de los términos",
+        "body": "Al registrarte y usar ArbiScanner, aceptas quedar vinculado por los términos y condiciones de este acuerdo."
+      },
+      "useOfService": {
+        "heading": "Uso del servicio",
+        "body": "ArbiScanner proporciona información y herramientas de análisis de operaciones de arbitraje. El servicio se ofrece \"tal cual\", sin garantías de ningún tipo."
+      },
+      "financialDisclaimer": {
+        "heading": "Aviso financiero",
+        "body": "Operar con criptomonedas implica un riesgo considerable. ArbiScanner no ofrece asesoramiento financiero. Todas las decisiones de trading son tu propia responsabilidad."
+      },
+      "dataPrivacy": {
+        "heading": "Datos y privacidad",
+        "body": "Recopilamos y procesamos tus datos de acuerdo con nuestra Política de Privacidad. Tu correo electrónico e información de cuenta se almacenarán de forma segura."
+      },
+      "accountResponsibilities": {
+        "heading": "Responsabilidades de la cuenta",
+        "body": "Eres responsable de mantener la confidencialidad de las credenciales de tu cuenta y de todas las actividades realizadas con ella."
+      },
+      "termination": {
+        "heading": "Terminación",
+        "body": "Nos reservamos el derecho de terminar o suspender el acceso a nuestro servicio en cualquier momento por incumplimiento de este acuerdo."
+      }
+    }
+  },
+  "guide": {
+    "close": "Cerrar guía",
+    "goToStep": "Ir al paso {{step}}",
+    "dontShowAgain": "No volver a mostrar",
+    "back": "Atrás",
+    "gotIt": "¡Entendido!",
+    "next": "Siguiente"
+  },
+  "telegramLink": {
+    "title": "Vincular cuenta de Telegram",
+    "intro": "Conecta tu cuenta de Telegram para recibir notificaciones instantáneas sobre oportunidades de trading rentables.",
+    "benefitsHeading": "Lo que obtendrás:",
+    "benefits": {
+      "realTime": "Alertas en tiempo real de oportunidades de diferencial",
+      "customized": "Notificaciones personalizadas según tus preferencias",
+      "directAccess": "Acceso directo a información de trading"
+    },
+    "instructions": "Haz clic en el botón de abajo para abrir Telegram y completar el proceso de vinculación con nuestro bot.",
+    "openTelegram": "Abrir Telegram"
+  },
+  "errorState": {
+    "default": "Algo salió mal. Inténtalo de nuevo más tarde.",
+    "tryAgain": "Intentar de nuevo"
+  },
+  "successState": {
+    "defaultTitle": "Éxito"
+  }
+}

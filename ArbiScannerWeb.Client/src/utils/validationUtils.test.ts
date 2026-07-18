@@ -2,20 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { validateEmail, validatePassword } from './validationUtils';
 
 describe('validateEmail', () => {
-    it('returns error for empty string', () => {
-        expect(validateEmail('')).toBe('Please enter a valid email address.');
+    it('returns error key for empty string', () => {
+        expect(validateEmail('')).toBe('validation.email.invalid');
     });
 
-    it('returns error for string without @', () => {
-        expect(validateEmail('notanemail')).toBe('Please enter a valid email address.');
+    it('returns error key for string without @', () => {
+        expect(validateEmail('notanemail')).toBe('validation.email.invalid');
     });
 
-    it('returns error for string without domain extension', () => {
-        expect(validateEmail('user@domain')).toBe('Please enter a valid email address.');
+    it('returns error key for string without domain extension', () => {
+        expect(validateEmail('user@domain')).toBe('validation.email.invalid');
     });
 
-    it('returns error for string with spaces', () => {
-        expect(validateEmail('user @domain.com')).toBe('Please enter a valid email address.');
+    it('returns error key for string with spaces', () => {
+        expect(validateEmail('user @domain.com')).toBe('validation.email.invalid');
     });
 
     it('returns empty string for valid email', () => {
@@ -32,24 +32,24 @@ describe('validateEmail', () => {
 });
 
 describe('validatePassword', () => {
-    it('returns error for empty string', () => {
-        expect(validatePassword('')).toBe('Password must be at least 12 characters long.');
+    it('returns error key for empty string', () => {
+        expect(validatePassword('')).toBe('validation.password.tooShort');
     });
 
-    it('returns error when shorter than 12 characters', () => {
-        expect(validatePassword('Short1@')).toBe('Password must be at least 12 characters long.');
+    it('returns error key when shorter than 12 characters', () => {
+        expect(validatePassword('Short1@')).toBe('validation.password.tooShort');
     });
 
-    it('returns error when no digit present', () => {
-        expect(validatePassword('NoDigitHere!!AA')).toBe('Password must include at least one numeric character.');
+    it('returns error key when no digit present', () => {
+        expect(validatePassword('NoDigitHere!!AA')).toBe('validation.password.needsDigit');
     });
 
-    it('returns error when no special character present', () => {
-        expect(validatePassword('NoSpecialChar12A')).toBe('Password must include at least one special symbol like @.');
+    it('returns error key when no special character present', () => {
+        expect(validatePassword('NoSpecialChar12A')).toBe('validation.password.needsSymbol');
     });
 
-    it('returns error when no uppercase letter present', () => {
-        expect(validatePassword('nouppercase12@!')).toBe('Password must include at least one uppercase letter.');
+    it('returns error key when no uppercase letter present', () => {
+        expect(validatePassword('nouppercase12@!')).toBe('validation.password.needsUpper');
     });
 
     it('returns empty string for a fully valid password', () => {

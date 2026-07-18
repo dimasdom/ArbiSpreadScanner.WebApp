@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface GuideStep {
     icon: React.ReactNode;
@@ -13,6 +14,7 @@ interface GuideModalProps {
 }
 
 const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => {
+    const { t } = useTranslation('common');
     const [isVisible, setIsVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
 
@@ -62,7 +64,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
             <button
                 className="absolute opacity-0 inset-0 w-full h-full cursor-default"
                 onClick={handleClose}
-                aria-label="Close guide"
+                aria-label={t('guide.close')}
                 tabIndex={-1}
             />
             <dialog
@@ -81,7 +83,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                     <button
                         onClick={handleClose}
                         className="text-white/70 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
-                        aria-label="Close guide"
+                        aria-label={t('guide.close')}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -105,7 +107,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                             <button
                                 key={s.title}
                                 onClick={() => setCurrentStep(i)}
-                                aria-label={`Go to step ${i + 1}`}
+                                aria-label={t('guide.goToStep', { step: i + 1 })}
                                 className={`w-2 h-2 rounded-full transition-all duration-200 ${
                                     i === currentStep
                                         ? 'bg-indigo-600 w-6'
@@ -122,7 +124,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                         onClick={handleDontShowAgain}
                         className="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm shrink-0"
                     >
-                        Don't show again
+                        {t('guide.dontShowAgain')}
                     </button>
 
                     <div className="flex gap-2">
@@ -131,7 +133,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                                 onClick={handleBack}
                                 className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                             >
-                                Back
+                                {t('guide.back')}
                             </button>
                         )}
                         {isLast ? (
@@ -139,14 +141,14 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                                 onClick={handleGotIt}
                                 className="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
                             >
-                                Got it!
+                                {t('guide.gotIt')}
                             </button>
                         ) : (
                             <button
                                 onClick={handleNext}
                                 className="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1"
                             >
-                                Next
+                                {t('guide.next')}
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>

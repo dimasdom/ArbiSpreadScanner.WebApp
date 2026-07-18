@@ -1,0 +1,56 @@
+{
+  "header": {
+    "title": "Häufig gestellte Fragen",
+    "subtitle": "Alles, was du über <brand>ArbiScanner</brand>, seine Funktionen und den Einstieg ins Spread-Trading wissen musst."
+  },
+  "items": {
+    "whatIs": {
+      "question": "Was ist ArbiScanner?",
+      "answer": "ArbiScanner ist eine umfassende Web-Trading-Anwendung, die dir hilft, Spread-Gelegenheiten zu erkennen und zu nutzen. Wir unterstützen verschiedene Spread-Arten, darunter Funding-Raten, Spot-Arbitrage und Futures-Spreads auf mehreren großen Börsen."
+    },
+    "exchanges": {
+      "question": "Welche Börsen werden derzeit unterstützt?",
+      "answer": "Wir unterstützen derzeit eine breite Palette erstklassiger Börsen, darunter <bold>Binance, Bybit, OKX, KuCoin Futures, MEXC, Bitget, HTX, XT, CoinEX, LBank, WhiteBit, Gate.io und BingX</bold>. Wir arbeiten kontinuierlich daran, weitere Integrationen hinzuzufügen."
+    },
+    "smartAlerts": {
+      "question": "Wie funktionieren smarte Benachrichtigungen?",
+      "answer": "Mit smarten Benachrichtigungen kannst du spezifische Schwellenwerte für Spreads festlegen. Sobald ein Spread deine Mindestgewinnanforderungen erfüllt, wirst du sofort über das Dashboard oder die konfigurierten Benachrichtigungskanäle informiert — so verpasst du nie eine profitable Gelegenheit."
+    },
+    "riskManagement": {
+      "question": "Gibt es ein Risikomanagement-System?",
+      "answer": "Ja! ArbiScanner enthält integrierte Risikomanagement-Tools. Du kannst individuelle Regeln zur Positionsgrößenberechnung festlegen, die Handelsbeträge automatisch anhand deines gesamten Portfoliowerts und deiner persönlichen Risikotoleranz berechnen."
+    },
+    "personalize": {
+      "question": "Kann ich anpassen, welche Börsen ich sehe?",
+      "answer": "Absolut. Mit unserer Funktion „Erlebnis personalisieren\" kannst du einzelne Börsen ein- oder ausblenden. Wenn du nur bei bestimmten Börsen ein Konto hast oder ihnen vertraust, kannst du das Dashboard so filtern, dass nur relevante Daten angezeigt werden."
+    },
+    "spreadThreshold": {
+      "question": "Was bedeutet der Spread-Schwellenwert?",
+      "answer": "Der <strong>Spread-Schwellenwert</strong> (festgelegt in den Kontoeinstellungen) ist der minimale Spread-Prozentsatz, über den du benachrichtigt werden möchtest. Wenn du ihn beispielsweise auf <strong>0,5</strong> einstellst, siehst du nur Spreads ab 0,5 %. So werden kleine, unrentable Gelegenheiten herausgefiltert und der Feed übersichtlicher."
+    },
+    "shortLongExchange": {
+      "question": "Was sind Short-Börse und Long-Börse?",
+      "answer": "Jeder Spread besteht aus zwei gegensätzlichen Positionen, die gleichzeitig eröffnet werden:<br/><br/><strong>Short-Börse</strong> — die Börse, an der der Preis des Assets höher ist. Hier verkaufst du (Short) das Asset.<br/><strong>Long-Börse</strong> — die Börse, an der der Preis des Assets niedriger ist. Hier kaufst du (Long) das Asset.<br/><br/>Der Gewinn ergibt sich aus der Preisdifferenz zwischen beiden Seiten abzüglich der Handelsgebühren."
+    },
+    "orderBook": {
+      "question": "Wie lese ich das Orderbuch auf der Spread-Detailseite?",
+      "answer": "Das Orderbuch zeigt die aktuellen <strong>Asks</strong> (Verkaufsorders) und <strong>Bids</strong> (Kauforders) für jede Börse.<br/><br/><strong>Asks</strong> — Preise, zu denen Verkäufer bereit sind zu verkaufen. Du kaufst zum Ask-Preis an der Long-Börse.<br/><strong>Bids</strong> — Preise, zu denen Käufer bereit sind zu zahlen. Du verkaufst zum Bid-Preis an der Short-Börse.<br/><br/>Achte auf große Ordergrößen nahe deinem Zielpreis — das bedeutet bessere <strong>Liquidität</strong> und weniger <strong>Slippage</strong> beim Ein- oder Ausstieg."
+    },
+    "volatility": {
+      "question": "Was bedeutet Volatilität auf der Spread-Seite?",
+      "answer": "<strong>Volatilität</strong> misst, wie stark sich der Preis auf beiden Börsen zuletzt verändert hat. Sie wird aus den Live-Ticker-Daten der aktuellen Sitzung berechnet.<br/><br/>Höhere Volatilität bedeutet, dass sich die Preise schnell bewegen — das kann eine schnellere Spread-Konvergenz (schnelleren Gewinn) bedeuten, aber auch ein höheres Risiko, dass sich der Spread weiter gegen dich ausweitet. Niedrigere Volatilität deutet in der Regel auf einen stabileren, besser vorhersehbaren Spread hin."
+    },
+    "fundingRate": {
+      "question": "Wie funktionieren Funding-Rate-Spreads?",
+      "answer": "In Perpetual-Futures-Märkten erheben Börsen eine periodische <strong>Funding-Rate</strong> zwischen Long- und Short-Positionen, um den Preis an den Spot-Markt zu koppeln.<br/><br/>Ist die Funding-Rate <strong>positiv</strong>: Longs zahlen an Shorts. Die Short-Seite <em>erhält</em> die Finanzierung, die Long-Seite <em>zahlt</em> sie.<br/>Ist die Funding-Rate <strong>negativ</strong>: Shorts zahlen an Longs. Die Long-Seite <em>erhält</em> die Finanzierung.<br/><br/>ArbiScanner zeigt direkt auf der Spread-Detailseite an, in welche Richtung du Finanzierung zahlst oder erhältst."
+    }
+  },
+  "contact": {
+    "prompt": "Nicht gefunden, wonach du suchst?",
+    "button": "Support kontaktieren",
+    "emailNote": "Schreib uns eine E-Mail an <email>arbiscannerweb@atomicmail.io</email>"
+  },
+  "guides": {
+    "seeAgain": "Anleitungen erneut anzeigen"
+  }
+}

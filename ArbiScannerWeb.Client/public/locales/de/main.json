@@ -1,0 +1,50 @@
+{
+  "guide": {
+    "title": "So funktioniert ArbiScanner",
+    "steps": {
+      "welcome": {
+        "title": "Willkommen bei ArbiScanner",
+        "description": "ArbiScanner überwacht Preisunterschiede zwischen mehreren Börsen in Echtzeit und hilft dir, profitable Spread-Trading-Gelegenheiten zu erkennen — einschließlich Funding-, Spot- und Futures-Spreads."
+      },
+      "spreadTypes": {
+        "title": "Drei Spread-Arten",
+        "description": "<strong>Futures</strong> — Preisunterschied zwischen Futures-Kontrakten auf zwei Börsen.<br/><strong>Funding</strong> — Arbitrage der Perpetual-Funding-Rate zwischen Long- und Short-Positionen.<br/><strong>Spot</strong> — Preisunterschied desselben Assets auf zwei Spot-Märkten."
+      },
+      "smartAlerts": {
+        "title": "Smarte Benachrichtigungen",
+        "description": "Lege in den Kontoeinstellungen deinen minimalen Spread-Schwellenwert fest. Du wirst sofort benachrichtigt — über das Dashboard und Telegram — sobald ein Spread deinen Zielwert überschreitet."
+      },
+      "getStarted": {
+        "title": "Erste Schritte",
+        "description": "Registriere ein Konto, abonniere einen Plan und konfiguriere dann deine Einstellungen in den Kontoeinstellungen: Wähle deine Börsen aus, lege deinen Spread-Schwellenwert fest und verbinde Telegram für sofortige Benachrichtigungen."
+      }
+    }
+  },
+  "hero": {
+    "title": "Willkommen bei ArbiScanner",
+    "subtitle": "Die ultimative Web-App zum Handeln verschiedener Spread-Arten, einschließlich <highlight>Funding</highlight>, <highlight>Spot</highlight> und <highlight>Futures-Spreads</highlight>."
+  },
+  "exchanges": {
+    "heading": "Unterstützte Börsen"
+  },
+  "features": {
+    "personalize": {
+      "title": "Erlebnis personalisieren",
+      "description": "Passe dein Dashboard an, indem du nur die Börsen auswählst, denen du vertraust. Konzentriere dich auf das, was für dich wichtig ist."
+    },
+    "riskManagement": {
+      "title": "Risikomanagement",
+      "description": "Lege deine individuelle Positionsgröße fest, um sie automatisch an dein Portfolio und deine Risikotoleranz anzupassen."
+    },
+    "smartAlerts": {
+      "title": "Smarte Benachrichtigungen",
+      "description": "Lege deine minimalen Spread-Schwellenwerte fest, um sofort benachrichtigt zu werden, wenn profitable Gelegenheiten entstehen."
+    }
+  },
+  "liveDemo": {
+    "title": "In Aktion erleben",
+    "badge": "Live-Beispiel — Simulierte Daten",
+    "description": "So sieht ein echter Spread auf ArbiScanner aus — er aktualisiert sich in Echtzeit mit einem Live-Chart und der Tiefe des Orderbuchs.",
+    "spreadLabel": "Spread: {{value}}%"
+  }
+}

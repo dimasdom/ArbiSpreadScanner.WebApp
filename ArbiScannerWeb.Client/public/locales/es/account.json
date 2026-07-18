@@ -1,0 +1,155 @@
+{
+  "errors": {
+    "networkError": "Error de red. Inténtalo de nuevo."
+  },
+  "accountPage": {
+    "guide": {
+      "title": "Guía de configuración de la cuenta",
+      "steps": {
+        "emailAndSpread": {
+          "title": "Correo y umbral de diferencial",
+          "description": "Mantén tu <bold>correo electrónico</bold> actualizado para las notificaciones de la cuenta.<br></br>Configura un <bold>umbral de tamaño de diferencial</bold>: solo se mostrarán y marcarán como oportunidades los diferenciales por encima de este %. Ejemplo: 0.5 significa que solo te interesan diferenciales ≥ 0.5%."
+        },
+        "positionSize": {
+          "title": "Tamaño de posición",
+          "description": "Elige el tamaño de tu posición de trading: es el importe en dólares por cada pata de la operación. Se usa para estimar tu beneficio potencial en cada oportunidad de diferencial. Elige un importe acorde con tu tolerancia al riesgo."
+        },
+        "monitoring": {
+          "title": "Preferencias de monitorización",
+          "description": "Activa los tipos de diferencial que quieres seguir: Futuros, Financiación o Spot. Selecciona solo los tipos que operas activamente para reducir el ruido y centrarte en oportunidades relevantes."
+        },
+        "exchanges": {
+          "title": "Exchanges activos",
+          "description": "Elige qué exchanges monitorizar. Solo se incluirán en el feed de diferenciales en vivo los pares que involucren tus exchanges seleccionados. Deselecciona los exchanges en los que no tengas cuenta."
+        },
+        "telegram": {
+          "title": "Notificaciones de Telegram",
+          "description": "Conecta tu cuenta de Telegram para recibir alertas instantáneas cuando aparezcan diferenciales que coincidan con tus criterios. Haz clic en \"Vincular Telegram\" y sigue las instrucciones del bot. Puedes desvincularla en cualquier momento desde esta página."
+        }
+      }
+    },
+    "emailChangeDialog": {
+      "title": "Confirmar cambio de correo",
+      "body": "Para usar <bold>{{email}}</bold> como inicio de sesión la próxima vez, primero debes confirmarlo. Se enviará un código de confirmación a esta dirección.",
+      "confirm": "Confirmar",
+      "sending": "Enviando...",
+      "confirmError": "No se pudo cambiar el correo."
+    },
+    "header": {
+      "title": "Configuración de la cuenta",
+      "subtitle": "Gestiona tu perfil, tus preferencias de trading y tus conexiones de exchange."
+    },
+    "subscription": {
+      "active": {
+        "title": "Suscripción activa",
+        "typeLabel": "Tipo de suscripción",
+        "premiumFallback": "Premium",
+        "expiresLabel": "Expira el"
+      },
+      "none": {
+        "title": "Sin suscripción activa",
+        "body": "Actualmente no tienes una suscripción activa. Explora nuestras opciones disponibles para desbloquear funciones premium.",
+        "viewButton": "Ver suscripciones disponibles →"
+      }
+    },
+    "telegram": {
+      "sectionTitle": "Notificaciones de Telegram",
+      "connected": {
+        "label": "Telegram conectado",
+        "chatIdLabel": "ID de chat: {{chatId}}"
+      },
+      "unlinkAria": "Desvincular Telegram",
+      "unlinkError": "No se pudo desvincular la cuenta de Telegram.",
+      "notConnected": {
+        "label": "Conectar Telegram",
+        "description": "Vincula tu cuenta de Telegram para recibir notificaciones instantáneas sobre oportunidades de trading.",
+        "linkButton": "Vincular cuenta de Telegram"
+      }
+    },
+    "form": {
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "tu@correo.com",
+      "spreadSizeLabel": "Umbral de tamaño de diferencial",
+      "spreadSizePlaceholder": "0.5",
+      "positionSizeLabel": "Tamaño de posición",
+      "positionSizeSelectPlaceholder": "Seleccionar tamaño",
+      "monitoringTitle": "Preferencias de monitorización",
+      "futuresSpreads": "Diferenciales de futuros",
+      "fundingRates": "Tasas de financiación",
+      "spotSpreads": "Diferenciales spot",
+      "exchangesTitle": "Exchanges activos"
+    },
+    "actions": {
+      "save": "Guardar cambios",
+      "saving": "Guardando..."
+    },
+    "toasts": {
+      "saveSuccess": "¡Configuración guardada!",
+      "saveError": "No se pudo guardar la configuración."
+    }
+  },
+  "login": {
+    "title": "Inicia sesión en tu cuenta",
+    "emailLabel": "Correo electrónico",
+    "passwordLabel": "Contraseña",
+    "submitButton": "Iniciar sesión",
+    "submitting": "Iniciando sesión...",
+    "forgotPasswordLink": "¿Olvidaste tu contraseña?",
+    "registerLink": "Registrarse"
+  },
+  "register": {
+    "title": "Crear una cuenta",
+    "emailLabel": "Correo electrónico",
+    "confirmEmailLabel": "Confirmar correo electrónico",
+    "passwordLabel": "Contraseña",
+    "confirmPasswordLabel": "Confirmar contraseña",
+    "submitButton": "Registrarse",
+    "submitting": "Registrando...",
+    "forgotPasswordLink": "¿Olvidaste tu contraseña?",
+    "signInLink": "Iniciar sesión",
+    "errors": {
+      "emailMismatch": "Los correos electrónicos no coinciden.",
+      "passwordMismatch": "Las contraseñas no coinciden.",
+      "registrationFailed": "Error en el registro"
+    }
+  },
+  "confirmEmail": {
+    "title": "Confirma tu correo electrónico",
+    "tokenLabel": "Código de confirmación",
+    "submitButton": "Confirmar correo",
+    "confirming": "Confirmando...",
+    "resendButton": "Reenviar código",
+    "resending": "Reenviando...",
+    "errors": {
+      "tokenRequired": "El código de confirmación es obligatorio.",
+      "confirmationFailed": "Error en la confirmación",
+      "resendTokenRequired": "Se requiere el código de confirmación de correo para reenviar el código.",
+      "resendFailed": "No se pudo reenviar el código de confirmación."
+    }
+  },
+  "forgotPassword": {
+    "title": "Restablece tu contraseña",
+    "emailLabel": "Correo electrónico",
+    "submitButton": "Enviar código",
+    "sending": "Enviando...",
+    "signInLink": "Iniciar sesión",
+    "registerLink": "Registrarse",
+    "successTitle": "Correo enviado",
+    "successMessage": "Enlace para restablecer la contraseña enviado a {{email}}",
+    "errors": {
+      "sendFailed": "No se pudo enviar el enlace de restablecimiento."
+    }
+  },
+  "resetPassword": {
+    "title": "Restablecer contraseña",
+    "newPasswordLabel": "Nueva contraseña",
+    "confirmPasswordLabel": "Confirmar contraseña",
+    "submitButton": "Restablecer contraseña",
+    "submitting": "Enviando...",
+    "errors": {
+      "tokenMissing": "Falta el código de confirmación en la URL.",
+      "passwordMismatch": "La contraseña y su confirmación no coinciden.",
+      "resetFailed": "No se pudo restablecer la contraseña"
+    }
+  }
+}

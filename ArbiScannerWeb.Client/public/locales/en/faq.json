@@ -1,0 +1,56 @@
+{
+  "header": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Everything you need to know about <brand>ArbiScanner</brand>, features, and how to get started with spread trading."
+  },
+  "items": {
+    "whatIs": {
+      "question": "What is ArbiScanner?",
+      "answer": "ArbiScanner is a comprehensive web trading application designed to help you identify and capitalize on spread opportunities. We support various spread types including funding rates, spot arbitrage, and futures spreads across multiple major exchanges."
+    },
+    "exchanges": {
+      "question": "Which exchanges are currently supported?",
+      "answer": "We currently support a wide range of top-tier exchanges including <bold>Binance, Bybit, OKX, KuCoin Futures, MEXC, Bitget, HTX, XT, CoinEX, LBank, WhiteBit, Gate.io, and BingX</bold>. We are constantly working on adding more integrations."
+    },
+    "smartAlerts": {
+      "question": "How do Smart Alerts work?",
+      "answer": "Smart Alerts allow you to set specific threshold criteria for spreads. Once a spread meets your minimum profit requirements, you will be notified instantly via the dashboard or configured notification channels, ensuring you never miss a profitable opportunity."
+    },
+    "riskManagement": {
+      "question": "Is there a risk management system?",
+      "answer": "Yes! ArbiScanner includes built-in risk management tools. You can define custom position sizing rules that automatically calculate trade amounts based on your total portfolio value and personal risk tolerance."
+    },
+    "personalize": {
+      "question": "Can I customize which exchanges I see?",
+      "answer": "Absolutely. Our 'Personalize Experience' feature lets you toggle specific exchanges on or off. If you only have accounts with or trust certain exchanges, you can filter the dashboard to show only relevant data."
+    },
+    "spreadThreshold": {
+      "question": "What does the Spread Size Threshold mean?",
+      "answer": "The <strong>Spread Size Threshold</strong> (set in Account Settings) is the minimum spread percentage you want to be notified about. For example, setting it to <strong>0.5</strong> means you will only see spreads of 0.5% or higher. This filters out small, unprofitable opportunities and reduces noise in the feed."
+    },
+    "shortLongExchange": {
+      "question": "What are Short Exchange and Long Exchange?",
+      "answer": "Each spread involves two opposite positions placed simultaneously:<br/><br/><strong>Short Exchange</strong> — the exchange where the asset price is higher. You sell (short) the asset here.<br/><strong>Long Exchange</strong> — the exchange where the asset price is lower. You buy (long) the asset here.<br/><br/>The profit comes from the price difference between the two sides, minus trading fees."
+    },
+    "orderBook": {
+      "question": "How do I read the order book on the Spread detail page?",
+      "answer": "The order book shows the current <strong>asks</strong> (sell orders) and <strong>bids</strong> (buy orders) for each exchange.<br/><br/><strong>Asks</strong> — prices sellers are willing to accept. You will buy at the ask on the Long Exchange.<br/><strong>Bids</strong> — prices buyers are willing to pay. You will sell at the bid on the Short Exchange.<br/><br/>Look for large order sizes near your target price — this means better <strong>liquidity</strong> and less <strong>slippage</strong> when entering or exiting the trade."
+    },
+    "volatility": {
+      "question": "What does Volatility mean on the Spread page?",
+      "answer": "<strong>Volatility</strong> measures how much the price has fluctuated recently across both exchanges. It is calculated from the live ticker data in the current session.<br/><br/>Higher volatility means prices are moving rapidly — this can mean faster spread convergence (quicker profit) but also higher risk of the spread widening further against you. Lower volatility usually indicates a more stable, predictable spread."
+    },
+    "fundingRate": {
+      "question": "How do Funding Rate spreads work?",
+      "answer": "In perpetual futures markets, exchanges charge a periodic <strong>funding rate</strong> between long and short positions to keep the price anchored to the spot market.<br/><br/>When the funding rate is <strong>positive</strong>: longs pay shorts. The Short side <em>receives</em> funding; the Long side <em>pays</em> funding.<br/>When the funding rate is <strong>negative</strong>: shorts pay longs. The Long side <em>receives</em> funding.<br/><br/>ArbiScanner displays which direction you pay or receive funding directly on the Spread detail page."
+    }
+  },
+  "contact": {
+    "prompt": "Can't find what you're looking for?",
+    "button": "Contact Support",
+    "emailNote": "Send us an email at <email>arbiscannerweb@atomicmail.io</email>"
+  },
+  "guides": {
+    "seeAgain": "See guides again"
+  }
+}

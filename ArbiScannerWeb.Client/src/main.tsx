@@ -1,6 +1,7 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './i18n/config.ts'
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router'
 import store from './store/store.ts'
@@ -9,6 +10,7 @@ import { logger } from './services/loggerService.ts'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import { ThemeProvider } from './contexts/ThemeContext.tsx'
 import MuiBridge from './contexts/MuiBridge.tsx'
+import FullPageLoader from './components/FullPageLoader.tsx'
 
 window.onerror = (message, source, lineno, colno, error) => {
     logger.error(
@@ -33,7 +35,9 @@ createRoot(document.getElementById('root')!).render(
                 <ThemeProvider>
                     <MuiBridge>
                         <ErrorBoundary>
-                            <App />
+                            <Suspense fallback={<FullPageLoader />}>
+                                <App />
+                            </Suspense>
                         </ErrorBoundary>
                     </MuiBridge>
                 </ThemeProvider>

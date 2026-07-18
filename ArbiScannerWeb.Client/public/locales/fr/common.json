@@ -1,0 +1,105 @@
+{
+  "nav": {
+    "main": "Accueil",
+    "account": "Compte",
+    "subscriptions": "Abonnements",
+    "faq": "FAQ",
+    "spreads": "Écarts",
+    "toggleMenu": "Basculer le menu",
+    "menu": "Menu",
+    "closeMenu": "Fermer le menu"
+  },
+  "auth": {
+    "logIn": "Connexion",
+    "logOut": "Déconnexion"
+  },
+  "theme": {
+    "toggleAria": "Basculer le mode sombre"
+  },
+  "language": {
+    "switchAria": "Changer de langue"
+  },
+  "footer": {
+    "copyright": "© {{year}} <brand>ArbiScanner</brand>. Tous droits réservés.",
+    "faq": "FAQ"
+  },
+  "notFound": "Page introuvable",
+  "validation": {
+    "email": {
+      "invalid": "Veuillez saisir une adresse e-mail valide."
+    },
+    "password": {
+      "tooShort": "Le mot de passe doit comporter au moins 12 caractères.",
+      "needsDigit": "Le mot de passe doit inclure au moins un chiffre.",
+      "needsSymbol": "Le mot de passe doit inclure au moins un symbole spécial comme @.",
+      "needsUpper": "Le mot de passe doit inclure au moins une lettre majuscule."
+    }
+  },
+  "actions": {
+    "ok": "OK",
+    "cancel": "Annuler",
+    "close": "Fermer"
+  },
+  "cookieConsent": {
+    "title": "Avis relatif aux cookies",
+    "body": "Ce site utilise <strong>uniquement des cookies fonctionnels</strong>, strictement nécessaires à son bon fonctionnement. Nous ne collectons, ne stockons ni ne partageons <strong>aucune</strong> donnée personnelle."
+  },
+  "eula": {
+    "title": "Contrat de licence utilisateur final",
+    "intro": "Veuillez lire attentivement ce contrat de licence utilisateur final avant d'utiliser ArbiScanner.",
+    "agree": "J'accepte",
+    "sections": {
+      "acceptance": {
+        "heading": "Acceptation des conditions",
+        "body": "En vous inscrivant et en utilisant ArbiScanner, vous acceptez d'être lié par les termes et conditions de ce contrat."
+      },
+      "useOfService": {
+        "heading": "Utilisation du service",
+        "body": "ArbiScanner fournit des informations et des outils d'analyse pour le trading d'écarts. Le service est fourni \"tel quel\", sans aucune garantie."
+      },
+      "financialDisclaimer": {
+        "heading": "Avertissement financier",
+        "body": "Le trading de cryptomonnaies comporte des risques substantiels. ArbiScanner ne fournit aucun conseil financier. Toutes les décisions de trading relèvent de votre seule responsabilité."
+      },
+      "dataPrivacy": {
+        "heading": "Données et confidentialité",
+        "body": "Nous collectons et traitons vos données conformément à notre politique de confidentialité. Votre e-mail et vos informations de compte seront stockés en toute sécurité."
+      },
+      "accountResponsibilities": {
+        "heading": "Responsabilités liées au compte",
+        "body": "Vous êtes responsable de la confidentialité des identifiants de votre compte et de toutes les activités effectuées sous celui-ci."
+      },
+      "termination": {
+        "heading": "Résiliation",
+        "body": "Nous nous réservons le droit de résilier ou de suspendre l'accès à notre service à tout moment en cas de violation de ce contrat."
+      }
+    }
+  },
+  "guide": {
+    "close": "Fermer le guide",
+    "goToStep": "Aller à l'étape {{step}}",
+    "dontShowAgain": "Ne plus afficher",
+    "back": "Retour",
+    "gotIt": "Compris !",
+    "next": "Suivant"
+  },
+  "telegramLink": {
+    "title": "Lier un compte Telegram",
+    "intro": "Connectez votre compte Telegram pour recevoir des notifications instantanées sur les opportunités de trading rentables.",
+    "benefitsHeading": "Ce que vous obtiendrez :",
+    "benefits": {
+      "realTime": "Alertes en temps réel pour les opportunités d'écart",
+      "customized": "Notifications personnalisées selon vos préférences",
+      "directAccess": "Accès direct aux analyses de trading"
+    },
+    "instructions": "Cliquez sur le bouton ci-dessous pour ouvrir Telegram et terminer la procédure de liaison avec notre bot.",
+    "openTelegram": "Ouvrir Telegram"
+  },
+  "errorState": {
+    "default": "Une erreur s'est produite. Veuillez réessayer plus tard.",
+    "tryAgain": "Réessayer"
+  },
+  "successState": {
+    "defaultTitle": "Succès"
+  }
+}

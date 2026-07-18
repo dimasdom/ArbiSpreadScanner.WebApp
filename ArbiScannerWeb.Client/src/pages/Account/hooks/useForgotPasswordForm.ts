@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import type { IRootStore } from '../../../store/store';
 import { useForgotPasswordMutation } from '../../../store/services/account';
 import { validateEmail } from '../../../utils/validationUtils';
+import { useLocalizedNavigate } from '../../../i18n/routing';
 
 interface ForgotPasswordErrors {
     email: string;
@@ -12,7 +13,8 @@ interface ForgotPasswordErrors {
 }
 
 export function useForgotPasswordForm() {
-    const navigate = useNavigate();
+    const { t } = useTranslation(['account', 'common']);
+    const navigate = useLocalizedNavigate();
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
     const [forgotPassword] = useForgotPasswordMutation();
 
@@ -31,9 +33,9 @@ export function useForgotPasswordForm() {
         setErrors({ email: '', server: '' });
 
         const email = emailRef.current?.value ?? '';
-        const emailErr = validateEmail(email);
-        if (emailErr) {
-            setErrors((prev) => ({ ...prev, email: emailErr }));
+        const emailErrKey = validateEmail(email);
+        if (emailErrKey) {
+            setErrors((prev) => ({ ...prev, email: t(`common:${emailErrKey}`) }));
             return;
         }
 
@@ -44,11 +46,11 @@ export function useForgotPasswordForm() {
                 setSubmittedEmail(email);
                 setIsSuccess(true);
             } else {
-                const msg = res?.errors?.[0]?.message || 'Unable to send reset link.';
+                const msg = res?.errors?.[0]?.message || t('forgotPassword.errors.sendFailed');
                 setErrors((prev) => ({ ...prev, server: msg }));
             }
         } catch (err) {
-            const details = err instanceof Error ? err.message : 'Network error. Please try again.';
+            const details = err instanceof Error ? err.message : t('errors.networkError');
             setErrors((prev) => ({ ...prev, server: details }));
         } finally {
             setLoading(false);

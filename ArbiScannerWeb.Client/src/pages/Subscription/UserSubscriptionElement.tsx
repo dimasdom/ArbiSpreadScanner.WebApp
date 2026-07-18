@@ -1,9 +1,11 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { useGetUserActiveSubscriptionsQuery } from "../../store/services/subscription";
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import ErrorState from '../../components/ErrorState';
 
 function UserSubscriptionElement() {
+    const { t, i18n } = useTranslation('subscription');
     const { data, isLoading, isError } = useGetUserActiveSubscriptionsQuery();
 
     if (isLoading) {
@@ -11,7 +13,7 @@ function UserSubscriptionElement() {
     }
 
     if (isError) {
-        return <ErrorState message="Failed to load your subscription status. Please try again later." />;
+        return <ErrorState message={t('userSubscription.loadError')} />;
     }
 
     if (data?.value) {
@@ -21,10 +23,15 @@ function UserSubscriptionElement() {
                     <VerifiedUserIcon fontSize="large" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                    {data.value.subscription?.type} Plan Active
+                    {t('userSubscription.activePlanHeading', { type: data.value.subscription?.type })}
                 </h3>
                 <p className="text-gray-600 text-lg">
-                    Your subscription is active until <span className="font-semibold text-green-700">{new Date(data.value.endDate).toLocaleDateString()}</span>.
+                    <Trans
+                        i18nKey="userSubscription.activeUntil"
+                        ns="subscription"
+                        values={{ date: new Date(data.value.endDate).toLocaleDateString(i18n.language) }}
+                        components={{ bold: <span className="font-semibold text-green-700" /> }}
+                    />
                 </p>
             </div>
         );
@@ -34,9 +41,9 @@ function UserSubscriptionElement() {
                 <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-500">
                     <HighlightOffIcon fontSize="large" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">No Active Subscription</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('userSubscription.noActiveHeading')}</h3>
                 <p className="text-gray-600">
-                    You do not have an active subscription. Select a plan below to get started.
+                    {t('userSubscription.noActiveBody')}
                 </p>
             </div>
         );

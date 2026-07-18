@@ -1,0 +1,60 @@
+{
+  "subscriptionPage": {
+    "title": "Wähle deinen Plan",
+    "subtitle": "Schalte Premium-Funktionen frei, darunter Echtzeit-Spread-Daten, erweiterte Analysen und bevorzugten Support.",
+    "loadError": "Abonnements konnten nicht geladen werden. Bitte versuche es später erneut."
+  },
+  "plan": {
+    "featureAccess": "Zugriff auf Daten",
+    "featureSupport": "Premium-Support",
+    "featureDuration": "{{days}} Tage Zugriff"
+  },
+  "userSubscription": {
+    "loadError": "Der Status deines Abonnements konnte nicht geladen werden. Bitte versuche es später erneut.",
+    "activePlanHeading": "{{type}}-Plan aktiv",
+    "activeUntil": "Dein Abonnement ist aktiv bis <bold>{{date}}</bold>.",
+    "noActiveHeading": "Kein aktives Abonnement",
+    "noActiveBody": "Du hast derzeit kein aktives Abonnement. Wähle unten einen Plan, um loszulegen."
+  },
+  "payment": {
+    "info": {
+      "loadError": "Die Abonnementdetails konnten nicht geladen werden.",
+      "planHeading": "{{type}}-Plan",
+      "confirmSubtitle": "Bestätige die Details deines Abonnements",
+      "billingCycle": "Abrechnungszeitraum",
+      "billingCycleValue": "{{days}} Tage",
+      "price": "Preis",
+      "featuresIncluded": "Beinhaltet Zugriff auf Echtzeitanalysen, Risikomanagement-Tools und unbegrenzte Benachrichtigungen.",
+      "proceedButton": "Weiter zur Zahlung"
+    },
+    "crypto": {
+      "loadError": "Die Abonnementdetails konnten nicht geladen werden.",
+      "subscriptionHeading": "{{type}}-Abonnement",
+      "perDuration": "/ {{days}} Tage",
+      "secureTitle": "Sichere Zahlung mit OxaPay",
+      "instructions": "Verwende den untenstehenden Link, um deine Zahlung abzuschließen.",
+      "payButton": "Mit OxaPay bezahlen",
+      "generatingLink": "Der Zahlungslink wird generiert. Bitte warte einen Moment.",
+      "cancelButton": "Zahlung abbrechen",
+      "processedSecurely": "Zahlungen werden sicher über Cryptomus abgewickelt.",
+      "thankYouHeading": "Vielen Dank für deinen Kauf!",
+      "thankYouBody": "Dein Abonnement wurde erfolgreich aktiviert.",
+      "thankYouSubBody": "Du kannst jetzt alle Funktionen deines Abonnements nutzen.",
+      "continueButton": "Weiter"
+    },
+    "success": {
+      "heading": "Vielen Dank für deinen Kauf!",
+      "subheading": "Dein Abonnement ist jetzt aktiv.",
+      "body": "Du hast erfolgreich den Nutzerzugang freigeschaltet. Mach dich bereit, dein Trading mit unseren leistungsstarken Tools auf das nächste Level zu heben.",
+      "features": {
+        "realTimeTitle": "Echtzeitdaten",
+        "realTimeDesc": "Live-Arbitragemöglichkeiten.",
+        "riskTitle": "Risiko-Tools",
+        "riskDesc": "Erweiterte Positionsgrößenberechnung.",
+        "alertsTitle": "Sofortbenachrichtigungen",
+        "alertsDesc": "Verpasse nie einen Trade."
+      },
+      "startTradingButton": "Jetzt mit dem Trading beginnen"
+    }
+  }
+}

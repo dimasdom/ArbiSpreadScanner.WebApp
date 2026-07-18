@@ -1,0 +1,119 @@
+{
+  "guide": {
+    "spreadsPage": {
+      "title": "Die Spread-Tabelle nutzen",
+      "steps": {
+        "table": {
+          "title": "Live-Spread-Tabelle",
+          "description": "Diese Tabelle zeigt alle derzeit aktiven Arbitrage-Gelegenheiten über verschiedene Börsen hinweg. Jede Zeile ist ein Live-Spread — die Daten aktualisieren sich automatisch, wenn sich die Marktbedingungen ändern."
+        },
+        "columns": {
+          "title": "Die Spalten verstehen",
+          "spreadLabel": "Spread",
+          "spreadDescription": "die Gewinnchance (%) nach Gebühren.",
+          "typeLabel": "Typ",
+          "typeDescription": "Futures-, Funding- oder Spot-Spread.",
+          "symbolLabel": "Symbol",
+          "symbolDescription": "das Handelspaar (z. B. BTC/USDT).",
+          "exchangeLabel": "Börse Long/Short",
+          "exchangeDescription": "wo jedes Bein platziert wird.",
+          "rateLabel": "Kurs Long/Short",
+          "rateDescription": "aktuelle Preise auf jeder Seite."
+        },
+        "opening": {
+          "title": "Einen Spread öffnen",
+          "description": "Doppelklicke auf eine beliebige Zeile (oder tippe auf Mobilgeräten), um die vollständige Spread-Detailseite mit Live-Chart, Orderbuchtiefe, Funding-Raten und Volatilitätskennzahlen zu öffnen."
+        }
+      }
+    },
+    "spreadPage": {
+      "title": "Die Spread-Details lesen",
+      "steps": {
+        "chart": {
+          "title": "Live-Preischart",
+          "description": "Der Chart zeigt die Preisbewegungen beider Börsen in Echtzeit. Achte auf Konvergenz oder Divergenz — ein enger werdender Spread bedeutet, dass sich die Gelegenheit möglicherweise schließt."
+        },
+        "badges": {
+          "title": "Spread- & Volatilitäts-Badges",
+          "spreadLabel": "Spread %",
+          "spreadDescription": "aktuelles Gewinnpotenzial nach Gebühren. Grün = positiv, Rot = negativ.",
+          "volatilityLabel": "Volatilität",
+          "volatilityDescription": "jüngste Preisschwankung. Höhere Volatilität = höheres Risiko, aber potenziell schnellerer Abschluss."
+        },
+        "exchanges": {
+          "title": "Short- & Long-Börsen",
+          "shortLabel": "Short-Börse",
+          "shortDescription": "verkaufe (short) den Vermögenswert hier, wo der Preis höher ist.",
+          "longLabel": "Long-Börse",
+          "longDescription": "kaufe (long) den Vermögenswert hier, wo der Preis niedriger ist.",
+          "fundingNote": "Bei Funding-Spreads zeigt die Richtung auch an, ob du die Funding-Rate <em>zahlst</em> oder <em>erhältst</em>."
+        },
+        "orderBook": {
+          "title": "Orderbuchtiefe",
+          "description": "Die Orderbuch-Panels zeigen die besten Kauf- und Verkaufsangebote für jede Börse. Größere Ordergrößen nahe deinem Zielpreis bedeuten bessere Liquidität und weniger Slippage beim Einstieg in den Trade."
+        }
+      }
+    }
+  },
+  "spreadsPage": {
+    "columns": {
+      "spread": "Spread",
+      "type": "Typ",
+      "symbol": "Symbol",
+      "exchangeLong": "Börse Long",
+      "exchangeShort": "Börse Short",
+      "rateLong": "Kurs Long",
+      "rateShort": "Kurs Short",
+      "fundingRateLong": "Funding-Rate Long",
+      "fundingRateShort": "Funding-Rate Short"
+    },
+    "notAvailable": "N/V",
+    "errorLoading": "Spreads konnten nicht geladen werden. Bitte versuche es später erneut."
+  },
+  "spreadType": {
+    "Futures": "Futures",
+    "Funding": "Funding",
+    "Spot": "Spot"
+  },
+  "spreadPage": {
+    "closedDialog": {
+      "title": "Spread geschlossen",
+      "message": "Dieser Spread wurde geschlossen und ist nicht mehr verfügbar.",
+      "ok": "OK"
+    },
+    "badges": {
+      "volatility": "Volatilität: {{value}}%",
+      "spread": "Spread: {{value}}%"
+    },
+    "details": {
+      "startSpread": "Start-Spread: {{value}}%",
+      "summaryTariff": "Gesamtgebühr: {{value}}%",
+      "estimatedProfit": "Geschätzter Gewinn: {{value}}%",
+      "estSlippage": "Geschätztes Slippage: {{value}}%",
+      "forPosition": "für eine Position von ${{amount}}"
+    },
+    "tip": "Tipp: Klicke auf den Namen einer Börse, um deren Handelsseite direkt zu öffnen.",
+    "shortExchange": "Short-Börse",
+    "longExchange": "Long-Börse",
+    "fundingLine": "Funding: {{value}}% ({{direction}})",
+    "fundingDirection": {
+      "pay": "Du zahlst",
+      "receive": "Du erhältst"
+    },
+    "chart": {
+      "defaultTitle": "Echtzeit-Chart"
+    }
+  },
+  "orderBlock": {
+    "headers": {
+      "side": "Seite",
+      "sum": "Summe ($)",
+      "price": "Preis",
+      "diff": "Diff."
+    },
+    "buy": "kaufen",
+    "sell": "verkaufen",
+    "best": "bester",
+    "diffValue": "+{{value}}%"
+  }
+}

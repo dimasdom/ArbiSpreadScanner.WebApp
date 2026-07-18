@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { clearUserData } from '../../../store/slices/accountSlice';
 import { useAppDispatch } from '../../../hooks';
 import { useConfirmEmailMutation, useResendEmailRequestMutation } from '../../../store/services/account';
+import { useLocalizedNavigate } from '../../../i18n/routing';
 
 interface ConfirmEmailErrors {
     token: string;
@@ -11,7 +13,8 @@ interface ConfirmEmailErrors {
 }
 
 export function useConfirmEmailForm() {
-    const navigate = useNavigate();
+    const { t } = useTranslation('account');
+    const navigate = useLocalizedNavigate();
     const dispatch = useAppDispatch();
     const [searchParams] = useSearchParams();
     const [confirmEmail] = useConfirmEmailMutation();
@@ -34,7 +37,7 @@ export function useConfirmEmailForm() {
         e.preventDefault();
         const emailConfirmToken = emailConfirmTokenRef.current;
         if (!emailConfirmToken) {
-            setErrors((prev) => ({ ...prev, token: 'Confirmation token is required.' }));
+            setErrors((prev) => ({ ...prev, token: t('confirmEmail.errors.tokenRequired') }));
             return;
         }
         setErrors({ token: '', server: '' });
@@ -46,11 +49,11 @@ export function useConfirmEmailForm() {
                 dispatch(clearUserData());
                 navigate('/account/login?redirect=/account');
             } else {
-                const msg = res?.errors?.[0]?.message || res?.reasons?.[0]?.message || 'Confirmation failed';
+                const msg = res?.errors?.[0]?.message || res?.reasons?.[0]?.message || t('confirmEmail.errors.confirmationFailed');
                 setErrors((prev) => ({ ...prev, server: msg }));
             }
         } catch (err) {
-            const details = err instanceof Error ? err.message : 'Network error. Please try again.';
+            const details = err instanceof Error ? err.message : t('errors.networkError');
             setErrors((prev) => ({ ...prev, server: details }));
         } finally {
             setLoading(false);
@@ -60,7 +63,7 @@ export function useConfirmEmailForm() {
     const handleResendCode = async () => {
         const emailConfirmToken = emailConfirmTokenRef.current;
         if (!emailConfirmToken) {
-            setErrors((prev) => ({ ...prev, server: 'Email confirmation token is required to resend confirmation code.' }));
+            setErrors((prev) => ({ ...prev, server: t('confirmEmail.errors.resendTokenRequired') }));
             return;
         }
         setResending(true);
@@ -68,11 +71,11 @@ export function useConfirmEmailForm() {
         try {
             const result = await resendEmailRequest({ emailConfirmToken }).unwrap();
             if (!result.isSuccess) {
-                const msg = result.errors?.[0]?.message || result.reasons?.[0]?.message || 'Failed to resend confirmation code.';
+                const msg = result.errors?.[0]?.message || result.reasons?.[0]?.message || t('confirmEmail.errors.resendFailed');
                 setErrors((prev) => ({ ...prev, server: msg }));
             }
         } catch (err) {
-            const details = err instanceof Error ? err.message : 'Network error. Please try again.';
+            const details = err instanceof Error ? err.message : t('errors.networkError');
             setErrors((prev) => ({ ...prev, server: details }));
         } finally {
             setResending(false);

@@ -1,60 +1,65 @@
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import GuideModal from '../../components/GuideModal';
 import type { GuideStep } from '../../components/GuideModal';
 import ErrorState from '../../components/ErrorState';
 import { useSpreadsPage } from './hooks/useSpreadsPage';
 
-const spreadsGuideSteps: GuideStep[] = [
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M3 6h18M3 18h18" />
-            </svg>
-        ),
-        title: 'Live Spreads Table',
-        description: 'This table shows all currently active arbitrage opportunities detected across exchanges. Each row is a live spread — data refreshes automatically as market conditions change.',
-    },
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-        ),
-        title: 'Understanding the Columns',
-        description: (
-            <span>
-                <strong>Spread</strong> — the profit opportunity (%) after fees.<br />
-                <strong>Type</strong> — Futures, Funding, or Spot spread.<br />
-                <strong>Symbol</strong> — the trading pair (e.g. BTC/USDT).<br />
-                <strong>Exchange Long/Short</strong> — where to place each leg.<br />
-                <strong>Rate Long/Short</strong> — current prices on each side.
-            </span>
-        ),
-    },
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
-            </svg>
-        ),
-        title: 'Opening a Spread',
-        description: 'Double-click any row (or tap on mobile) to open the full spread detail page with a live chart, order book depth, funding rates, and volatility metrics.',
-    },
-];
+function getSpreadsGuideSteps(t: TFunction<'spreads'>): GuideStep[] {
+    return [
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M3 6h18M3 18h18" />
+                </svg>
+            ),
+            title: t('guide.spreadsPage.steps.table.title'),
+            description: t('guide.spreadsPage.steps.table.description'),
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            ),
+            title: t('guide.spreadsPage.steps.columns.title'),
+            description: (
+                <span>
+                    <strong>{t('guide.spreadsPage.steps.columns.spreadLabel')}</strong> — {t('guide.spreadsPage.steps.columns.spreadDescription')}<br />
+                    <strong>{t('guide.spreadsPage.steps.columns.typeLabel')}</strong> — {t('guide.spreadsPage.steps.columns.typeDescription')}<br />
+                    <strong>{t('guide.spreadsPage.steps.columns.symbolLabel')}</strong> — {t('guide.spreadsPage.steps.columns.symbolDescription')}<br />
+                    <strong>{t('guide.spreadsPage.steps.columns.exchangeLabel')}</strong> — {t('guide.spreadsPage.steps.columns.exchangeDescription')}<br />
+                    <strong>{t('guide.spreadsPage.steps.columns.rateLabel')}</strong> — {t('guide.spreadsPage.steps.columns.rateDescription')}
+                </span>
+            ),
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
+                </svg>
+            ),
+            title: t('guide.spreadsPage.steps.opening.title'),
+            description: t('guide.spreadsPage.steps.opening.description'),
+        },
+    ];
+}
 
 function SpreadsPage() {
     const { rows, isLoading, isError, handleRowDoubleClick, handleRowClick } = useSpreadsPage();
+    const { t } = useTranslation('spreads');
 
     const columns: GridColDef[] = [
-        { field: 'spread', headerName: 'Spread', width: 110 },
-        { field: 'type', headerName: 'Type', width: 130 },
-        { field: 'symbol', headerName: 'Symbol', width: 150 },
-        { field: 'exchangeLong', headerName: 'Exchange Long', width: 150 },
-        { field: 'exchangeShort', headerName: 'Exchange Short', width: 150 },
-        { field: 'exchangeRateLong', headerName: 'Rate Long', width: 110 },
-        { field: 'exchangeRateShort', headerName: 'Rate Short', width: 110 },
-        { field: 'fundingRateLong', headerName: 'Funding Rate Long', width: 140 },
-        { field: 'fundingRateShort', headerName: 'Funding Rate Short', width: 140 },
+        { field: 'spread', headerName: t('spreadsPage.columns.spread'), width: 110 },
+        { field: 'type', headerName: t('spreadsPage.columns.type'), width: 130 },
+        { field: 'symbol', headerName: t('spreadsPage.columns.symbol'), width: 150 },
+        { field: 'exchangeLong', headerName: t('spreadsPage.columns.exchangeLong'), width: 150 },
+        { field: 'exchangeShort', headerName: t('spreadsPage.columns.exchangeShort'), width: 150 },
+        { field: 'exchangeRateLong', headerName: t('spreadsPage.columns.rateLong'), width: 110 },
+        { field: 'exchangeRateShort', headerName: t('spreadsPage.columns.rateShort'), width: 110 },
+        { field: 'fundingRateLong', headerName: t('spreadsPage.columns.fundingRateLong'), width: 140 },
+        { field: 'fundingRateShort', headerName: t('spreadsPage.columns.fundingRateShort'), width: 140 },
     ];
 
     const renderContent = () => {
@@ -67,7 +72,7 @@ function SpreadsPage() {
         }
 
         if (isError) {
-            return <ErrorState message="Failed to load spreads. Please try again later." />;
+            return <ErrorState message={t('spreadsPage.errorLoading')} />;
         }
 
         return (
@@ -89,7 +94,7 @@ function SpreadsPage() {
 
     return (
         <div className="shadow-inner max-w-7xl mx-auto mt-6 rounded-4xl p-4 md:p-5 bg-white dark:bg-gray-900 min-h-screen md:min-h-auto relative transition-colors duration-200">
-            <GuideModal storageKey="guide_spreads_seen" title="Using the Spreads Table" steps={spreadsGuideSteps} />
+            <GuideModal storageKey="guide_spreads_seen" title={t('guide.spreadsPage.title')} steps={getSpreadsGuideSteps(t)} />
             {renderContent()}
         </div>
     );

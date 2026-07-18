@@ -1,17 +1,19 @@
+import { useTranslation } from 'react-i18next';
 import { useResetPasswordForm } from './hooks/useResetPasswordForm';
 
 export default function ResetPasswordPage() {
+    const { t } = useTranslation('account');
     const { passwordRef, confirmPasswordRef, errors, loading, handlePasswordInput, handleSubmit } = useResetPasswordForm();
 
     return (
         <form onSubmit={handleSubmit} className="min-h-[60vh] flex items-center justify-center px-4 py-8">
             <div className="w-full max-w-md">
                 <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md ring-1 ring-gray-50 dark:ring-gray-700 ring-inset p-6">
-                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Reset password</h2>
+                    <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">{t('resetPassword.title')}</h2>
 
                     <div className="space-y-4">
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">New password</label>
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('resetPassword.newPasswordLabel')}</label>
                             <input
                                 ref={passwordRef}
                                 type="password"
@@ -23,7 +25,7 @@ export default function ResetPasswordPage() {
                         </div>
 
                         <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm password</label>
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('resetPassword.confirmPasswordLabel')}</label>
                             <input
                                 ref={confirmPasswordRef}
                                 type="password"
@@ -43,7 +45,7 @@ export default function ResetPasswordPage() {
                                 disabled={loading}
                                 className="w-full inline-flex justify-center rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium py-2 px-4 shadow-md hover:shadow-lg transition-shadow ring-1 ring-gray-50 dark:ring-gray-600 ring-inset disabled:opacity-60"
                             >
-                                {loading ? 'Submitting...' : 'Reset password'}
+                                {loading ? t('resetPassword.submitting') : t('resetPassword.submitButton')}
                             </button>
                             {errors.server && (
                                 <p className="mt-3 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-md px-3 py-2 shadow-md ring-1 ring-red-100 dark:ring-red-800 ring-inset">{errors.server}</p>

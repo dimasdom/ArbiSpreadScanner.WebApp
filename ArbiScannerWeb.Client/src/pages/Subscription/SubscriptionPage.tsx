@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import SubscriptionElement from "./SubcriptionElement";
 import { CircularProgress } from "@mui/material";
 import type { SubscriptionModel } from '../../types/accountType';
@@ -5,6 +6,7 @@ import { useSubscriptionPage } from '../../hooks/useSubscriptionPage';
 import ErrorState from '../../components/ErrorState';
 
 function SubscriptionPage() {
+    const { t } = useTranslation('subscription');
     const { subscriptions, isLoading, error } = useSubscriptionPage();
 
      if (isLoading) {
@@ -16,17 +18,17 @@ function SubscriptionPage() {
      }
 
      if (error) {
-         return <ErrorState message="Failed to load subscriptions. Please try again later." />;
+         return <ErrorState message={t('subscriptionPage.loadError')} />;
      }
 
     return (
         <div className="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8 pb-20">
             <div className="text-center mb-16 space-y-4">
                 <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
-                    Select Your Plan
+                    {t('subscriptionPage.title')}
                 </h1>
                 <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-                    Unlock premium features including real-time spread data, advanced analytics, and priority support.
+                    {t('subscriptionPage.subtitle')}
                 </p>
             </div>
 

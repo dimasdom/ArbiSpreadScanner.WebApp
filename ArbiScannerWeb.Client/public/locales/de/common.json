@@ -1,0 +1,105 @@
+{
+  "nav": {
+    "main": "Start",
+    "account": "Konto",
+    "subscriptions": "Abonnements",
+    "faq": "FAQ",
+    "spreads": "Spreads",
+    "toggleMenu": "Menü umschalten",
+    "menu": "Menü",
+    "closeMenu": "Menü schließen"
+  },
+  "auth": {
+    "logIn": "Anmelden",
+    "logOut": "Abmelden"
+  },
+  "theme": {
+    "toggleAria": "Dunkelmodus umschalten"
+  },
+  "language": {
+    "switchAria": "Sprache ändern"
+  },
+  "footer": {
+    "copyright": "© {{year}} <brand>ArbiScanner</brand>. Alle Rechte vorbehalten.",
+    "faq": "FAQ"
+  },
+  "notFound": "Seite nicht gefunden",
+  "validation": {
+    "email": {
+      "invalid": "Bitte gib eine gültige E-Mail-Adresse ein."
+    },
+    "password": {
+      "tooShort": "Das Passwort muss mindestens 12 Zeichen lang sein.",
+      "needsDigit": "Das Passwort muss mindestens eine Ziffer enthalten.",
+      "needsSymbol": "Das Passwort muss mindestens ein Sonderzeichen wie @ enthalten.",
+      "needsUpper": "Das Passwort muss mindestens einen Großbuchstaben enthalten."
+    }
+  },
+  "actions": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "close": "Schließen"
+  },
+  "cookieConsent": {
+    "title": "Cookie-Hinweis",
+    "body": "Diese Website verwendet <strong>ausschließlich funktionale Cookies</strong> — sie sind für den korrekten Betrieb der Website unbedingt erforderlich. Wir sammeln, speichern oder teilen <strong>keine</strong> personenbezogenen Daten."
+  },
+  "eula": {
+    "title": "Endbenutzer-Lizenzvereinbarung",
+    "intro": "Bitte lies diese Endbenutzer-Lizenzvereinbarung sorgfältig durch, bevor du ArbiScanner nutzt.",
+    "agree": "Ich stimme zu",
+    "sections": {
+      "acceptance": {
+        "heading": "Annahme der Bedingungen",
+        "body": "Durch die Registrierung und Nutzung von ArbiScanner erklärst du dich mit den Bedingungen dieser Vereinbarung einverstanden."
+      },
+      "useOfService": {
+        "heading": "Nutzung des Dienstes",
+        "body": "ArbiScanner stellt Informationen und Analysewerkzeuge für Spread-Trading bereit. Der Dienst wird \"wie besehen\" ohne jegliche Gewährleistung bereitgestellt."
+      },
+      "financialDisclaimer": {
+        "heading": "Finanzieller Haftungsausschluss",
+        "body": "Der Handel mit Kryptowährungen birgt erhebliche Risiken. ArbiScanner erteilt keine Finanzberatung. Alle Handelsentscheidungen liegen in deiner eigenen Verantwortung."
+      },
+      "dataPrivacy": {
+        "heading": "Daten und Datenschutz",
+        "body": "Wir erheben und verarbeiten deine Daten gemäß unserer Datenschutzrichtlinie. Deine E-Mail- und Kontoinformationen werden sicher gespeichert."
+      },
+      "accountResponsibilities": {
+        "heading": "Kontoverantwortlichkeiten",
+        "body": "Du bist für die Vertraulichkeit deiner Kontodaten sowie für alle Aktivitäten unter deinem Konto verantwortlich."
+      },
+      "termination": {
+        "heading": "Kündigung",
+        "body": "Wir behalten uns das Recht vor, den Zugang zu unserem Dienst bei Verstößen gegen diese Vereinbarung jederzeit zu beenden oder auszusetzen."
+      }
+    }
+  },
+  "guide": {
+    "close": "Anleitung schließen",
+    "goToStep": "Zu Schritt {{step}} wechseln",
+    "dontShowAgain": "Nicht mehr anzeigen",
+    "back": "Zurück",
+    "gotIt": "Verstanden!",
+    "next": "Weiter"
+  },
+  "telegramLink": {
+    "title": "Telegram-Konto verknüpfen",
+    "intro": "Verbinde dein Telegram-Konto, um sofortige Benachrichtigungen über profitable Handelsmöglichkeiten zu erhalten.",
+    "benefitsHeading": "Das erwartet dich:",
+    "benefits": {
+      "realTime": "Echtzeit-Benachrichtigungen für Spread-Gelegenheiten",
+      "customized": "Individuelle Benachrichtigungen nach deinen Einstellungen",
+      "directAccess": "Direkter Zugang zu Trading-Insights"
+    },
+    "instructions": "Klicke auf die Schaltfläche unten, um Telegram zu öffnen und den Verknüpfungsprozess mit unserem Bot abzuschließen.",
+    "openTelegram": "Telegram öffnen"
+  },
+  "errorState": {
+    "default": "Etwas ist schiefgelaufen. Bitte versuche es später erneut.",
+    "tryAgain": "Erneut versuchen"
+  },
+  "successState": {
+    "defaultTitle": "Erfolg"
+  }
+}

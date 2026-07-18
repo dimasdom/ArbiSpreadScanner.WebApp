@@ -1,0 +1,60 @@
+{
+  "subscriptionPage": {
+    "title": "Elige tu plan",
+    "subtitle": "Desbloquea funciones premium que incluyen datos de spreads en tiempo real, análisis avanzados y soporte prioritario.",
+    "loadError": "No se pudieron cargar las suscripciones. Inténtalo de nuevo más tarde."
+  },
+  "plan": {
+    "featureAccess": "Acceso a los datos",
+    "featureSupport": "Soporte premium",
+    "featureDuration": "{{days}} días de acceso"
+  },
+  "userSubscription": {
+    "loadError": "No se pudo cargar el estado de tu suscripción. Inténtalo de nuevo más tarde.",
+    "activePlanHeading": "Plan {{type}} activo",
+    "activeUntil": "Tu suscripción está activa hasta el <bold>{{date}}</bold>.",
+    "noActiveHeading": "Sin suscripción activa",
+    "noActiveBody": "No tienes ninguna suscripción activa. Elige un plan a continuación para empezar."
+  },
+  "payment": {
+    "info": {
+      "loadError": "No se pudieron cargar los detalles de la suscripción.",
+      "planHeading": "Plan {{type}}",
+      "confirmSubtitle": "Confirma los detalles de tu suscripción",
+      "billingCycle": "Ciclo de facturación",
+      "billingCycleValue": "{{days}} días",
+      "price": "Precio",
+      "featuresIncluded": "Incluye acceso a análisis en tiempo real, herramientas de gestión de riesgo y alertas ilimitadas.",
+      "proceedButton": "Continuar con el pago"
+    },
+    "crypto": {
+      "loadError": "No se pudieron cargar los detalles de la suscripción.",
+      "subscriptionHeading": "Suscripción {{type}}",
+      "perDuration": "/ {{days}} días",
+      "secureTitle": "Pago seguro con OxaPay",
+      "instructions": "Usa el enlace de abajo para completar tu pago.",
+      "payButton": "Pagar con OxaPay",
+      "generatingLink": "Se está generando el enlace de pago. Espera un momento.",
+      "cancelButton": "Cancelar pago",
+      "processedSecurely": "Los pagos se procesan de forma segura a través de Cryptomus.",
+      "thankYouHeading": "¡Gracias por tu compra!",
+      "thankYouBody": "Tu suscripción se ha activado correctamente.",
+      "thankYouSubBody": "Ya puedes disfrutar de todas las funciones de tu suscripción.",
+      "continueButton": "Continuar"
+    },
+    "success": {
+      "heading": "¡Gracias por tu compra!",
+      "subheading": "Tu suscripción ya está activa.",
+      "body": "Has desbloqueado el acceso de usuario con éxito. Prepárate para llevar tu trading al siguiente nivel con nuestras potentes herramientas.",
+      "features": {
+        "realTimeTitle": "Datos en tiempo real",
+        "realTimeDesc": "Oportunidades de arbitraje en vivo.",
+        "riskTitle": "Herramientas de riesgo",
+        "riskDesc": "Dimensionamiento avanzado de posiciones.",
+        "alertsTitle": "Alertas instantáneas",
+        "alertsDesc": "No te pierdas ninguna operación."
+      },
+      "startTradingButton": "Empezar a operar ahora"
+    }
+  }
+}

@@ -1,62 +1,76 @@
 import OrderBlock from "./OrderBlockComponent";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { Trans, useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import GuideModal from '../../components/GuideModal';
 import type { GuideStep } from '../../components/GuideModal';
 import RealtimeLineChart from "./RealTimeLineChartComponent";
 import { getFundingDirectionText } from '../../utils/spreadUtils';
 import { useSpreadPage } from './hooks/useSpreadPage';
 
-const spreadGuideSteps: GuideStep[] = [
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-            </svg>
-        ),
-        title: 'Live Price Chart',
-        description: 'The chart shows real-time price movements for both exchanges. Watch for convergence or divergence — a narrowing spread means the opportunity may be closing.',
-    },
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-        ),
-        title: 'Spread & Volatility Badges',
-        description: (
-            <span>
-                <strong>Spread %</strong> — current profit potential after tariffs. Green = positive, red = negative.<br />
-                <strong>Volatility</strong> — recent price fluctuation. Higher volatility = higher risk but potentially faster close.
-            </span>
-        ),
-    },
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-        ),
-        title: 'Short & Long Exchanges',
-        description: (
-            <span>
-                <strong>Short Exchange</strong> — sell (short) the asset here where the price is higher.<br />
-                <strong>Long Exchange</strong> — buy (long) the asset here where the price is lower.<br />
-                For funding spreads, the direction also tells you whether you <em>pay</em> or <em>receive</em> the funding rate.
-            </span>
-        ),
-    },
-    {
-        icon: (
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-        ),
-        title: 'Order Book Depth',
-        description: 'The order book panels show the top bids (buyers) and asks (sellers) for each exchange. Larger order sizes at your target price mean better liquidity and less slippage when entering the trade.',
-    },
-];
+function getSpreadGuideSteps(t: TFunction<'spreads'>): GuideStep[] {
+    return [
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+            ),
+            title: t('guide.spreadPage.steps.chart.title'),
+            description: t('guide.spreadPage.steps.chart.description'),
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            ),
+            title: t('guide.spreadPage.steps.badges.title'),
+            description: (
+                <span>
+                    <strong>{t('guide.spreadPage.steps.badges.spreadLabel')}</strong> — {t('guide.spreadPage.steps.badges.spreadDescription')}<br />
+                    <strong>{t('guide.spreadPage.steps.badges.volatilityLabel')}</strong> — {t('guide.spreadPage.steps.badges.volatilityDescription')}
+                </span>
+            ),
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+            ),
+            title: t('guide.spreadPage.steps.exchanges.title'),
+            description: (
+                <span>
+                    <strong>{t('guide.spreadPage.steps.exchanges.shortLabel')}</strong> — {t('guide.spreadPage.steps.exchanges.shortDescription')}<br />
+                    <strong>{t('guide.spreadPage.steps.exchanges.longLabel')}</strong> — {t('guide.spreadPage.steps.exchanges.longDescription')}<br />
+                    <Trans i18nKey="guide.spreadPage.steps.exchanges.fundingNote" ns="spreads" components={{ em: <em /> }} />
+                </span>
+            ),
+        },
+        {
+            icon: (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+            ),
+            title: t('guide.spreadPage.steps.orderBook.title'),
+            description: t('guide.spreadPage.steps.orderBook.description'),
+        },
+    ];
+}
+
+// getFundingDirectionText (outside this feature's ownership, in utils/spreadUtils.ts) returns
+// hardcoded English 'You pay' / 'You receive'. We map its result to a translation key here
+// rather than editing that shared util.
+function fundingDirectionKey(fundingRate: number, isLong: boolean): string {
+    return getFundingDirectionText(fundingRate, isLong) === 'You pay'
+        ? 'spreadPage.fundingDirection.pay'
+        : 'spreadPage.fundingDirection.receive';
+}
 
 function SpreadPage() {
+    const { t } = useTranslation('spreads');
     const {
         possiblePositionDTO,
         tickers,
@@ -89,7 +103,7 @@ function SpreadPage() {
 
     return (
         <div className="max-w-5xl mx-auto mt-6 shadow-2xl rounded-4xl bg-white dark:bg-gray-900 transition-colors duration-200">
-            <GuideModal storageKey="guide_spread_seen" title="Reading the Spread Detail" steps={spreadGuideSteps} />
+            <GuideModal storageKey="guide_spread_seen" title={t('guide.spreadPage.title')} steps={getSpreadGuideSteps(t)} />
             <Dialog
                 open={isSpreadClosedDialogOpen}
                 onClose={handleSpreadClosedConfirm}
@@ -97,16 +111,16 @@ function SpreadPage() {
                 fullWidth
             >
                 <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Spread Closed
+                    {t('spreadPage.closedDialog.title')}
                 </DialogTitle>
                 <DialogContent>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                        This spread has been closed and is no longer available.
+                        {t('spreadPage.closedDialog.message')}
                     </p>
                 </DialogContent>
                 <DialogActions className="px-6 pb-4">
                     <Button variant="contained" onClick={handleSpreadClosedConfirm}>
-                        OK
+                        {t('spreadPage.closedDialog.ok')}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -122,22 +136,22 @@ function SpreadPage() {
                             <h2 className="text-2xl font-semibold dark:text-gray-100">{possiblePositionDTO?.positionModel.symbol}</h2>
 
                             <div className="flex flex-wrap gap-2 mt-2">
-                                <span className={`${spreadClass} inline-flex items-center text-sm font-medium px-3 py-1 rounded-full`}>{spreadLabel}</span>
-                                <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">Volatility: {displayedVolatility?.toFixed(2)}%</span>
-                                <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${spreadVal > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>Spread: {spreadVal.toFixed(2)}%</span>
+                                <span className={`${spreadClass} inline-flex items-center text-sm font-medium px-3 py-1 rounded-full`}>{spreadLabel ? t(`spreadType.${spreadLabel}`) : spreadLabel}</span>
+                                <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">{t('spreadPage.badges.volatility', { value: displayedVolatility?.toFixed(2) })}</span>
+                                <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${spreadVal > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>{t('spreadPage.badges.spread', { value: spreadVal.toFixed(2) })}</span>
                             </div>
 
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">Start Spread: {possiblePositionDTO?.positionModel.startSpread.toFixed(2)}%</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Summary Tariff: {possiblePositionDTO?.positionModel.summaryTarrif.toFixed(4)}%</p>
-                            <p className="text-base font-bold mt-2 dark:text-gray-100">Estimated Profit: {possiblePositionDTO?.positionModel.possibleProfit.toFixed(2)}%</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">{t('spreadPage.details.startSpread', { value: possiblePositionDTO?.positionModel.startSpread.toFixed(2) })}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{t('spreadPage.details.summaryTariff', { value: possiblePositionDTO?.positionModel.summaryTarrif.toFixed(4) })}</p>
+                            <p className="text-base font-bold mt-2 dark:text-gray-100">{t('spreadPage.details.estimatedProfit', { value: possiblePositionDTO?.positionModel.possibleProfit.toFixed(2) })}</p>
                             {totalSlippage != null && (
                                 <div className="mt-2 flex flex-wrap gap-2">
                                     <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${totalSlippage > Math.abs(spreadVal) ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'}`}>
-                                        Est. Slippage: {totalSlippage.toFixed(3)}%
+                                        {t('spreadPage.details.estSlippage', { value: totalSlippage.toFixed(3) })}
                                     </span>
                                     {positionSize > 0 && (
                                         <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                                            for ${positionSize.toLocaleString()} position
+                                            {t('spreadPage.details.forPosition', { amount: positionSize.toLocaleString() })}
                                         </span>
                                     )}
                                 </div>
@@ -146,10 +160,10 @@ function SpreadPage() {
 
                         <div className="md:col-span-1">
                             <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                Tip: click an exchange name to open its trading page directly.
+                                {t('spreadPage.tip')}
                             </p>
                             <div>
-                                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Short Exchange</h3>
+                                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('spreadPage.shortExchange')}</h3>
                                 <p className="text-gray-800 dark:text-gray-200">
                                     {possiblePositionDTO?.shortExchangeUrl ? (
                                         <a
@@ -167,13 +181,16 @@ function SpreadPage() {
                                 </p>
                                 {possiblePositionDTO?.positionModel.exchangeShort.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeShort.fundingRateValue !== 0 && (
                                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        Funding: {(possiblePositionDTO.positionModel.exchangeShort.fundingRateValue * 100).toFixed(2)}% ({getFundingDirectionText(possiblePositionDTO.positionModel.exchangeShort.fundingRateValue, false)})
+                                        {t('spreadPage.fundingLine', {
+                                            value: (possiblePositionDTO.positionModel.exchangeShort.fundingRateValue * 100).toFixed(2),
+                                            direction: t(fundingDirectionKey(possiblePositionDTO.positionModel.exchangeShort.fundingRateValue, false)),
+                                        })}
                                     </p>
                                 )}
                             </div>
                             <hr className="my-3 border-gray-200 dark:border-gray-700" />
                             <div>
-                                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Long Exchange</h3>
+                                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('spreadPage.longExchange')}</h3>
                                 <p className="text-gray-800 dark:text-gray-200">
                                     {possiblePositionDTO?.longExchangeUrl ? (
                                         <a
@@ -191,7 +208,10 @@ function SpreadPage() {
                                 </p>
                                 {!isSpotSpread && possiblePositionDTO?.positionModel.exchangeLong.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeLong.fundingRateValue !== 0 && (
                                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        Funding: {(possiblePositionDTO.positionModel.exchangeLong.fundingRateValue * 100).toFixed(2)}% ({getFundingDirectionText(possiblePositionDTO.positionModel.exchangeLong.fundingRateValue, true)})
+                                        {t('spreadPage.fundingLine', {
+                                            value: (possiblePositionDTO.positionModel.exchangeLong.fundingRateValue * 100).toFixed(2),
+                                            direction: t(fundingDirectionKey(possiblePositionDTO.positionModel.exchangeLong.fundingRateValue, true)),
+                                        })}
                                     </p>
                                 )}
                             </div>

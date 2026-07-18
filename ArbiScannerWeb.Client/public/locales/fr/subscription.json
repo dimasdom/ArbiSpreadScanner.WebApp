@@ -1,0 +1,60 @@
+{
+  "subscriptionPage": {
+    "title": "Choisissez votre forfait",
+    "subtitle": "Débloquez des fonctionnalités premium, notamment des données de spread en temps réel, des analyses avancées et une assistance prioritaire.",
+    "loadError": "Échec du chargement des abonnements. Veuillez réessayer plus tard."
+  },
+  "plan": {
+    "featureAccess": "Accès aux données",
+    "featureSupport": "Assistance premium",
+    "featureDuration": "{{days}} jours d'accès"
+  },
+  "userSubscription": {
+    "loadError": "Échec du chargement de l'état de votre abonnement. Veuillez réessayer plus tard.",
+    "activePlanHeading": "Forfait {{type}} actif",
+    "activeUntil": "Votre abonnement est actif jusqu'au <bold>{{date}}</bold>.",
+    "noActiveHeading": "Aucun abonnement actif",
+    "noActiveBody": "Vous n'avez aucun abonnement actif. Choisissez un forfait ci-dessous pour commencer."
+  },
+  "payment": {
+    "info": {
+      "loadError": "Échec du chargement des détails de l'abonnement.",
+      "planHeading": "Forfait {{type}}",
+      "confirmSubtitle": "Confirmez les détails de votre abonnement",
+      "billingCycle": "Cycle de facturation",
+      "billingCycleValue": "{{days}} jours",
+      "price": "Prix",
+      "featuresIncluded": "Comprend l'accès aux analyses en temps réel, aux outils de gestion des risques et aux alertes illimitées.",
+      "proceedButton": "Procéder au paiement"
+    },
+    "crypto": {
+      "loadError": "Échec du chargement des détails de l'abonnement.",
+      "subscriptionHeading": "Abonnement {{type}}",
+      "perDuration": "/ {{days}} jours",
+      "secureTitle": "Paiement sécurisé via OxaPay",
+      "instructions": "Utilisez le lien ci-dessous pour finaliser votre paiement.",
+      "payButton": "Payer avec OxaPay",
+      "generatingLink": "Le lien de paiement est en cours de génération. Veuillez patienter un instant.",
+      "cancelButton": "Annuler le paiement",
+      "processedSecurely": "Les paiements sont traités en toute sécurité via Cryptomus.",
+      "thankYouHeading": "Merci pour votre achat !",
+      "thankYouBody": "Votre abonnement a été activé avec succès.",
+      "thankYouSubBody": "Vous pouvez désormais profiter de toutes les fonctionnalités de votre abonnement.",
+      "continueButton": "Continuer"
+    },
+    "success": {
+      "heading": "Merci pour votre achat !",
+      "subheading": "Votre abonnement est maintenant actif.",
+      "body": "Vous avez débloqué avec succès l'accès utilisateur. Préparez-vous à faire passer votre trading au niveau supérieur grâce à nos outils puissants.",
+      "features": {
+        "realTimeTitle": "Données en temps réel",
+        "realTimeDesc": "Opportunités d'arbitrage en direct.",
+        "riskTitle": "Outils de gestion des risques",
+        "riskDesc": "Dimensionnement avancé des positions.",
+        "alertsTitle": "Alertes instantanées",
+        "alertsDesc": "Ne manquez plus jamais une opportunité."
+      },
+      "startTradingButton": "Commencer à trader maintenant"
+    }
+  }
+}

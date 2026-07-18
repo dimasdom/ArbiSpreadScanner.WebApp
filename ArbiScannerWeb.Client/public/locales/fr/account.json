@@ -1,0 +1,155 @@
+{
+  "errors": {
+    "networkError": "Erreur réseau. Veuillez réessayer."
+  },
+  "accountPage": {
+    "guide": {
+      "title": "Guide des paramètres du compte",
+      "steps": {
+        "emailAndSpread": {
+          "title": "E-mail et seuil d'écart",
+          "description": "Maintenez votre <bold>e-mail</bold> à jour pour les notifications de compte.<br></br>Définissez un <bold>seuil de taille d'écart</bold> — seuls les écarts au-dessus de ce % seront affichés et signalés comme des opportunités. Exemple : 0.5 signifie que seuls les écarts ≥ 0.5 % vous intéressent."
+        },
+        "positionSize": {
+          "title": "Taille de position",
+          "description": "Choisissez la taille de votre position de trading — il s'agit du montant en dollars par jambe de transaction. Elle sert à estimer votre profit potentiel pour chaque opportunité d'écart. Choisissez un montant adapté à votre tolérance au risque."
+        },
+        "monitoring": {
+          "title": "Préférences de surveillance",
+          "description": "Activez les types d'écart que vous souhaitez suivre : Futures, Financement ou Spot. Sélectionnez uniquement les types que vous tradez activement pour réduire le bruit et vous concentrer sur les opportunités pertinentes."
+        },
+        "exchanges": {
+          "title": "Plateformes actives",
+          "description": "Choisissez les plateformes à surveiller. Seules les paires impliquant vos plateformes sélectionnées seront incluses dans le flux d'écarts en direct. Désélectionnez les plateformes sur lesquelles vous n'avez pas de compte."
+        },
+        "telegram": {
+          "title": "Notifications Telegram",
+          "description": "Connectez votre compte Telegram pour recevoir des alertes instantanées lorsque des écarts correspondant à vos critères apparaissent. Cliquez sur \"Lier Telegram\" et suivez les instructions du bot. Vous pouvez délier votre compte à tout moment depuis cette page."
+        }
+      }
+    },
+    "emailChangeDialog": {
+      "title": "Confirmer le changement d'e-mail",
+      "body": "Pour utiliser <bold>{{email}}</bold> lors de votre prochaine connexion, vous devez d'abord la confirmer. Un code de confirmation sera envoyé à cette adresse.",
+      "confirm": "Confirmer",
+      "sending": "Envoi en cours...",
+      "confirmError": "Échec du changement d'e-mail."
+    },
+    "header": {
+      "title": "Paramètres du compte",
+      "subtitle": "Gérez votre profil, vos préférences de trading et vos connexions aux plateformes."
+    },
+    "subscription": {
+      "active": {
+        "title": "Abonnement actif",
+        "typeLabel": "Type d'abonnement",
+        "premiumFallback": "Premium",
+        "expiresLabel": "Expire le"
+      },
+      "none": {
+        "title": "Aucun abonnement actif",
+        "body": "Vous n'avez actuellement aucun abonnement actif. Découvrez nos options disponibles pour débloquer les fonctionnalités premium.",
+        "viewButton": "Voir les abonnements disponibles →"
+      }
+    },
+    "telegram": {
+      "sectionTitle": "Notifications Telegram",
+      "connected": {
+        "label": "Telegram connecté",
+        "chatIdLabel": "ID de chat : {{chatId}}"
+      },
+      "unlinkAria": "Délier Telegram",
+      "unlinkError": "Impossible de délier le compte Telegram.",
+      "notConnected": {
+        "label": "Connecter Telegram",
+        "description": "Liez votre compte Telegram pour recevoir des notifications instantanées sur les opportunités de trading.",
+        "linkButton": "Lier un compte Telegram"
+      }
+    },
+    "form": {
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "votre@email.com",
+      "spreadSizeLabel": "Seuil de taille d'écart",
+      "spreadSizePlaceholder": "0.5",
+      "positionSizeLabel": "Taille de position",
+      "positionSizeSelectPlaceholder": "Sélectionner une taille",
+      "monitoringTitle": "Préférences de surveillance",
+      "futuresSpreads": "Écarts sur futures",
+      "fundingRates": "Taux de financement",
+      "spotSpreads": "Écarts au comptant",
+      "exchangesTitle": "Plateformes actives"
+    },
+    "actions": {
+      "save": "Enregistrer les modifications",
+      "saving": "Enregistrement..."
+    },
+    "toasts": {
+      "saveSuccess": "Paramètres enregistrés !",
+      "saveError": "Échec de l'enregistrement des paramètres."
+    }
+  },
+  "login": {
+    "title": "Connectez-vous à votre compte",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Mot de passe",
+    "submitButton": "Connexion",
+    "submitting": "Connexion en cours...",
+    "forgotPasswordLink": "Mot de passe oublié ?",
+    "registerLink": "S'inscrire"
+  },
+  "register": {
+    "title": "Créer un compte",
+    "emailLabel": "E-mail",
+    "confirmEmailLabel": "Confirmer l'e-mail",
+    "passwordLabel": "Mot de passe",
+    "confirmPasswordLabel": "Confirmer le mot de passe",
+    "submitButton": "S'inscrire",
+    "submitting": "Inscription en cours...",
+    "forgotPasswordLink": "Mot de passe oublié ?",
+    "signInLink": "Se connecter",
+    "errors": {
+      "emailMismatch": "Les e-mails ne correspondent pas.",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "registrationFailed": "Échec de l'inscription"
+    }
+  },
+  "confirmEmail": {
+    "title": "Confirmez votre e-mail",
+    "tokenLabel": "Code de confirmation",
+    "submitButton": "Confirmer l'e-mail",
+    "confirming": "Confirmation en cours...",
+    "resendButton": "Renvoyer le code",
+    "resending": "Renvoi en cours...",
+    "errors": {
+      "tokenRequired": "Le code de confirmation est requis.",
+      "confirmationFailed": "Échec de la confirmation",
+      "resendTokenRequired": "Un jeton de confirmation d'e-mail est requis pour renvoyer le code de confirmation.",
+      "resendFailed": "Échec du renvoi du code de confirmation."
+    }
+  },
+  "forgotPassword": {
+    "title": "Réinitialisez votre mot de passe",
+    "emailLabel": "E-mail",
+    "submitButton": "Envoyer le code",
+    "sending": "Envoi en cours...",
+    "signInLink": "Se connecter",
+    "registerLink": "S'inscrire",
+    "successTitle": "E-mail envoyé",
+    "successMessage": "Lien de réinitialisation du mot de passe envoyé à {{email}}",
+    "errors": {
+      "sendFailed": "Impossible d'envoyer le lien de réinitialisation."
+    }
+  },
+  "resetPassword": {
+    "title": "Réinitialiser le mot de passe",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "confirmPasswordLabel": "Confirmer le mot de passe",
+    "submitButton": "Réinitialiser le mot de passe",
+    "submitting": "Envoi en cours...",
+    "errors": {
+      "tokenMissing": "Le code de confirmation est manquant dans l'URL.",
+      "passwordMismatch": "Le mot de passe et sa confirmation ne correspondent pas.",
+      "resetFailed": "Impossible de réinitialiser le mot de passe"
+    }
+  }
+}

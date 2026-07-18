@@ -1,0 +1,119 @@
+{
+  "guide": {
+    "spreadsPage": {
+      "title": "Cómo usar la tabla de diferenciales",
+      "steps": {
+        "table": {
+          "title": "Tabla de diferenciales en vivo",
+          "description": "Esta tabla muestra todas las oportunidades de arbitraje activas detectadas entre exchanges. Cada fila es un diferencial en vivo — los datos se actualizan automáticamente según cambian las condiciones del mercado."
+        },
+        "columns": {
+          "title": "Entendiendo las columnas",
+          "spreadLabel": "Diferencial",
+          "spreadDescription": "la oportunidad de beneficio (%) después de comisiones.",
+          "typeLabel": "Tipo",
+          "typeDescription": "diferencial de futuros, financiación o spot.",
+          "symbolLabel": "Símbolo",
+          "symbolDescription": "el par de trading (p. ej. BTC/USDT).",
+          "exchangeLabel": "Exchange largo/corto",
+          "exchangeDescription": "dónde colocar cada pata.",
+          "rateLabel": "Tasa largo/corto",
+          "rateDescription": "precios actuales en cada lado."
+        },
+        "opening": {
+          "title": "Abrir un diferencial",
+          "description": "Haz doble clic en cualquier fila (o toca en móvil) para abrir la página de detalle completa del diferencial con gráfico en vivo, profundidad del libro de órdenes, tasas de financiación y métricas de volatilidad."
+        }
+      }
+    },
+    "spreadPage": {
+      "title": "Cómo leer el detalle del diferencial",
+      "steps": {
+        "chart": {
+          "title": "Gráfico de precios en vivo",
+          "description": "El gráfico muestra los movimientos de precio en tiempo real de ambos exchanges. Observa la convergencia o divergencia — un diferencial que se estrecha significa que la oportunidad podría estar cerrándose."
+        },
+        "badges": {
+          "title": "Indicadores de diferencial y volatilidad",
+          "spreadLabel": "Diferencial %",
+          "spreadDescription": "beneficio potencial actual después de tarifas. Verde = positivo, rojo = negativo.",
+          "volatilityLabel": "Volatilidad",
+          "volatilityDescription": "fluctuación de precio reciente. Mayor volatilidad = mayor riesgo pero cierre potencialmente más rápido."
+        },
+        "exchanges": {
+          "title": "Exchanges corto y largo",
+          "shortLabel": "Exchange corto",
+          "shortDescription": "vende (short) el activo aquí, donde el precio es más alto.",
+          "longLabel": "Exchange largo",
+          "longDescription": "compra (long) el activo aquí, donde el precio es más bajo.",
+          "fundingNote": "En diferenciales de financiación, la dirección también indica si <em>pagas</em> o <em>recibes</em> la tasa de financiación."
+        },
+        "orderBook": {
+          "title": "Profundidad del libro de órdenes",
+          "description": "Los paneles del libro de órdenes muestran las mejores ofertas de compra y venta de cada exchange. Órdenes de mayor tamaño cerca de tu precio objetivo significan mejor liquidez y menos deslizamiento al entrar en la operación."
+        }
+      }
+    }
+  },
+  "spreadsPage": {
+    "columns": {
+      "spread": "Diferencial",
+      "type": "Tipo",
+      "symbol": "Símbolo",
+      "exchangeLong": "Exchange largo",
+      "exchangeShort": "Exchange corto",
+      "rateLong": "Tasa larga",
+      "rateShort": "Tasa corta",
+      "fundingRateLong": "Tasa de financiación larga",
+      "fundingRateShort": "Tasa de financiación corta"
+    },
+    "notAvailable": "N/D",
+    "errorLoading": "No se pudieron cargar los diferenciales. Inténtalo de nuevo más tarde."
+  },
+  "spreadType": {
+    "Futures": "Futuros",
+    "Funding": "Financiación",
+    "Spot": "Spot"
+  },
+  "spreadPage": {
+    "closedDialog": {
+      "title": "Diferencial cerrado",
+      "message": "Este diferencial se ha cerrado y ya no está disponible.",
+      "ok": "Aceptar"
+    },
+    "badges": {
+      "volatility": "Volatilidad: {{value}}%",
+      "spread": "Diferencial: {{value}}%"
+    },
+    "details": {
+      "startSpread": "Diferencial inicial: {{value}}%",
+      "summaryTariff": "Comisión total: {{value}}%",
+      "estimatedProfit": "Beneficio estimado: {{value}}%",
+      "estSlippage": "Deslizamiento estimado: {{value}}%",
+      "forPosition": "para una posición de ${{amount}}"
+    },
+    "tip": "Consejo: haz clic en el nombre de un exchange para abrir directamente su página de trading.",
+    "shortExchange": "Exchange corto",
+    "longExchange": "Exchange largo",
+    "fundingLine": "Financiación: {{value}}% ({{direction}})",
+    "fundingDirection": {
+      "pay": "Pagas",
+      "receive": "Recibes"
+    },
+    "chart": {
+      "defaultTitle": "Gráfico en tiempo real"
+    }
+  },
+  "orderBlock": {
+    "headers": {
+      "side": "Lado",
+      "sum": "Suma ($)",
+      "price": "Precio",
+      "diff": "Dif."
+    },
+    "buy": "compra",
+    "sell": "venta",
+    "best": "mejor",
+    "diffValue": "+{{value}}%"
+  }
+}

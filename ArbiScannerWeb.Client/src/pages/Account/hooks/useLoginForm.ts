@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { clearError } from '../../../store/slices/accountSlice';
 import { useLoginMutation } from '../../../store/services/account';
 import { useAppDispatch } from '../../../hooks';
 import type { IRootStore } from '../../../store/store';
 import { validateEmail } from '../../../utils/validationUtils';
+import { useLocalizedNavigate } from '../../../i18n/routing';
 
 interface LoginErrors {
     email: string;
@@ -14,7 +16,8 @@ interface LoginErrors {
 }
 
 export function useLoginForm() {
-    const navigate = useNavigate();
+    const { t } = useTranslation(['account', 'common']);
+    const navigate = useLocalizedNavigate();
     const [searchParams] = useSearchParams();
     const dispatch = useAppDispatch();
     const [login] = useLoginMutation();
@@ -52,9 +55,10 @@ export function useLoginForm() {
         const emailVal = emailRef.current?.value ?? '';
         const passwordVal = passwordRef.current?.value ?? '';
 
-        const emailErr = validateEmail(emailVal);
+        const emailErrKey = validateEmail(emailVal);
+        const emailErr = emailErrKey ? t(`common:${emailErrKey}`) : '';
         const passwordErr = !passwordVal || passwordVal.length < 12
-            ? 'Password must be at least 12 characters long.'
+            ? t('common:validation.password.tooShort')
             : '';
 
         if (emailErr || passwordErr) {

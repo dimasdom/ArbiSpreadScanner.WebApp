@@ -9,7 +9,7 @@ import SpreadPage from './pages/Spread/SpreadPage';
 import AccountPage from './pages/Account/AccountPage';
 import LoginPage from './pages/Account/LoginPage';
 import { useSelector } from 'react-redux';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { clearUserData, hasStoredSession, markSessionChecked } from './store/slices/accountSlice';
 import type { IRootStore } from './store/store';
 import RegisterPage from './pages/Account/RegisterPage';
@@ -29,6 +29,12 @@ import { useAppDispatch } from './hooks';
 import { useLocalizedNavigate, stripLangPrefix } from './i18n/routing';
 import { useGetUserDataQuery, useLogoutMutation } from './store/services/account';
 import { useGetUserActiveSubscriptionsQuery } from './store/services/subscription';
+
+const PageLoader = () => (
+    <div className="flex items-center justify-center min-h-64 mt-6">
+        <div className="w-10 h-10 border-4 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+    </div>
+);
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <motion.div
@@ -68,29 +74,31 @@ function App() {
             <NavBar isLoggedIn={isLoggedIn} isActiveSubscription={isActiveSubscription} onLogin={() => { dispatch(clearUserData()); navigate("/account/login") }} onLogout={() => { void logout(); }} />
 
             <main className="flex-1 pt-20">
-                <AnimatePresence mode="wait">
-                    <Routes location={location} key={stripLangPrefix(location.pathname)}>
-                        <Route path="/" element={<RootRedirect />} />
-                        <Route path=":lang" element={<LangGuard />}>
-                            <Route path="account">
-                                <Route index element={<ProtectedRoute><PageWrapper><AccountPage /></PageWrapper></ProtectedRoute>} />
-                                <Route path="login" element={<PageWrapper><LoginPage /></PageWrapper>} />
-                                <Route path="register" element={<PageWrapper><RegisterPage /></PageWrapper>} />
-                                <Route path="confirmemail" element={<PageWrapper><ConfirmEmailPage /></PageWrapper>} />
-                                <Route path="resetpassword" element={<PageWrapper><ResetPasswordPage /></PageWrapper>} />
-                                <Route path="forgotpassword" element={<PageWrapper><ForgotPasswordPage /></PageWrapper>} />
+                <Suspense fallback={<PageLoader />}>
+                    <AnimatePresence mode="wait">
+                        <Routes location={location} key={stripLangPrefix(location.pathname)}>
+                            <Route path="/" element={<RootRedirect />} />
+                            <Route path=":lang" element={<LangGuard />}>
+                                <Route path="account">
+                                    <Route index element={<ProtectedRoute><PageWrapper><AccountPage /></PageWrapper></ProtectedRoute>} />
+                                    <Route path="login" element={<PageWrapper><LoginPage /></PageWrapper>} />
+                                    <Route path="register" element={<PageWrapper><RegisterPage /></PageWrapper>} />
+                                    <Route path="confirmemail" element={<PageWrapper><ConfirmEmailPage /></PageWrapper>} />
+                                    <Route path="resetpassword" element={<PageWrapper><ResetPasswordPage /></PageWrapper>} />
+                                    <Route path="forgotpassword" element={<PageWrapper><ForgotPasswordPage /></PageWrapper>} />
+                                </Route>
+                                <Route index element={<PageWrapper><MainPage /></PageWrapper>} />
+                                <Route path="spreads" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadsPage /></PageWrapper></ProtectedRoute>} />
+                                <Route path="spread" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadPage /></PageWrapper></ProtectedRoute>} />
+                                <Route path="subscriptions" element={<PageWrapper><SubscriptionPage /></PageWrapper>} />
+                                <Route path="payment" element={<PageWrapper><PaymentInfoPage /></PageWrapper>} />
+                                <Route path="payment/pay" element={<PageWrapper><PaymentCryptoPage /></PageWrapper>} />
+                                <Route path="faq" element={<PageWrapper><FaqPage /></PageWrapper>} />
+                                <Route path="*" element={<PageWrapper><div className="p-4">{t('notFound')}</div></PageWrapper>} />
                             </Route>
-                            <Route index element={<PageWrapper><MainPage /></PageWrapper>} />
-                            <Route path="spreads" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadsPage /></PageWrapper></ProtectedRoute>} />
-                            <Route path="spread" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadPage /></PageWrapper></ProtectedRoute>} />
-                            <Route path="subscriptions" element={<PageWrapper><SubscriptionPage /></PageWrapper>} />
-                            <Route path="payment" element={<PageWrapper><PaymentInfoPage /></PageWrapper>} />
-                            <Route path="payment/pay" element={<PageWrapper><PaymentCryptoPage /></PageWrapper>} />
-                            <Route path="faq" element={<PageWrapper><FaqPage /></PageWrapper>} />
-                            <Route path="*" element={<PageWrapper><div className="p-4">{t('notFound')}</div></PageWrapper>} />
-                        </Route>
-                    </Routes>
-                </AnimatePresence>
+                        </Routes>
+                    </AnimatePresence>
+                </Suspense>
             </main>
             <Footer/>
             <CookieConsentModal />

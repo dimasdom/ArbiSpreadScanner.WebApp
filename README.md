@@ -14,6 +14,7 @@ The main user-facing web application for the ArbiScanner platform. It displays r
 - [Running Locally](#running-locally)
 - [Environment Variables](#environment-variables)
 - [Error Handling](#error-handling)
+- [Internationalization](#internationalization)
 - [Database Migrations](#database-migrations)
 - [Testing](#testing)
 - [Docker](#docker)
@@ -33,6 +34,7 @@ Key user-facing features:
 - User registration, login, email confirmation, and password reset
 - Telegram account linking for notifications delivered by the TelegramNotifierApp service
 - Subscription management
+- Localized UI in 6 languages with language-prefixed routing (`/en/...`, `/uk/...`, etc.)
 
 ---
 
@@ -130,11 +132,13 @@ Pages:
 - `SubscriptionPage` — plans; `PaymentInfoPage`, `PaymentCryptoPage`, `PaymentSuccessPage`
 - `FaqPage` — FAQ accordion
 
-State management: Redux Toolkit with RTK Query (services: `account`, `spread`, `subscription`). SignalR connection is managed by `signalrService.ts`. Token refresh coordination is handled by `refreshCoordinator.ts` to prevent concurrent refresh races.
+State management: Redux Toolkit with RTK Query (services: `account`, `spread`, `subscription`) plus a plain `language` slice mirroring the active i18next locale. SignalR connection is managed by `signalrService.ts`. Token refresh coordination is handled by `refreshCoordinator.ts` to prevent concurrent refresh races.
 
 Error handling: `normalizeApiError.ts` converts any RTK Query `FetchBaseQueryError`/`SerializedError` into a `{ code, message }` shape, reading the `errorCode`/`message` fields the API's `TypedErrors` envelope always returns (see [Error Handling](#error-handling)); `ErrorState.tsx` renders that shape consistently wherever a query fails.
 
 Enums shared with the wire format (`SpreadType`, `PositionAction`, `Exchange` in `src/types/`) are defined as `as const` objects with a derived union type rather than TypeScript `enum` — the project's `tsconfig.app.json` sets `erasableSyntaxOnly`, which rejects real `enum` declarations because they emit runtime code instead of erasing away. `SpreadType.ts` also exports `SpreadTypeNames`, a reverse `value -> key` lookup, since plain objects (unlike numeric enums) don't get that mapping for free.
+
+Internationalization: every route is prefixed with a `:lang` segment (`LangGuard` in `src/components/LangGuard.tsx` validates it and redirects to a detected/stored language when missing or invalid); translations are lazy-loaded per-namespace JSON via `i18next-http-backend` — see [Internationalization](#internationalization).
 
 ---
 
@@ -170,6 +174,7 @@ Enums shared with the wire format (`SpreadType`, `PositionAction`, `Exchange` in
 | HTTP | axios 1 |
 | Routing | react-router 7 |
 | Animations | framer-motion 12 |
+| i18n | i18next 25 + react-i18next 15 + i18next-http-backend 3 |
 
 ### Backend Observability
 
@@ -365,6 +370,27 @@ How it's produced:
 On the client, `normalizeApiError.ts` reads `errorCode`/`message` off this envelope and `ErrorState.tsx` renders it consistently — see the `ArbiScannerWeb.Client` entry under [Project Responsibilities](#project-responsibilities) above.
 
 Note that both the middleware and the filter/error-code helpers live in `ArbiScannerWeb.Infrastructure`, not the API project, so the same error contract is reusable if another host project is ever added.
+
+---
+
+## Internationalization
+
+The client is localized into 6 languages via `i18next` + `react-i18next`: English (default), Spanish, German, French, Russian, and Ukrainian.
+
+**Routing.** Every route carries a leading `:lang` segment (`/en/spreads`, `/uk/faq`, ...), enforced by `LangGuard` (`src/components/LangGuard.tsx`), which wraps all routes in `App.tsx`:
+- A valid `:lang` param syncs `i18next`'s active language via `i18n.changeLanguage`.
+- A missing/invalid `:lang` (including bare `/`, handled by `RootRedirect`) redirects to `/<detected-lang>/<original-path>`, preserving query string and hash.
+- `useLocalizedNavigate()` (`src/i18n/routing.ts`) is a drop-in replacement for react-router's `useNavigate()` that re-prepends the current language segment on every absolute in-app navigation, so links don't need to hardcode it. `stripLangPrefix()` strips that segment back off for path comparisons (e.g. the `AnimatePresence` page-transition key in `App.tsx`).
+
+**Language detection** (`src/i18n/detect.ts`, `getPreferredLanguage()`) resolves in order: a previously-chosen language in `localStorage` (`preferredLang`) → the browser's `navigator.languages` → hard fallback to English. This only picks the redirect target for first-visit/invalid-URL cases — once a URL has a valid `:lang` segment, that segment is the source of truth.
+
+**Translation loading.** Translation strings live under `public/locales/<lang>/<namespace>.json` (namespaces: `common`, `main`, `account`, `spreads`, `subscription`, `faq`) and are fetched on demand by `i18next-http-backend` (`loadPath: /locales/{{lng}}/{{ns}}.json`) the first time a component calls `useTranslation('<namespace>')` — only `common` is preloaded at startup (needed by `NavBar`/`Footer` on every page), so navigating to a page doesn't pull down every namespace's JSON up front.
+
+**State sync.** `i18n.on('languageChanged', ...)` (`src/i18n/config.ts`) is the single place that keeps the Redux `language` slice (`src/store/slices/languageSlice.ts`) and `localStorage` in sync with `i18next`, regardless of whether the change originated from `LangGuard` parsing the URL or the user picking a language in `LanguageSwitcher` (`src/components/LanguageSwitcher.tsx`, `src/i18n/languages.ts` — flag + label metadata per language code).
+
+**Adding a language:** add an entry to `SUPPORTED_LANGUAGES` in `src/i18n/languages.ts`, then add a matching `public/locales/<code>/` directory with all six namespace JSON files.
+
+**Adding a namespace:** create `public/locales/<lang>/<namespace>.json` for every supported language, add the namespace name to the `NAMESPACES` list in `src/i18n/config.ts` (documentation only — not passed to `init()`, to keep it lazy-loaded), and call `useTranslation('<namespace>')` in the consuming component.
 
 ---
 
@@ -573,9 +599,13 @@ ArbiScannerWebApp/
 │   └── Support/                         # Hand-rolled LoadRunner
 │
 ├── ArbiScannerWeb.Client/              # React 19 + Vite + TypeScript SPA
+│   ├── public/
+│   │   └── locales/                    # Per-language translation JSON (en, es, de, fr, ru, uk) — see Internationalization
+│   │       └── <lang>/                 # common, main, account, spreads, subscription, faq namespaces
 │   ├── src/
-│   │   ├── components/                 # Shared UI components (NavBar, Footer, ErrorState, modals)
+│   │   ├── components/                 # Shared UI components (NavBar, Footer, ErrorState, modals, LangGuard, LanguageSwitcher)
 │   │   ├── hooks/                      # Custom React hooks
+│   │   ├── i18n/                       # i18next config, language metadata, detection, localized routing helpers
 │   │   ├── pages/                      # Page components organized by feature
 │   │   │   ├── Main/                   # MainPage, LiveDemoWidget (simulated-data preview)
 │   │   │   ├── Account/                # Login, Register, Profile, email/password flows

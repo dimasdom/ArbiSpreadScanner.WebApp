@@ -181,13 +181,11 @@ namespace ArbiScannerWeb.API.Controllers
 
         private CookieOptions CreateCookieOptions(TimeSpan lifetime)
         {
-            var secure = Request.IsHttps;
-
             return new CookieOptions
             {
                 HttpOnly = true,
-                Secure = secure,
-                SameSite = secure ? SameSiteMode.None : SameSiteMode.Lax,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
                 Expires = DateTimeOffset.UtcNow.Add(lifetime),
                 Path = "/"
             };

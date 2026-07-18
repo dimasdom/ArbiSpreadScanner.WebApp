@@ -20,6 +20,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Enrichers.Span;
 using StackExchange.Redis;
+using System.Threading.RateLimiting;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -91,6 +92,20 @@ try
             .AddRuntimeInstrumentation()
             .AddPrometheusExporter());
     builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+        options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+            RateLimitPartition.GetSlidingWindowLimiter(GetClientIpAddress(httpContext), _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 6,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+    });
     builder.Services.AddCors(options =>
     {
         var allowedOrigins = builder.Configuration
@@ -101,8 +116,8 @@ try
         {
             policy
                 .WithOrigins(allowedOrigins)
-                 .AllowAnyHeader()
-                .AllowAnyMethod()
+                .WithMethods("GET", "POST", "DELETE")
+                .WithHeaders("Content-Type")
                 .AllowCredentials();
         });
     });
@@ -135,6 +150,7 @@ try
 
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseRateLimiter();
 
     app.UseHangfireDashboard("/hangfire", new DashboardOptions
     {
@@ -153,6 +169,15 @@ catch (Exception ex)
 finally
 {
     await Log.CloseAndFlushAsync();
+}
+
+static string GetClientIpAddress(HttpContext context)
+{
+    var xForwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+    if (!string.IsNullOrEmpty(xForwardedFor))
+        return xForwardedFor.Split(',')[0].Trim();
+
+    return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 }
 
 public partial class Program { }

@@ -15,11 +15,18 @@ using ProtoBuf;
 using ProtoBuf.Meta;
 using ArbiScannerWeb.Infrastructure.Settings;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Retry;
+using StackExchange.Redis;
 
 namespace ArbiScannerWeb.Infrastructure.Services
 {
    public class RabbitMqService : IRabbitMqService, IDisposable, IAsyncDisposable
     {
+        public const string DeadLetterExchange = "spread_dlx";
+
+        private static readonly TimeSpan DedupeWindow = TimeSpan.FromMinutes(15);
+
         private IConnection? _connection;
         private IChannel? _channel;
         private readonly ILogger<RabbitMqService> _logger;
@@ -27,15 +34,28 @@ namespace ArbiScannerWeb.Infrastructure.Services
         private readonly string _queueName;
         private bool _isConsuming = false;
         private readonly IOptions<RabbitMqSettings> _settings;
+        private readonly IDatabase _redis;
+        private readonly ResiliencePipeline _retryPipeline;
         private bool _disposed = false;
         private static readonly RuntimeTypeModel ProtobufModel = CreateProtobufModel();
         public event Func<TradeOpportunityModel, Task>? OnMessageReceived;
 
-        public RabbitMqService(ILogger<RabbitMqService> logger, IOptions<RabbitMqSettings> settings)
+        public RabbitMqService(ILogger<RabbitMqService> logger, IOptions<RabbitMqSettings> settings, IConnectionMultiplexer redis)
         {
             _logger = logger;
             _settings = settings;
             _queueName = _settings.Value.Queue;
+            _redis = redis.GetDatabase();
+            _retryPipeline = new ResiliencePipelineBuilder()
+                .AddRetry(new RetryStrategyOptions
+                {
+                    ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                    MaxRetryAttempts = 3,
+                    Delay = TimeSpan.FromSeconds(1),
+                    BackoffType = DelayBackoffType.Exponential,
+                    UseJitter = true
+                })
+                .Build();
         }
 
         private static RuntimeTypeModel CreateProtobufModel()
@@ -113,33 +133,61 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
             try
             {
+                var dlqQueueName = $"{_queueName}_dlq";
+
+                await _channel!.ExchangeDeclareAsync(DeadLetterExchange, ExchangeType.Fanout, durable: true);
+                await _channel!.QueueDeclareAsync(dlqQueueName, durable: true, exclusive: false, autoDelete: false);
+                await _channel!.QueueBindAsync(dlqQueueName, DeadLetterExchange, routingKey: "");
+
                 await _channel!.ExchangeDeclareAsync(_settings.Value.Exchange, ExchangeType.Fanout, durable: true);
-                await _channel!.QueueDeclareAsync(_queueName, durable: false, exclusive: false, autoDelete: false);
+                await _channel!.QueueDeclareAsync(_queueName, durable: true, exclusive: false, autoDelete: false,
+                    arguments: new Dictionary<string, object?> { ["x-dead-letter-exchange"] = DeadLetterExchange });
                 await _channel!.QueueBindAsync(_queueName, _settings.Value.Exchange, _settings.Value.RoutingKey ?? "");
                 _consumer = new AsyncEventingBasicConsumer(_channel!);
                 _consumer.ReceivedAsync += async (model, ea) =>
                 {
+                    TradeOpportunityModel? position = null;
                     try
                     {
                         using var stream = new MemoryStream(ea.Body.ToArray());
-                        var position = (TradeOpportunityModel)ProtobufModel.Deserialize(
+                        position = (TradeOpportunityModel)ProtobufModel.Deserialize(
                             stream,
                             value: null,
                             type: typeof(TradeOpportunityModel));
 
                         _logger.LogInformation("Received message: {Message}", position.Spread);
 
-                        if (OnMessageReceived != null)
+                        var dedupeKey = $"spread-dedupe:{_queueName}:{position.Guid}:{position.ActionType}";
+                        var claimed = await _redis.StringSetAsync(dedupeKey, "1", DedupeWindow, When.NotExists);
+                        if (!claimed)
                         {
-                            var _ = OnMessageReceived.Invoke(position);
+                            _logger.LogInformation("Duplicate delivery skipped: {DedupeKey}", dedupeKey);
+                            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                            return;
                         }
 
-                        await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        try
+                        {
+                            await _retryPipeline.ExecuteAsync(async _ =>
+                            {
+                                if (OnMessageReceived != null)
+                                {
+                                    await OnMessageReceived.Invoke(position);
+                                }
+                            });
+
+                            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        }
+                        catch (Exception)
+                        {
+                            await _redis.KeyDeleteAsync(dedupeKey);
+                            throw;
+                        }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error processing message");
-                        await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                        _logger.LogError(ex, "Error processing message, sending to dead-letter queue");
+                        await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                     }
                 };
 

@@ -15,7 +15,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
         private readonly IRabbitMqService _rabbitMqService;
         private readonly ILogger<MessageProcessingService> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly SemaphoreSlim _concurrencyLimiter = new(30);
 
         public MessageProcessingService(
             IRabbitMqService rabbitMqService,
@@ -66,45 +65,28 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        private Task ProcessMessageAsync(TradeOpportunityModel possiblePosition)
+        private async Task ProcessMessageAsync(TradeOpportunityModel possiblePosition)
         {
-            _ = Task.Run(async () =>
+            using var scope = _serviceScopeFactory.CreateScope();
+            var spreadService = scope.ServiceProvider.GetRequiredService<ITradeOpportunityService>();
+
+            switch (possiblePosition.ActionType)
             {
-                await _concurrencyLimiter.WaitAsync();
-                try
-                {
-                    using var scope = _serviceScopeFactory.CreateScope();
-                    var spreadService = scope.ServiceProvider.GetRequiredService<ITradeOpportunityService>();
+                case MarketPositionAction.Open:
+                    await spreadService.AddSpread(possiblePosition);
+                    break;
+                case MarketPositionAction.Update:
+                    await spreadService.UpdateSpread(possiblePosition);
+                    break;
+                case MarketPositionAction.Close:
+                    await spreadService.CloseSpread(possiblePosition);
+                    break;
+                default:
+                    _logger.LogWarning("Unknown action type: {ActionType}", possiblePosition.ActionType);
+                    return;
+            }
 
-                    switch (possiblePosition.ActionType)
-                    {
-                        case MarketPositionAction.Open:
-                            await spreadService.AddSpread(possiblePosition);
-                            break;
-                        case MarketPositionAction.Update:
-                            await spreadService.UpdateSpread(possiblePosition);
-                            break;
-                        case MarketPositionAction.Close:
-                            await spreadService.CloseSpread(possiblePosition);
-                            break;
-                        default:
-                            _logger.LogWarning("Unknown action type: {ActionType}", possiblePosition.ActionType);
-                            return;
-                    }
-
-                    _logger.LogInformation("Processed message: {ActionType}", possiblePosition.ActionType);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error processing RabbitMQ message");
-                }
-                finally
-                {
-                    _concurrencyLimiter.Release();
-                }
-            });
-
-            return Task.CompletedTask;
+            _logger.LogInformation("Processed message: {ActionType}", possiblePosition.ActionType);
         }
     }
 }

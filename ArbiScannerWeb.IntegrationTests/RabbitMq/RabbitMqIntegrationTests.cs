@@ -4,6 +4,7 @@ using ArbiScannerWeb.Domain.Models;
 using ArbiScannerWeb.Domain.Models.DTOs;
 using ArbiScannerWeb.IntegrationTests.Fixtures;
 using ArbiScannerWeb.IntegrationTests.Support;
+using ArbiScannerWeb.Infrastructure.Services;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using RabbitMQ.Client;
@@ -106,8 +107,10 @@ public class RabbitMqIntegrationTests(RabbitMqTestFixture fixture)
         await using var connection = await factory.CreateConnectionAsync();
         await using var channel = await connection.CreateChannelAsync();
 
+        await channel.ExchangeDeclareAsync(RabbitMqService.DeadLetterExchange, ExchangeType.Fanout, durable: true);
         await channel.ExchangeDeclareAsync(RabbitMqTestFixture.Exchange, ExchangeType.Fanout, durable: true);
-        await channel.QueueDeclareAsync(RabbitMqTestFixture.Queue, durable: false, exclusive: false, autoDelete: false);
+        await channel.QueueDeclareAsync(RabbitMqTestFixture.Queue, durable: true, exclusive: false, autoDelete: false,
+            arguments: new Dictionary<string, object?> { ["x-dead-letter-exchange"] = RabbitMqService.DeadLetterExchange });
         await channel.QueueBindAsync(RabbitMqTestFixture.Queue, RabbitMqTestFixture.Exchange, routingKey: "");
 
         var body = ProtobufTestSerializer.Serialize(message);

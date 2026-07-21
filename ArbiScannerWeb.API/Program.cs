@@ -2,6 +2,7 @@ using ArbiScannerWeb.Abstractions.Interfaces;
 using ArbiScannerWeb.Domain.Models;
 using ArbiScannerWeb.Infrastructure;
 using ArbiScannerWeb.Infrastructure.DbContext;
+using ArbiScannerWeb.Infrastructure.HealthChecks;
 using ArbiScannerWeb.Infrastructure.Services;
 using ArbiScannerWeb.Infrastructure.Settings;
 using ArbiScannerWeb.Infrastructure.Filters;
@@ -63,6 +64,11 @@ try
         var redisEndpoint = builder.Configuration["Redis:Endpoint"] ?? "localhost:6379";
         return ConnectionMultiplexer.ConnectAsync(redisEndpoint).GetAwaiter().GetResult();
     });
+    builder.Services.AddHealthChecks()
+        .AddCheck<DbContextHealthCheck<AppDbContext>>("postgres")
+        .AddCheck<MongoHealthCheck>("mongo")
+        .AddCheck<RedisHealthCheck>("redis")
+        .AddCheck<RabbitMqHealthCheck>("rabbitmq");
     builder.Services.AddHttpClient("AdminApi", (sp, client) =>
     {
         var config = sp.GetRequiredService<IConfiguration>();
@@ -159,6 +165,7 @@ try
     });
 
     app.MapControllers();
+    app.MapHealthChecks("/health");
 
     await app.RunAsync();
 }

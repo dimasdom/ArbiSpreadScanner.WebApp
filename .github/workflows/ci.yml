@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ArbiScannerWeb.Client/package-lock.json
+
+      - name: Install client dependencies
+        run: npm ci
+        working-directory: ArbiScannerWeb.Client
+
+      - name: Restore
+        run: dotnet restore ArbiScannerWebApp.sln
+
+      - name: Build (with analyzers)
+        run: dotnet build ArbiScannerWebApp.sln --no-restore --configuration Release
+
+      - name: Unit tests
+        run: >
+          dotnet test ArbiScannerWeb.Tests/ArbiScannerWeb.Tests.csproj
+          --no-restore --configuration Release
+          --logger "trx;LogFileName=unit-tests.trx"
+          --results-directory ./TestResults
+
+      - name: Integration tests
+        run: >
+          dotnet test ArbiScannerWeb.IntegrationTests/ArbiScannerWeb.IntegrationTests.csproj
+          --no-restore --configuration Release
+          --logger "trx;LogFileName=integration-tests.trx"
+          --results-directory ./TestResults
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results
+          path: "TestResults/*.trx"
+          reporter: dotnet-trx

@@ -2,6 +2,8 @@
 
 The main user-facing web application for the ArbiScanner platform. It displays real-time cryptocurrency arbitrage spread opportunities discovered by the ArbitrageScanner engine. Users can browse current spreads, view historical ticker data, set alerts, and manage their account — including linking a Telegram account for push notifications.
 
+> This submodule is part of the ArbiScanner monorepo. `docs/completed-work-summary.md`, referenced below, lives in that monorepo's root — not inside this repo.
+
 ---
 
 ## Table of Contents
@@ -14,8 +16,10 @@ The main user-facing web application for the ArbiScanner platform. It displays r
 - [Running Locally](#running-locally)
 - [Environment Variables](#environment-variables)
 - [Error Handling](#error-handling)
+- [Message Processing Correctness](#message-processing-correctness)
 - [Internationalization](#internationalization)
 - [Database Migrations](#database-migrations)
+- [Code Quality & CI](#code-quality--ci)
 - [Testing](#testing)
 - [Docker](#docker)
 - [Project Structure](#project-structure)
@@ -52,8 +56,8 @@ ArbiScannerWeb.API  ──>  ArbiScannerWeb.Infrastructure  ──>  ArbiScanner
 
 **Data flows:**
 
-1. The ArbitrageScanner engine publishes spread events to the `spread_fanout_exchange` RabbitMQ exchange.
-2. `RabbitMqService` in Infrastructure consumes from the `spread_api` queue, processes messages via `MessageProcessingService`, and persists the active spreads to MongoDB (`CurrentSpreads` collection) and ticker history (`SpreadsTicker` collection).
+1. The ArbitrageScanner engine publishes spread events to the durable `spread_fanout_exchange` RabbitMQ exchange with publisher confirms.
+2. `RabbitMqService` in Infrastructure consumes from the durable `spread_api` queue (dead-lettering to `spread_api_dlq` on failure), de-duplicates via a Redis `SET NX` claim keyed on `(queue, Guid, ActionType)`, and only acknowledges a message to the broker *after* `MessageProcessingService` has actually finished persisting it — see [Message Processing Correctness](#message-processing-correctness).
 3. After persistence, `IRealtimeNotifier` (implemented by `SignalRService` in the API project) pushes the updated spread data to all connected browser clients over the `TradeOpportunityHub` SignalR hub.
 4. The React SPA receives real-time events via `@microsoft/signalr` and updates the Redux store.
 5. REST endpoints serve historical data from MongoDB and user/account data from PostgreSQL.
@@ -373,6 +377,21 @@ Note that both the middleware and the filter/error-code helpers live in `ArbiSca
 
 ---
 
+## Message Processing Correctness
+
+`RabbitMqService` (shared with `ArbiScanner.TelegramNotifierApp` via project reference) used to acknowledge a message to the broker as soon as the `OnMessageReceived` handler was *fired*, not once it actually finished — the handler was invoked without being awaited, and the wrapper (`MessageProcessingService`) compounded this by detaching its real work via `Task.Run` and returning an already-completed `Task`. A message could be acked before the Mongo write it represented had even started.
+
+This is now fixed end-to-end:
+
+- The consumer awaits the full handler chain before acking. On failure it retries (Polly, exponential backoff + jitter) before dead-lettering the message (`x-dead-letter-exchange` → `spread_api_dlq`) rather than requeuing forever.
+- Before processing, a Redis `SET NX` claim keyed on `(queue, Guid, ActionType)` — not `Guid` alone, since the same event legitimately recurs across the Open/Update/Close lifecycle — de-duplicates redelivered messages. The claim is deleted if processing ultimately fails, so a later DLQ replay isn't mistaken for a stale duplicate.
+- `MessageProcessingService`'s `SemaphoreSlim(30)` concurrency limiter was removed: it existed to bound concurrent Mongo writes while the broker had already (incorrectly) moved on to the next message. Now that RabbitMQ's default sequential consumer dispatch only advances after the current message is actually acked, at most one message is ever in flight — the limiter had become dead weight.
+- Publisher confirms and durable queues (`spread_api`, `spread_telegram`) with a `spread_dlx` dead-letter exchange were added on the `ArbitrageScanner` publishing side to match.
+
+Proven, not just asserted: `ArbiScannerWeb.IntegrationTests/RabbitMq/RabbitMqIdempotencyTests.cs` publishes the same event twice against a real Testcontainers broker and asserts exactly one ticker write results; `RabbitMqDeadLetterTests.cs` publishes a non-deserializable message and asserts it lands in the dead-letter queue instead of looping forever. See `docs/completed-work-summary.md` (monorepo root) for the full write-up.
+
+---
+
 ## Internationalization
 
 The client is localized into 6 languages via `i18next` + `react-i18next`: English (default), Spanish, German, French, Russian, and Ukrainian.
@@ -428,6 +447,18 @@ dotnet ef migrations remove --project ../ArbiScannerWeb.Infrastructure
 
 ---
 
+## Code Quality & CI
+
+`.editorconfig` and `Directory.Build.props` enable `AnalysisLevel=latest`/`AnalysisMode=Recommended` with `TreatWarningsAsErrors`. `Directory.Build.props` documents the specific pre-existing warning rule IDs grandfathered in — nullable-safety warnings are not among them and fail the build if introduced.
+
+`.github/workflows/ci.yml` runs restore → Node/npm install (the API references the React client as an MSBuild project) → build (with analyzers) → `ArbiScannerWeb.Tests` → `ArbiScannerWeb.IntegrationTests` on every push. The root monorepo also has `.github/workflows/docker-build.yml`, since this API's Dockerfile needs repo-root build context.
+
+### Health checks
+
+`/health` (Postgres, Mongo, Redis, RabbitMQ) is exposed on the same host/port as the REST API, backed by `Microsoft.Extensions.Diagnostics.HealthChecks` and the classes in `ArbiScannerWeb.Infrastructure/HealthChecks/` — several of which (`RedisHealthCheck`, `RabbitMqHealthCheck`, `DbContextHealthCheck<T>`, `DbContextFactoryHealthCheck<T>`) are reused by `ArbiScannerAdminPannel` and `ArbiScanner.TelegramNotifierApp` via the same project reference that shares `RabbitMqService`.
+
+---
+
 ## Testing
 
 Three .NET test projects and a client-side Vitest suite were added alongside the error-handling and test-coverage push described above. None of the three .NET suites are required for `dotnet build` (they're excluded from the "just build" flow only in the sense that a slow/no-Docker environment can skip `IntegrationTests`/`LoadTests`), but all three are part of `ArbiScannerWebApp.sln` and run with `dotnet test`.
@@ -459,6 +490,8 @@ Testcontainers-backed tests using `Microsoft.AspNetCore.Mvc.Testing`'s `WebAppli
 | `Api/ClientLogSmokeTests` | The frontend error-logging endpoint |
 | `AdminPanel/AdminPanelIntegrationTests` | Subscription data sourced from a WireMock-stubbed AdminPanel API |
 | `RabbitMq/RabbitMqIntegrationTests` | `RabbitMqService` consuming real messages from a `Testcontainers.RabbitMq` broker |
+| `RabbitMq/RabbitMqIdempotencyTests` | Publishing the same event twice results in exactly one ticker write — proves the Redis dedupe claim actually prevents reprocessing, not just that it compiles |
+| `RabbitMq/RabbitMqDeadLetterTests` | A non-deserializable ("poison") message lands in `spread_api_dlq` instead of being nacked-and-requeued forever |
 
 ```bash
 dotnet test ArbiScannerWeb.IntegrationTests/ArbiScannerWeb.IntegrationTests.csproj
@@ -567,6 +600,7 @@ ArbiScannerWebApp/
 │   ├── Migrations/                     # EF Core migration files
 │   ├── Repositories/                   # MongoDB and PostgreSQL repositories
 │   ├── Services/                       # RabbitMqService, AccountService, EmailService, etc.
+│   ├── HealthChecks/                   # Redis/RabbitMQ/DbContext(Factory) checks — shared with AdminPanel and TelegramNotifierApp
 │   ├── Settings/                       # JwtOptions, MongoDbSettings, RabbitMqConfiguration
 │   ├── Middleware/                     # ExceptionHandlingMiddleware (see Error Handling)
 │   ├── Filters/                        # ResultStatusCodeFilter

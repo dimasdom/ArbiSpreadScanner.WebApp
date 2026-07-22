@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import type { SerializedError } from '@reduxjs/toolkit';
 import { clearError } from '../../../store/slices/accountSlice';
 import { useRegisterMutation } from '../../../store/services/account';
 import { useAppDispatch } from '../../../hooks';
 import type { IRootStore } from '../../../store/store';
 import { validateEmail, validatePassword } from '../../../utils/validationUtils';
 import { useLocalizedNavigate } from '../../../i18n/routing';
+import { normalizeApiError } from '../../../utils/normalizeApiError';
 
 interface RegisterErrors {
     email: string;
@@ -92,7 +95,7 @@ export function useRegisterForm() {
                 setErrors((prev) => ({ ...prev, server: msg }));
             }
         } catch (err) {
-            const details = err instanceof Error ? err.message : t('errors.networkError');
+            const details = normalizeApiError(err as FetchBaseQueryError | SerializedError | undefined).message;
             setErrors((prev) => ({ ...prev, server: details }));
         } finally {
             setLoading(false);

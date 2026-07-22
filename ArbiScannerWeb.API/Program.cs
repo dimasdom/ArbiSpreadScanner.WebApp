@@ -13,7 +13,6 @@ using ArbiScannerWeb.API.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.SpaServices.Extensions;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;

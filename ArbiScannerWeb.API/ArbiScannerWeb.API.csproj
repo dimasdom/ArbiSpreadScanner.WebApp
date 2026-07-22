@@ -6,9 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>9e633c75-1649-4688-9be1-057098e13494</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <SpaRoot>..\ArbiScannerWeb.Client</SpaRoot>
-    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
-    <SpaProxyServerUrl>https://localhost:12321</SpaProxyServerUrl>
   </PropertyGroup>
 
  <ItemGroup>
@@ -20,8 +17,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
     <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="10.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2">
       <PrivateAssets>all</PrivateAssets>
@@ -52,9 +47,6 @@
   <ItemGroup>
     <ProjectReference Include="..\ArbiScannerWeb.Abstractions\ArbiScannerWeb.Abstractions.csproj" />
     <ProjectReference Include="..\ArbiScannerWeb.Infrastructure\ArbiScannerWeb.Infrastructure.csproj" />
-    <ProjectReference Include="..\ArbiScannerWeb.Client\ArbiScannerWeb.Client.esproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
   </ItemGroup>
 
 </Project>

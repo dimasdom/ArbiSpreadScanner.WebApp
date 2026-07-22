@@ -27,22 +27,19 @@ namespace ArbiScannerWeb.Infrastructure
     {
         private const string AccessTokenCookieName = "arbiscanner.access_token";
 
-        public static void AddDbContext(this IServiceCollection services, string connectionString)
+        public static void AddDbContext(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
-              options.UseNpgsql(connectionString, o => o.EnableRetryOnFailure()),
+              options.UseNpgsql(configuration.GetConnectionString("SqlServer"), o => o.EnableRetryOnFailure()),
               optionsLifetime: ServiceLifetime.Singleton);
             services.AddDbContextFactory<AppDbContext>(options =>
             {
-                options.UseNpgsql(connectionString, o => o.EnableRetryOnFailure());
+                options.UseNpgsql(configuration.GetConnectionString("SqlServer"), o => o.EnableRetryOnFailure());
             });
         }
 
         public static void AddMongoDb(this IServiceCollection services, IConfiguration configuration)
         {
-            var settings = configuration.GetSection(MongoDbSettings.SectionName).Get<MongoDbSettings>()
-                ?? throw new InvalidOperationException("MongoDB options not configured");
-
             BsonSerializer.TryRegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 
             if (!BsonClassMap.IsClassMapRegistered(typeof(TradeOpportunityTickerModel)))
@@ -75,10 +72,11 @@ namespace ArbiScannerWeb.Infrastructure
                 });
             }
 
-            services.AddSingleton(settings);
-            services.AddSingleton<IMongoClient>(_ => new MongoClient(settings.ConnectionString));
+            services.AddSingleton(sp => configuration.GetSection(MongoDbSettings.SectionName).Get<MongoDbSettings>()
+                ?? throw new InvalidOperationException("MongoDB options not configured"));
+            services.AddSingleton<IMongoClient>(sp => new MongoClient(sp.GetRequiredService<MongoDbSettings>().ConnectionString));
             services.AddSingleton<IMongoDatabase>(sp =>
-                sp.GetRequiredService<IMongoClient>().GetDatabase(settings.DatabaseName));
+                sp.GetRequiredService<IMongoClient>().GetDatabase(sp.GetRequiredService<MongoDbSettings>().DatabaseName));
         }
 
         public static void AddServices(this IServiceCollection services) =>
@@ -111,9 +109,6 @@ namespace ArbiScannerWeb.Infrastructure
 
         public static void AddAuthenticationJwt(this IServiceCollection services, IConfiguration configuration)
         {
-            var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() 
-                ?? throw new InvalidOperationException("JWT options not configured");
-
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -121,6 +116,9 @@ namespace ArbiScannerWeb.Infrastructure
             })
             .AddJwtBearer(options =>
             {
+                var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+                    ?? throw new InvalidOperationException("JWT options not configured");
+
                 options.RequireHttpsMetadata = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {

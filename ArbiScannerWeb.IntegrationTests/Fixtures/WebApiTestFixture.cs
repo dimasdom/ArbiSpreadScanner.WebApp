@@ -29,7 +29,7 @@ public sealed class WebApiTestFixture : IAsyncLifetime
         await Task.WhenAll(_postgres.StartAsync(), _redis.StartAsync(), _mongo.StartAsync());
 
         Factory = new CustomWebApplicationFactory(
-            new Dictionary<string, string?>
+            new Dictionary<string, string?>(JwtTestSettings.ConfigOverrides)
             {
                 ["ConnectionStrings:SqlServer"] = _postgres.GetConnectionString(),
                 ["Redis:Endpoint"] = _redis.GetConnectionString(),

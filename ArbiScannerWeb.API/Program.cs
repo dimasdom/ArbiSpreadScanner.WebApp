@@ -37,7 +37,7 @@ try
     builder.Services.AddControllers(opts => opts.Filters.Add<ResultStatusCodeFilter>());
     builder.Services.AddOpenApi();
     builder.Services.AddSignalR();
-    builder.Services.AddDbContext(builder.Configuration.GetConnectionString("SqlServer")!);
+    builder.Services.AddDbContext(builder.Configuration);
     builder.Services.AddIdentity();
     builder.Services.AddJwtOptions(builder.Configuration);
     builder.Services.AddAuthenticationJwt(builder.Configuration);

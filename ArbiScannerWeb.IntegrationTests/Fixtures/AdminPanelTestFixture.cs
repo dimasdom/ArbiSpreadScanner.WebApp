@@ -41,7 +41,7 @@ public sealed class AdminPanelTestFixture : IAsyncLifetime
                 .WithBodyAsJson(new { isSuccess = true, value = new { token = "stub-admin-jwt" } }));
 
         Factory = new CustomWebApplicationFactory(
-            new Dictionary<string, string?>
+            new Dictionary<string, string?>(JwtTestSettings.ConfigOverrides)
             {
                 ["ConnectionStrings:SqlServer"] = _postgres.GetConnectionString(),
                 ["Redis:Endpoint"] = _redis.GetConnectionString(),

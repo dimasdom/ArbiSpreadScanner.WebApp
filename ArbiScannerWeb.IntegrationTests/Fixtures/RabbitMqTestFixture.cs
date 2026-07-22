@@ -45,7 +45,7 @@ public sealed class RabbitMqTestFixture : IAsyncLifetime
         BrokerEndpoint = (_rabbitMq.Hostname, _rabbitMq.GetMappedPublicPort(5672), BrokerUsername, BrokerPassword);
 
         Factory = new CustomWebApplicationFactory(
-            new Dictionary<string, string?>
+            new Dictionary<string, string?>(JwtTestSettings.ConfigOverrides)
             {
                 ["ConnectionStrings:SqlServer"] = _postgres.GetConnectionString(),
                 ["Redis:Endpoint"] = _redis.GetConnectionString(),

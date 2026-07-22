@@ -30,11 +30,11 @@ namespace ArbiScannerWeb.Infrastructure
         public static void AddDbContext(this IServiceCollection services, string connectionString)
         {
             services.AddDbContext<AppDbContext>(options =>
-              options.UseNpgsql(connectionString),
+              options.UseNpgsql(connectionString, o => o.EnableRetryOnFailure()),
               optionsLifetime: ServiceLifetime.Singleton);
             services.AddDbContextFactory<AppDbContext>(options =>
             {
-                options.UseNpgsql(connectionString);
+                options.UseNpgsql(connectionString, o => o.EnableRetryOnFailure());
             });
         }
 

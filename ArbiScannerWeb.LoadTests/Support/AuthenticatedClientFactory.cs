@@ -16,7 +16,7 @@ internal static class AuthenticatedClientFactory
             CookieContainer = new CookieContainer(),
             UseCookies = true,
             PooledConnectionLifetime = TimeSpan.FromMinutes(5),
-            MaxConnectionsPerServer = LoadRunner.MaxConcurrency(settings.RequestsPerSecond)
+            MaxConnectionsPerServer = LoadRunner.MaxConcurrency(settings.QueriesPerMinute)
         };
 
         var client = new HttpClient(handler)

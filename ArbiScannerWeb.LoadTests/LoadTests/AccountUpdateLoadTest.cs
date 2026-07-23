@@ -35,7 +35,7 @@ public class AccountUpdateLoadTest
                 var response = await client.PostAsJsonAsync("/api/Account/UpdateDetails", payload);
                 return response.IsSuccessStatusCode;
             },
-            settings.RequestsPerSecond,
+            settings.QueriesPerMinute,
             settings.Duration);
 
         result.OkCount.Should().BeGreaterThan(0, "at least one request should have succeeded");

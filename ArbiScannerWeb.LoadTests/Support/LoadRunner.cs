@@ -1,40 +1,28 @@
-using System.Diagnostics;
-
 namespace ArbiScannerWeb.LoadTests.Support;
 
 internal sealed record LoadRunResult(int OkCount, int FailCount);
 
 internal static class LoadRunner
 {
-    public static int MaxConcurrency(int requestsPerSecond) => Math.Clamp(requestsPerSecond, 4, 200);
+    public static int MaxConcurrency(int queriesPerMinute) => Math.Clamp((int)Math.Ceiling(queriesPerMinute / 60.0), 4, 200);
 
-    public static async Task<LoadRunResult> RunAsync(Func<Task<bool>> sendRequestAsync, int requestsPerSecond, TimeSpan duration)
+    public static async Task<LoadRunResult> RunAsync(Func<Task<bool>> sendRequestAsync, int queriesPerMinute, TimeSpan duration)
     {
         var okCount = 0;
         var failCount = 0;
-        var maxConcurrency = MaxConcurrency(requestsPerSecond);
+        var maxConcurrency = MaxConcurrency(queriesPerMinute);
         using var throttle = new SemaphoreSlim(maxConcurrency, maxConcurrency);
         using var cts = new CancellationTokenSource(duration);
         var inFlight = new List<Task>();
-        var stopwatch = Stopwatch.StartNew();
+        var interval = TimeSpan.FromSeconds(60.0 / queriesPerMinute);
 
         try
         {
             while (!cts.IsCancellationRequested)
             {
-                var tickStart = stopwatch.Elapsed;
-
-                for (var i = 0; i < requestsPerSecond && !cts.IsCancellationRequested; i++)
-                {
-                    await throttle.WaitAsync(cts.Token).ConfigureAwait(false);
-                    inFlight.Add(SendOneAsync());
-                }
-
-                var remaining = TimeSpan.FromSeconds(1) - (stopwatch.Elapsed - tickStart);
-                if (remaining > TimeSpan.Zero)
-                {
-                    await Task.Delay(remaining, cts.Token).ConfigureAwait(false);
-                }
+                await throttle.WaitAsync(cts.Token).ConfigureAwait(false);
+                inFlight.Add(SendOneAsync());
+                await Task.Delay(interval, cts.Token).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)

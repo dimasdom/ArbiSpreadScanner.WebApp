@@ -11,8 +11,6 @@ public sealed class LoadTestSettings
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(BaseUrl) && !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(Password);
 
-    public int RequestsPerSecond => Math.Max(1, (int)Math.Ceiling(QueriesPerMinute / 60.0));
-
     public static LoadTestSettings FromEnvironment()
     {
         var queriesPerMinute = ReadInt("WEB_LOADTEST_QUERIES_PER_MINUTE", 60);

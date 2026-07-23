@@ -2,8 +2,6 @@
 
 The main user-facing web application for the ArbiScanner platform. It displays real-time cryptocurrency arbitrage spread opportunities discovered by the ArbitrageScanner engine. Users can browse current spreads, view historical ticker data, set alerts, and manage their account — including linking a Telegram account for push notifications.
 
-> This submodule is part of the ArbiScanner monorepo. `docs/completed-work-summary.md`, referenced below, lives in that monorepo's root — not inside this repo.
-
 ---
 
 ## Table of Contents

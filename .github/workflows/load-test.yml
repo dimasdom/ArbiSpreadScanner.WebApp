@@ -1,0 +1,54 @@
+name: Load Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      queries_per_minute:
+        description: "Target queries per minute per endpoint"
+        required: false
+        default: "60"
+      duration_seconds:
+        description: "Duration of sustained load, in seconds"
+        required: false
+        default: "60"
+  schedule:
+    # Nightly smoke run against the configured environment, at low default load.
+    - cron: "0 3 * * *"
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    environment: load-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore ArbiScannerWeb.LoadTests/ArbiScannerWeb.LoadTests.csproj
+
+      - name: Run load tests
+        env:
+          WEB_LOADTEST_BASE_URL: ${{ secrets.WEB_LOADTEST_BASE_URL }}
+          WEB_LOADTEST_EMAIL: ${{ secrets.WEB_LOADTEST_EMAIL }}
+          WEB_LOADTEST_PASSWORD: ${{ secrets.WEB_LOADTEST_PASSWORD }}
+          WEB_LOADTEST_QUERIES_PER_MINUTE: ${{ inputs.queries_per_minute || '60' }}
+          WEB_LOADTEST_DURATION_SECONDS: ${{ inputs.duration_seconds || '60' }}
+        run: >
+          dotnet test ArbiScannerWeb.LoadTests/ArbiScannerWeb.LoadTests.csproj
+          --configuration Release
+          --logger "trx;LogFileName=load-tests.trx"
+          --results-directory ./TestResults
+
+      - name: Publish load test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Load Test Results
+          path: "TestResults/*.trx"
+          reporter: dotnet-trx

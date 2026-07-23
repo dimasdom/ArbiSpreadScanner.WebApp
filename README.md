@@ -451,6 +451,8 @@ dotnet ef migrations remove --project ../ArbiScannerWeb.Infrastructure
 
 `.github/workflows/ci.yml` runs restore → Node/npm install (the API references the React client as an MSBuild project) → build (with analyzers) → `ArbiScannerWeb.Tests` → `ArbiScannerWeb.IntegrationTests` on every push. The root monorepo also has `.github/workflows/docker-build.yml`, since this API's Dockerfile needs repo-root build context.
 
+`.github/workflows/load-test.yml` runs `ArbiScannerWeb.LoadTests` separately (`workflow_dispatch` with `queries_per_minute`/`duration_seconds` inputs, plus a nightly cron at defaults), gated behind a `load-test` GitHub Environment holding the `WEB_LOADTEST_BASE_URL`/`_EMAIL`/`_PASSWORD` secrets — see [ArbiScannerWeb.LoadTests](#arbiscannerwebloadtests) below.
+
 ### Health checks
 
 `/health` (Postgres, Mongo, Redis, RabbitMQ) is exposed on the same host/port as the REST API, backed by `Microsoft.Extensions.Diagnostics.HealthChecks` and the classes in `ArbiScannerWeb.Infrastructure/HealthChecks/` — several of which (`RedisHealthCheck`, `RabbitMqHealthCheck`, `DbContextHealthCheck<T>`, `DbContextFactoryHealthCheck<T>`) are reused by `ArbiScannerAdminPannel` and `ArbiScanner.TelegramNotifierApp` via the same project reference that shares `RabbitMqService`.
@@ -501,7 +503,16 @@ A separate, not-part-of-the-normal-test-run project (per the monorepo's CLAUDE.m
 
 - `LoadTests/AccountUpdateLoadTest`, `LoadTests/SpreadFetchLoadTest` — sustained-throughput smoke tests against a running instance of the API
 
-Uses `Xunit.SkippableFact` so these can be skipped by default and only run explicitly against an environment configured for load testing.
+Uses `Xunit.SkippableFact` so these can be skipped by default and only run explicitly against an environment configured for load testing, via these environment variables:
+
+| Variable | Purpose |
+|---|---|
+| `WEB_LOADTEST_BASE_URL` | Target instance, e.g. `https://www.arbiscannerwebapp.site` (no trailing slash/path) |
+| `WEB_LOADTEST_EMAIL` / `WEB_LOADTEST_PASSWORD` | A real, email-confirmed account on that instance |
+| `WEB_LOADTEST_QUERIES_PER_MINUTE` | Target rate per endpoint (default `60`) |
+| `WEB_LOADTEST_DURATION_SECONDS` | Sustained duration (default `60`) |
+
+`LoadRunner` paces strictly off queries-per-minute — one request every `60 / QueriesPerMinute` seconds — rather than a per-second batch with a 1-req/sec floor, since the latter silently sent 6x the configured rate for any QPM under 60 and tripped the target's rate limiter. `xunit.runner.json` disables collection parallelism so the two tests run sequentially instead of racing on the same login session (both authenticate as the same account; concurrent logins were invalidating each other's cookie mid-run).
 
 ### Client-side (Vitest)
 

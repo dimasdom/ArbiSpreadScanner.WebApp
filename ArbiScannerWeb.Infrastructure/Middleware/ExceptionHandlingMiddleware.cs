@@ -43,7 +43,9 @@ public class ExceptionHandlingMiddleware
                 reasons = Array.Empty<object>()
             };
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+            await context.Response.WriteAsync(
+                JsonSerializer.Serialize(payload, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
+                context.RequestAborted);
         }
     }
 }

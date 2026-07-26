@@ -171,7 +171,7 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "Host terminated unexpectedly");
-    throw;
+    throw new InvalidOperationException("Host terminated unexpectedly", ex);
 }
 finally
 {
@@ -187,4 +187,7 @@ static string GetClientIpAddress(HttpContext context)
     return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 }
 
-public partial class Program { }
+public partial class Program
+{
+    protected Program() { }
+}

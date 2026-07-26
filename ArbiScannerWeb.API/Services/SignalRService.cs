@@ -26,7 +26,6 @@ namespace ArbiScannerWeb.API.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to send message to group {GroupName}", group);
-                throw;
             }
         }
     }

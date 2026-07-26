@@ -135,14 +135,14 @@ namespace ArbiScannerWeb.Infrastructure.Services
             {
                 var dlqQueueName = $"{_queueName}_dlq";
 
-                await _channel!.ExchangeDeclareAsync(DeadLetterExchange, ExchangeType.Fanout, durable: true);
-                await _channel!.QueueDeclareAsync(dlqQueueName, durable: true, exclusive: false, autoDelete: false);
-                await _channel!.QueueBindAsync(dlqQueueName, DeadLetterExchange, routingKey: "");
+                await _channel!.ExchangeDeclareAsync(DeadLetterExchange, ExchangeType.Fanout, durable: true, cancellationToken: cancellationToken);
+                await _channel!.QueueDeclareAsync(dlqQueueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: cancellationToken);
+                await _channel!.QueueBindAsync(dlqQueueName, DeadLetterExchange, routingKey: "", cancellationToken: cancellationToken);
 
-                await _channel!.ExchangeDeclareAsync(_settings.Value.Exchange, ExchangeType.Fanout, durable: true);
+                await _channel!.ExchangeDeclareAsync(_settings.Value.Exchange, ExchangeType.Fanout, durable: true, cancellationToken: cancellationToken);
                 await _channel!.QueueDeclareAsync(_queueName, durable: true, exclusive: false, autoDelete: false,
-                    arguments: new Dictionary<string, object?> { ["x-dead-letter-exchange"] = DeadLetterExchange });
-                await _channel!.QueueBindAsync(_queueName, _settings.Value.Exchange, _settings.Value.RoutingKey ?? "");
+                    arguments: new Dictionary<string, object?> { ["x-dead-letter-exchange"] = DeadLetterExchange }, cancellationToken: cancellationToken);
+                await _channel!.QueueBindAsync(_queueName, _settings.Value.Exchange, _settings.Value.RoutingKey ?? "", cancellationToken: cancellationToken);
                 _consumer = new AsyncEventingBasicConsumer(_channel!);
                 _consumer.ReceivedAsync += async (model, ea) =>
                 {
@@ -162,7 +162,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                         if (!claimed)
                         {
                             _logger.LogInformation("Duplicate delivery skipped: {DedupeKey}", dedupeKey);
-                            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: CancellationToken.None);
                             return;
                         }
 
@@ -176,7 +176,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                                 }
                             });
 
-                            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: CancellationToken.None);
                         }
                         catch (Exception)
                         {
@@ -187,11 +187,11 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error processing message, sending to dead-letter queue");
-                        await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                        await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, cancellationToken: CancellationToken.None);
                     }
                 };
 
-                await _channel!.BasicConsumeAsync(queue: _queueName, autoAck: false, consumer: _consumer);
+                await _channel!.BasicConsumeAsync(queue: _queueName, autoAck: false, consumer: _consumer, cancellationToken: cancellationToken);
                 _isConsuming = true;
 
                 _logger.LogInformation("Started consuming messages from queue: {QueueName}", _queueName);
@@ -212,7 +212,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             try
             {
                 if (_channel != null && _consumer?.ConsumerTags?.FirstOrDefault() is string tag)
-                    await _channel.BasicCancelAsync(tag);
+                    await _channel.BasicCancelAsync(tag, cancellationToken: CancellationToken.None);
                 _isConsuming = false;
                 _logger.LogInformation("Stopped consuming messages");
             }

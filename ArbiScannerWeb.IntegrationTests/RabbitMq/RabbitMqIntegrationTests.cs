@@ -58,11 +58,11 @@ public class RabbitMqIntegrationTests(RabbitMqTestFixture fixture)
         var authedClient = await RegisterConfirmAndLoginAsync(client);
 
         var deadline = DateTime.UtcNow.AddSeconds(20);
-        ApiResult<TradeOpportunityDetailsDTO>? result = null;
+        ApiResult<TradeOpportunityDetailsDto>? result = null;
         while (DateTime.UtcNow < deadline)
         {
             var response = await authedClient.GetAsync($"/api/TradeOpportunity/GetSpreadInfo/{message.Guid}");
-            result = await response.Content.ReadFromJsonAsync<ApiResult<TradeOpportunityDetailsDTO>>(JsonOptions.CaseInsensitive);
+            result = await response.Content.ReadFromJsonAsync<ApiResult<TradeOpportunityDetailsDto>>(JsonOptions.CaseInsensitive);
             if (result?.IsSuccess == true)
                 break;
 
@@ -80,16 +80,16 @@ public class RabbitMqIntegrationTests(RabbitMqTestFixture fixture)
         var email = $"integration-{Guid.NewGuid():N}@example.com";
         const string password = "IntegrationTest@123";
 
-        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDTO { Login = email, Password = password });
+        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDto { Login = email, Password = password });
         var registerResult = await registerResponse.Content.ReadFromJsonAsync<ApiResult<EmailConfirmationCodes>>(JsonOptions.CaseInsensitive);
 
-        await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDTO
+        await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDto
         {
             EmailConfirmToken = registerResult!.Value!.Id.ToString(),
             Token = registerResult.Value.Code
         });
 
-        await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDTO { Login = email, Password = password });
+        await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDto { Login = email, Password = password });
 
         return client;
     }

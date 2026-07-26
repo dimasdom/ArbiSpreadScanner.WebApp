@@ -19,8 +19,8 @@ internal sealed class FakeSubscriptionService : ISubscriptionService
     public Task<Result<UserSubscriptionPayment>> CreatePaymentAsync(int subscriptionId)
         => Task.FromResult(Result.Ok(new UserSubscriptionPayment()));
 
-    public Task<Result<UserSubscriptionModelDTO>> GetUserActiveSubscriptionsAsync()
-        => Task.FromResult(Result.Ok(new UserSubscriptionModelDTO { IsActive = true }));
+    public Task<Result<UserSubscriptionModelDto>> GetUserActiveSubscriptionsAsync()
+        => Task.FromResult(Result.Ok(new UserSubscriptionModelDto { IsActive = true }));
 
     public Task<Result<UserSubscriptionPayment>> GetUserActivePaymentsAsync()
         => Task.FromResult(Result.Ok(new UserSubscriptionPayment()));

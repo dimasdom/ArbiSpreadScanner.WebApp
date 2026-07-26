@@ -14,7 +14,7 @@ namespace ArbiScannerWeb.Abstractions.Interfaces
         Task<Result<UserSubscriptionPayment>> GetPaymentStatusAsync(int userSubscriptionPaymentId);
         Task<Result<SubscriptionModel>> GetSubscriptionDetailsAsync(int subscriptionId);
         Task<Result<UserSubscriptionPayment>> CreatePaymentAsync(int subscriptionId);
-        Task<Result<UserSubscriptionModelDTO>> GetUserActiveSubscriptionsAsync();
+        Task<Result<UserSubscriptionModelDto>> GetUserActiveSubscriptionsAsync();
         Task<Result<UserSubscriptionPayment>> GetUserActivePaymentsAsync();
         Task<Result> CancelPayment(int userSubscriptionPaymentId);
         Task<bool> CheckIfUserHasActiveSubscriptionAsync();

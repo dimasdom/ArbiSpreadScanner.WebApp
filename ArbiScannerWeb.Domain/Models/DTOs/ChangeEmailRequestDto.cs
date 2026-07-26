@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace ArbiScannerWeb.Domain.Models.DTOs
 {
-    public class AccountLoginDTO
+    public class ChangeEmailRequestDto
     {
-        public required string Login { get; set; }
-        public required string Password { get; set; }
+        public string Email { get; set; } = string.Empty;
     }
 }

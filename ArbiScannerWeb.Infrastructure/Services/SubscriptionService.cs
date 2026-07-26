@@ -95,26 +95,26 @@ namespace ArbiScannerWeb.Infrastructure.Services
             return Result.Fail<UserSubscriptionPayment>(res.Errors);
         }
 
-        public async Task<Result<UserSubscriptionModelDTO>> GetUserActiveSubscriptionsAsync()
+        public async Task<Result<UserSubscriptionModelDto>> GetUserActiveSubscriptionsAsync()
         {
             
             var userId = _httpContextAccessor.HttpContext?.User?.Identity?.Name;
             if (userId is null)
-                return Result.Fail<UserSubscriptionModelDTO>("User is not authenticated.");
+                return Result.Fail<UserSubscriptionModelDto>("User is not authenticated.");
             var user = await _redis.StringGetAsync($"userSubscription:{userId}");
             if (!user.IsNullOrEmpty)
             {
                 var userSubDto = Newtonsoft.Json.JsonConvert.DeserializeObject<UserSubscriptionModel>((string)user!);
                 if (userSubDto != null && userSubDto.EndDate > DateTime.UtcNow)
                 {
-                    return Result.Ok(new UserSubscriptionModelDTO(userSubDto));
+                    return Result.Ok(new UserSubscriptionModelDto(userSubDto));
                 }
             }
             var res = await _adminService.GetUserActiveSubscriptionsAsync(userId);
             if (res.IsSuccess)
             {
-                var userSubDto = res.Value is not null ? new UserSubscriptionModelDTO(res.Value)
-                : new UserSubscriptionModelDTO()
+                var userSubDto = res.Value is not null ? new UserSubscriptionModelDto(res.Value)
+                : new UserSubscriptionModelDto()
                 {
                     IsActive = false
                 };
@@ -129,7 +129,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 return Result.Ok(userSubDto);
             }
         
-            return Result.Fail<UserSubscriptionModelDTO>(res.Errors);
+            return Result.Fail<UserSubscriptionModelDto>(res.Errors);
         }
         
     }

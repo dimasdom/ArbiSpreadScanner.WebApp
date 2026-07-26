@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ArbiScannerWeb.Domain.Models.DTOs
 {
-    public class ChangePasswordDTO
+    public class ChangePasswordDto
     {
         public required string Token { get; set; }
         public required string NewPassword { get; set; }

@@ -11,13 +11,13 @@ namespace ArbiScannerWeb.Abstractions.Interfaces
 {
     public interface IAccountService
     {
-        public Task<Result<AccountDto>> Login(AccountLoginDTO model);
-        public Task<Result<EmailConfirmationCodes>> RegisterUser(AccountLoginDTO model);
+        public Task<Result<AccountDto>> Login(AccountLoginDto model);
+        public Task<Result<EmailConfirmationCodes>> RegisterUser(AccountLoginDto model);
         public Task<Result<EmailConfirmationCodes>> SendConfirmationEmail(string email, AccountModel account);
         public Task<Result> CheckConfirmationCodeEmail(string emailConfirmId, string code);
         public Task<Result> SendForgetPasswordCode(string email);
-        public Task<Result> ResetPassword(ChangePasswordDTO changePasswordDTO);
-        public Task<Result<AccountEditDTO>> UpdateDetails(AccountEditDTO account);
+        public Task<Result> ResetPassword(ChangePasswordDto changePasswordDTO);
+        public Task<Result<AccountEditDto>> UpdateDetails(AccountEditDto account);
         public Task<Result<EmailConfirmationCodes>> ChangeEmailRequest(string newEmail);
         public Task<Result> ResendEmailConfirmation(string EmailConfirmToken);
         public Task<Result<AccountDto>> GetUserData();

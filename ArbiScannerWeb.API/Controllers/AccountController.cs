@@ -31,7 +31,7 @@ namespace ArbiScannerWeb.API.Controllers
 
         [AllowAnonymous]
         [HttpPost("Login")]
-        public async Task<ActionResult<Result<AccountDto>>> Login([FromBody] AccountLoginDTO model)
+        public async Task<ActionResult<Result<AccountDto>>> Login([FromBody] AccountLoginDto model)
         {
             var result = await _accountService.Login(model);
             if (result.IsSuccess && result.Value.EmailConfirmed)
@@ -45,45 +45,45 @@ namespace ArbiScannerWeb.API.Controllers
 
         [AllowAnonymous]
         [HttpPost("Register")]
-        public async Task<ActionResult<Result<EmailConfirmationCodes>>> RegisterUser([FromBody] AccountLoginDTO model)
+        public async Task<ActionResult<Result<EmailConfirmationCodes>>> RegisterUser([FromBody] AccountLoginDto model)
         {
             return (await _accountService.RegisterUser(model)).ToSerializable();
         }
 
         [AllowAnonymous]
         [HttpPost("ForgotPassword")]
-        public async Task<ActionResult<Result>> SendForgetPasswordCode([FromBody] ForgotPasswordDTO forgotPasswordDTO)
+        public async Task<ActionResult<Result>> SendForgetPasswordCode([FromBody] ForgotPasswordDto forgotPasswordDTO)
         {
             return (await _accountService.SendForgetPasswordCode(forgotPasswordDTO.Email)).ToSerializable();
         }
 
         [AllowAnonymous]
         [HttpPost("ResetPassword")]
-        public async Task<ActionResult<Result>> ResetPassword([FromBody] ChangePasswordDTO changePasswordDTO)
+        public async Task<ActionResult<Result>> ResetPassword([FromBody] ChangePasswordDto changePasswordDTO)
         {
             return (await _accountService.ResetPassword(changePasswordDTO)).ToSerializable();
         }
         [Authorize]
         [HttpPost("UpdateDetails")]
-        public async Task<ActionResult<Result<AccountEditDTO>>> UpdateDetails([FromBody] AccountEditDTO account)
+        public async Task<ActionResult<Result<AccountEditDto>>> UpdateDetails([FromBody] AccountEditDto account)
         {
             return (await _accountService.UpdateDetails(account)).ToSerializable();
         }
 
         [AllowAnonymous]
         [HttpPost("ConfirmEmail")]
-        public async Task<ActionResult<Result>> ConfirmEmail([FromBody] ConfirmEmailDTO emailConfirmationDTO)
+        public async Task<ActionResult<Result>> ConfirmEmail([FromBody] ConfirmEmailDto emailConfirmationDTO)
         {
             return (await _accountService.CheckConfirmationCodeEmail(emailConfirmationDTO.EmailConfirmToken,emailConfirmationDTO.Token)).ToSerializable();
         }
         [HttpPost("ChangeEmailRequest")]
-        public async Task<ActionResult<Result<EmailConfirmationCodes>>> ChangeEmailRequest([FromBody] ChangeEmailRequestDTO changeEmailRequestDTO)
+        public async Task<ActionResult<Result<EmailConfirmationCodes>>> ChangeEmailRequest([FromBody] ChangeEmailRequestDto changeEmailRequestDTO)
         {
             return (await _accountService.ChangeEmailRequest(changeEmailRequestDTO.Email)).ToSerializable();
         }
         [AllowAnonymous]
         [HttpPost("ResendEmailConfirmation")]
-        public async Task<ActionResult<Result>> ResendEmailConfirmation([FromBody] ConfirmEmailDTO emailConfirmationDTO)
+        public async Task<ActionResult<Result>> ResendEmailConfirmation([FromBody] ConfirmEmailDto emailConfirmationDTO)
 
         {
             return (await _accountService.ResendEmailConfirmation(emailConfirmationDTO.EmailConfirmToken)).ToSerializable();

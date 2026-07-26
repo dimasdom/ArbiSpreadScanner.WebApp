@@ -30,7 +30,7 @@ public class TradeOpportunityControllerTests(WebApiTestFixture fixture)
 
         var response = await client.GetAsync("/api/TradeOpportunity/GetSpreadsForUser");
 
-        var result = await response.Content.ReadFromJsonAsync<ApiResult<List<TradeOpportunityDetailsDTO>>>(JsonOptions.CaseInsensitive);
+        var result = await response.Content.ReadFromJsonAsync<ApiResult<List<TradeOpportunityDetailsDto>>>(JsonOptions.CaseInsensitive);
         result!.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEmpty();
     }
@@ -49,7 +49,7 @@ public class TradeOpportunityControllerTests(WebApiTestFixture fixture)
 
         var response = await client.GetAsync($"/api/TradeOpportunity/GetSpreadInfo/{spread.Guid}");
 
-        var result = await response.Content.ReadFromJsonAsync<ApiResult<TradeOpportunityDetailsDTO>>(JsonOptions.CaseInsensitive);
+        var result = await response.Content.ReadFromJsonAsync<ApiResult<TradeOpportunityDetailsDto>>(JsonOptions.CaseInsensitive);
         result!.IsSuccess.Should().BeTrue();
         result.Value!.PositionModel.Guid.Should().Be(spread.Guid);
         result.Value.PositionModel.Symbol.Should().Be(spread.Symbol);
@@ -62,7 +62,7 @@ public class TradeOpportunityControllerTests(WebApiTestFixture fixture)
 
         var response = await client.GetAsync($"/api/TradeOpportunity/GetSpreadInfo/{Guid.NewGuid()}");
 
-        var result = await response.Content.ReadFromJsonAsync<ApiResult<TradeOpportunityDetailsDTO>>(JsonOptions.CaseInsensitive);
+        var result = await response.Content.ReadFromJsonAsync<ApiResult<TradeOpportunityDetailsDto>>(JsonOptions.CaseInsensitive);
         result!.IsSuccess.Should().BeFalse();
     }
 
@@ -72,16 +72,16 @@ public class TradeOpportunityControllerTests(WebApiTestFixture fixture)
         var email = $"integration-{Guid.NewGuid():N}@example.com";
         const string password = "IntegrationTest@123";
 
-        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDTO { Login = email, Password = password });
+        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDto { Login = email, Password = password });
         var registerResult = await registerResponse.Content.ReadFromJsonAsync<ApiResult<EmailConfirmationCodes>>(JsonOptions.CaseInsensitive);
 
-        await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDTO
+        await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDto
         {
             EmailConfirmToken = registerResult!.Value!.Id.ToString(),
             Token = registerResult.Value.Code
         });
 
-        await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDTO { Login = email, Password = password });
+        await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDto { Login = email, Password = password });
 
         return client;
     }

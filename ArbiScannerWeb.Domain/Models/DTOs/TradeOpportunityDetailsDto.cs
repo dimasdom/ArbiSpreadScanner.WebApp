@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ArbiScannerWeb.Domain.Models.DTOs
 {
-    public class TradeOpportunityDetailsDTO
+    public class TradeOpportunityDetailsDto
     {
         public required TradeOpportunityModel PositionModel { get; set; }
 

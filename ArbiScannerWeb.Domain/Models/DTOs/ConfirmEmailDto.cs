@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace ArbiScannerWeb.Domain.Models.DTOs
 {
-    public class ForgotPasswordDTO
+    public class ConfirmEmailDto
     {
-        public string Email { get; set; } = default!;
+        public string EmailConfirmToken { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
     }
 }

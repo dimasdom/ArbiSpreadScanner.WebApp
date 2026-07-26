@@ -94,11 +94,11 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        public async Task<Result<TradeOpportunityDetailsDTO>> GetSpreadInfo(string id)
+        public async Task<Result<TradeOpportunityDetailsDto>> GetSpreadInfo(string id)
         {
             if (!await _subscriptionService.CheckIfUserHasActiveSubscriptionAsync())
             {
-                return Result.Fail<TradeOpportunityDetailsDTO>(TypedErrors.Forbidden("No active subscription"));
+                return Result.Fail<TradeOpportunityDetailsDto>(TypedErrors.Forbidden("No active subscription"));
             }
             try
             {
@@ -112,7 +112,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     var tickers = new List<TradeOpportunityTickerModel> { latestTicker };
                     tickers.AddRange(remaining);
 
-                    var dto = new TradeOpportunityDetailsDTO { PositionModel = spread, Tickers = tickers, GroupName = GetGroupNameBasedOnPosition(spread) };
+                    var dto = new TradeOpportunityDetailsDto { PositionModel = spread, Tickers = tickers, GroupName = GetGroupNameBasedOnPosition(spread) };
                     await EnrichWithExchangeLinksAsync(dto);
                     return Result.Ok(dto);
                 }
@@ -122,14 +122,14 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 _logger.LogError(ex, "Failed to get spread info for {Id}", id);
                 return Result.Fail(ex.Message);
             }
-            return Result.Fail<TradeOpportunityDetailsDTO>(TypedErrors.NotFound("Spread not found"));
+            return Result.Fail<TradeOpportunityDetailsDto>(TypedErrors.NotFound("Spread not found"));
         }
 
-        public async Task<Result<List<TradeOpportunityDetailsDTO>>> GetSpreadsForUser(string userId)
+        public async Task<Result<List<TradeOpportunityDetailsDto>>> GetSpreadsForUser(string userId)
         {
             if (!await _subscriptionService.CheckIfUserHasActiveSubscriptionAsync())
             {
-                return Result.Fail<List<TradeOpportunityDetailsDTO>>(TypedErrors.Forbidden("No active subscription"));
+                return Result.Fail<List<TradeOpportunityDetailsDto>>(TypedErrors.Forbidden("No active subscription"));
             }
             try
             {
@@ -140,11 +140,11 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 {
                     var user = await context.Users.FindAsync(userId);
                     if (user == null)
-                        return Result.Fail<List<TradeOpportunityDetailsDTO>>(TypedErrors.NotFound("User not found"));
+                        return Result.Fail<List<TradeOpportunityDetailsDto>>(TypedErrors.NotFound("User not found"));
 
                     var userSettings = await context.UsersSettings.FirstOrDefaultAsync(x => x.Id == user.UserSettingsId);
                     if (userSettings == null)
-                        return Result.Fail<List<TradeOpportunityDetailsDTO>>(TypedErrors.NotFound("Telegram user not found"));
+                        return Result.Fail<List<TradeOpportunityDetailsDto>>(TypedErrors.NotFound("Telegram user not found"));
 
                     userSettingsId = user.UserSettingsId;
                     futuresSpread = userSettings.FuturesSpread;
@@ -158,14 +158,14 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 if (spotSpread) spreadTypes.Add(SpreadType.Spot);
 
                 if (spreadTypes.Count == 0)
-                    return Result.Ok(new List<TradeOpportunityDetailsDTO>());
+                    return Result.Ok(new List<TradeOpportunityDetailsDto>());
 
                 var tasks = spreadTypes.Select(type => GetCurrentSpreadsForUser(userSettingsId, type)).ToList();
                 var results = await Task.WhenAll(tasks);
 
                 var failures = results.Where(r => r.IsFailed).ToList();
                 if (failures.Count == results.Length)
-                    return Result.Fail<List<TradeOpportunityDetailsDTO>>(failures[0].Errors[0]);
+                    return Result.Fail<List<TradeOpportunityDetailsDto>>(failures[0].Errors[0]);
 
                 var combined = results
                     .Where(r => r.IsSuccess)
@@ -173,7 +173,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     .ToList();
 
                 var dtoList = combined
-                    .Select(x => new TradeOpportunityDetailsDTO
+                    .Select(x => new TradeOpportunityDetailsDto
                     {
                         PositionModel = x,
                         Tickers = new List<TradeOpportunityTickerModel>(),
@@ -242,13 +242,13 @@ namespace ArbiScannerWeb.Infrastructure.Services
         private static string GetGroupNameBasedOnPosition(TradeOpportunityModel model)
             => model.Guid.ToString().ToLowerInvariant();
 
-        private async Task EnrichWithExchangeLinksAsync(TradeOpportunityDetailsDTO dto)
+        private async Task EnrichWithExchangeLinksAsync(TradeOpportunityDetailsDto dto)
         {
             var allLinks = await _exchangeLinkRepo.GetAllAsync();
             PopulateExchangeLinks(dto, allLinks);
         }
 
-        private static void PopulateExchangeLinks(TradeOpportunityDetailsDTO dto, List<ExchangeLinkModel> allLinks)
+        private static void PopulateExchangeLinks(TradeOpportunityDetailsDto dto, List<ExchangeLinkModel> allLinks)
         {
             var model = dto.PositionModel;
             var symbol = model.Symbol;

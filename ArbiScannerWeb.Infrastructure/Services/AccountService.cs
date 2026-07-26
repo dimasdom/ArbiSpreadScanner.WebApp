@@ -69,7 +69,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<Result<AccountDto>> Login(AccountLoginDTO model)
+        public async Task<Result<AccountDto>> Login(AccountLoginDto model)
         {
             var User = await _userManager.FindByNameAsync(model.Login);
             if (User != null)
@@ -160,7 +160,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             return password.ToString();
         }
 
-        public async Task<Result<EmailConfirmationCodes>> RegisterUser(AccountLoginDTO model)
+        public async Task<Result<EmailConfirmationCodes>> RegisterUser(AccountLoginDto model)
         {
             try
             {
@@ -264,7 +264,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             return Result.Ok();
         }
 
-        public async Task<Result> ResetPassword(ChangePasswordDTO changePasswordDTO)
+        public async Task<Result> ResetPassword(ChangePasswordDto changePasswordDTO)
         {
             var ForgetPasswordRequest = await _accountRepository.GetForgetPasswordRequestByIdAsync(Guid.Parse(changePasswordDTO.Token));
             if(ForgetPasswordRequest == null)
@@ -287,7 +287,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        public async Task<Result<AccountEditDTO>> UpdateDetails(AccountEditDTO accountDTO)
+        public async Task<Result<AccountEditDto>> UpdateDetails(AccountEditDto accountDTO)
         {
             var userIdString = _httpContextAccessor.HttpContext?.User?.Identity?.Name;
             if (string.IsNullOrEmpty(userIdString))
@@ -320,7 +320,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             return Result.Ok(accountDTO);
         }
 
-        private void MapAccountEditDTOToAccountModel(AccountEditDTO dto, AccountModel model)
+        private void MapAccountEditDTOToAccountModel(AccountEditDto dto, AccountModel model)
         {
             model.UserSettings.SpreadSize = dto.SpreadSize;
             model.UserSettings.PositionSize = dto.PositionSize;

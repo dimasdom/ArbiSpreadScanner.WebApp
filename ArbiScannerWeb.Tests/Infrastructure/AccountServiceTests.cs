@@ -168,7 +168,7 @@ public class AccountServiceTests
         _repo.Setup(r => r.GetForgetPasswordRequestByIdAsync(tokenId))
             .ReturnsAsync((ForgetPasswordRequest?)null);
 
-        var result = await _sut.ResetPassword(new ChangePasswordDTO
+        var result = await _sut.ResetPassword(new ChangePasswordDto
         {
             Token = tokenId.ToString(),
             NewPassword = "NewPass1!"
@@ -185,7 +185,7 @@ public class AccountServiceTests
             .ReturnsAsync(new ForgetPasswordRequest { Id = tokenId, UserId = "u1", Token = "identity-tok" });
         _userManager.Setup(m => m.FindByIdAsync("u1")).ReturnsAsync((AccountModel?)null);
 
-        var result = await _sut.ResetPassword(new ChangePasswordDTO
+        var result = await _sut.ResetPassword(new ChangePasswordDto
         {
             Token = tokenId.ToString(),
             NewPassword = "NewPass1!"
@@ -205,7 +205,7 @@ public class AccountServiceTests
         _userManager.Setup(m => m.ResetPasswordAsync(user, "identity-tok", "NewPass1!"))
             .ReturnsAsync(IdentityResult.Success);
 
-        var result = await _sut.ResetPassword(new ChangePasswordDTO
+        var result = await _sut.ResetPassword(new ChangePasswordDto
         {
             Token = tokenId.ToString(),
             NewPassword = "NewPass1!"

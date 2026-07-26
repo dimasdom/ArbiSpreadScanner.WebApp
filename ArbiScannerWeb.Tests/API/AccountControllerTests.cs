@@ -35,7 +35,7 @@ public class AccountControllerTests
     [Fact]
     public async Task Login_SuccessWithConfirmedEmail_SetsAuthCookies()
     {
-        _accountService.Setup(s => s.Login(It.IsAny<AccountLoginDTO>()))
+        _accountService.Setup(s => s.Login(It.IsAny<AccountLoginDto>()))
             .ReturnsAsync(Result.Ok(new AccountDto
             {
                 EmailConfirmed = true,
@@ -46,7 +46,7 @@ public class AccountControllerTests
         var httpContext = new DefaultHttpContext();
         var ctrl = CreateController(httpContext);
 
-        await ctrl.Login(new AccountLoginDTO { Login = "a@b.com", Password = "pass" });
+        await ctrl.Login(new AccountLoginDto { Login = "a@b.com", Password = "pass" });
 
         var setCookie = string.Join("|", httpContext.Response.Headers["Set-Cookie"].ToArray());
         setCookie.Should().Contain("arbiscanner.access_token");
@@ -56,7 +56,7 @@ public class AccountControllerTests
     [Fact]
     public async Task Login_SuccessButEmailUnconfirmed_DoesNotSetAuthCookies()
     {
-        _accountService.Setup(s => s.Login(It.IsAny<AccountLoginDTO>()))
+        _accountService.Setup(s => s.Login(It.IsAny<AccountLoginDto>()))
             .ReturnsAsync(Result.Ok(new AccountDto
             {
                 EmailConfirmed = false,
@@ -66,7 +66,7 @@ public class AccountControllerTests
         var httpContext = new DefaultHttpContext();
         var ctrl = CreateController(httpContext);
 
-        await ctrl.Login(new AccountLoginDTO { Login = "a@b.com", Password = "pass" });
+        await ctrl.Login(new AccountLoginDto { Login = "a@b.com", Password = "pass" });
 
         httpContext.Response.Headers.ContainsKey("Set-Cookie").Should().BeFalse();
     }
@@ -74,13 +74,13 @@ public class AccountControllerTests
     [Fact]
     public async Task Login_ServiceFails_DoesNotSetCookies()
     {
-        _accountService.Setup(s => s.Login(It.IsAny<AccountLoginDTO>()))
+        _accountService.Setup(s => s.Login(It.IsAny<AccountLoginDto>()))
             .ReturnsAsync(Result.Fail<AccountDto>("invalid credentials"));
 
         var httpContext = new DefaultHttpContext();
         var ctrl = CreateController(httpContext);
 
-        await ctrl.Login(new AccountLoginDTO { Login = "x@y.com", Password = "wrong" });
+        await ctrl.Login(new AccountLoginDto { Login = "x@y.com", Password = "wrong" });
 
         httpContext.Response.Headers.ContainsKey("Set-Cookie").Should().BeFalse();
     }

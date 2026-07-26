@@ -18,7 +18,7 @@ public class AccountUpdateLoadTest
         using var client = session.Client;
 
         var userSettings = session.Account.UserSettings;
-        var payload = new AccountEditDTO
+        var payload = new AccountEditDto
         {
             Email = settings.Email,
             SpreadSize = userSettings.SpreadSize,

@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace ArbiScannerWeb.Domain.Models.DTOs
 {
-    public class TickerDTO
+    public class AccountRegisterDto : AccountLoginDto
     {
+        public int TelegramUserId { get; set; }
     }
 }

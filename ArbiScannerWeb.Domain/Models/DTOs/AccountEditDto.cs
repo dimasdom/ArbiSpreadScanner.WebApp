@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace ArbiScannerWeb.Domain.Models.DTOs
 {
-    public class AccountEditDTO
+    public class AccountEditDto
     {
-        public AccountEditDTO() { }
+        public AccountEditDto() { }
         public string Email { get; set; } = default!;
         public double SpreadSize { get; set; } = 0;
         public int PositionSize { get; set; } = 0;

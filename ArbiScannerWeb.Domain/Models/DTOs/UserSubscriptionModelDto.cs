@@ -1,6 +1,6 @@
 namespace ArbiScannerWeb.Domain.Models.DTOs;
 
-public class UserSubscriptionModelDTO
+public class UserSubscriptionModelDto
 {
     public int Id { get; set; }
     public string UserId { get; set; } = string.Empty;
@@ -10,11 +10,11 @@ public class UserSubscriptionModelDTO
     public SubscriptionModel? Subscription { get; set; }
     public bool IsActive { get; set; }
 
-    public UserSubscriptionModelDTO()
+    public UserSubscriptionModelDto()
     {
     }
 
-    public UserSubscriptionModelDTO(UserSubscriptionModel userSubscriptionModel)
+    public UserSubscriptionModelDto(UserSubscriptionModel userSubscriptionModel)
     {
         Id = userSubscriptionModel.Id;
         UserId = userSubscriptionModel.UserId;

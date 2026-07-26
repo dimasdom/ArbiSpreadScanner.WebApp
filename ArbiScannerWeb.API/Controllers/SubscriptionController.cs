@@ -46,7 +46,7 @@ namespace ArbiScannerWeb.API.Controllers
         }
 
         [HttpGet("GetUserActiveSubscriptions")]
-        public async Task<Result<UserSubscriptionModelDTO>> GetUserActiveSubscriptions()
+        public async Task<Result<UserSubscriptionModelDto>> GetUserActiveSubscriptions()
         {
             return (await _subscriptionService.GetUserActiveSubscriptionsAsync()).ToSerializable();
         }

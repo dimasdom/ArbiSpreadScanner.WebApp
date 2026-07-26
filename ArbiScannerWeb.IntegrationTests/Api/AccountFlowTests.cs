@@ -18,14 +18,14 @@ public class AccountFlowTests(WebApiTestFixture fixture)
         var email = $"integration-{Guid.NewGuid():N}@example.com";
         const string password = "IntegrationTest@123";
 
-        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDTO { Login = email, Password = password });
+        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDto { Login = email, Password = password });
         registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var registerResult = await registerResponse.Content.ReadFromJsonAsync<ApiResult<EmailConfirmationCodes>>(JsonOptions.CaseInsensitive);
         registerResult.Should().NotBeNull();
         registerResult!.IsSuccess.Should().BeTrue();
         registerResult.Value.Should().NotBeNull();
 
-        var confirmResponse = await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDTO
+        var confirmResponse = await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDto
         {
             EmailConfirmToken = registerResult.Value!.Id.ToString(),
             Token = registerResult.Value.Code
@@ -33,7 +33,7 @@ public class AccountFlowTests(WebApiTestFixture fixture)
         var confirmResult = await confirmResponse.Content.ReadFromJsonAsync<ApiResult>(JsonOptions.CaseInsensitive);
         confirmResult!.IsSuccess.Should().BeTrue();
 
-        var loginResponse = await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDTO { Login = email, Password = password });
+        var loginResponse = await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDto { Login = email, Password = password });
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<ApiResult<AccountDto>>(JsonOptions.CaseInsensitive);
         loginResult!.IsSuccess.Should().BeTrue();
         loginResult.Value!.EmailConfirmed.Should().BeTrue();
@@ -60,7 +60,7 @@ public class AccountFlowTests(WebApiTestFixture fixture)
     {
         var client = fixture.Factory.CreateClient();
         var email = $"integration-{Guid.NewGuid():N}@example.com";
-        var payload = new AccountLoginDTO { Login = email, Password = "IntegrationTest@123" };
+        var payload = new AccountLoginDto { Login = email, Password = "IntegrationTest@123" };
 
         (await client.PostAsJsonAsync("/api/Account/Register", payload)).EnsureSuccessStatusCode();
         var secondResponse = await client.PostAsJsonAsync("/api/Account/Register", payload);

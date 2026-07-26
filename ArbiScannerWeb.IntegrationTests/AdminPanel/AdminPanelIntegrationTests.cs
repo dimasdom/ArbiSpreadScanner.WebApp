@@ -50,7 +50,7 @@ public class AdminPanelIntegrationTests(AdminPanelTestFixture fixture)
 
         var response = await client.GetAsync("/api/Subscription/GetUserActiveSubscriptions");
 
-        var result = await response.Content.ReadFromJsonAsync<ApiResult<UserSubscriptionModelDTO>>(JsonOptions.CaseInsensitive);
+        var result = await response.Content.ReadFromJsonAsync<ApiResult<UserSubscriptionModelDto>>(JsonOptions.CaseInsensitive);
         result!.IsSuccess.Should().BeFalse();
     }
 
@@ -90,16 +90,16 @@ public class AdminPanelIntegrationTests(AdminPanelTestFixture fixture)
         var email = $"integration-{Guid.NewGuid():N}@example.com";
         const string password = "IntegrationTest@123";
 
-        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDTO { Login = email, Password = password });
+        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDto { Login = email, Password = password });
         var registerResult = await registerResponse.Content.ReadFromJsonAsync<ApiResult<EmailConfirmationCodes>>(JsonOptions.CaseInsensitive);
 
-        await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDTO
+        await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDto
         {
             EmailConfirmToken = registerResult!.Value!.Id.ToString(),
             Token = registerResult.Value.Code
         });
 
-        await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDTO { Login = email, Password = password });
+        await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDto { Login = email, Password = password });
 
         return client;
     }

@@ -22,13 +22,13 @@ namespace ArbiScannerWeb.API.Controllers
         }
 
         [HttpGet("GetSpreadsForUser")]
-        public async Task<ActionResult<SerializableResult<List<TradeOpportunityDetailsDTO>>>> GetSpreadsForUser()
+        public async Task<ActionResult<SerializableResult<List<TradeOpportunityDetailsDto>>>> GetSpreadsForUser()
         {
             var userclaims = User.Claims;
             var userId = userclaims.FirstOrDefault(x => x.Type == ClaimsIdentity.DefaultNameClaimType);
             if (userId is null)
             {
-                return BadRequest(Result.Fail("User ID claim not found").ToResult<List<TradeOpportunityDetailsDTO>>().ToSerializable());
+                return BadRequest(Result.Fail("User ID claim not found").ToResult<List<TradeOpportunityDetailsDto>>().ToSerializable());
             }
 
             var result = await _tradeOpportunityService.GetSpreadsForUser(userId.Value);
@@ -41,7 +41,7 @@ namespace ArbiScannerWeb.API.Controllers
         }
 
         [HttpGet("GetSpreadInfo/{id}")]
-        public async Task<ActionResult<SerializableResult<TradeOpportunityDetailsDTO>>> GetSpreadInfo(string id)
+        public async Task<ActionResult<SerializableResult<TradeOpportunityDetailsDto>>> GetSpreadInfo(string id)
         {
             var result = await _tradeOpportunityService.GetSpreadInfo(id);
 

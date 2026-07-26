@@ -7,7 +7,7 @@ public record FrontendLogEntry(
     string Level,
     string Message,
     string? Source,
-    DateTimeOffset Timestamp,
+    DateTimeOffset? Timestamp,
     string? Details
 );
 
@@ -42,7 +42,7 @@ public class ClientLogController : ControllerBase
                     "[Frontend] {Message} | Origin: {Source} | ClientTime: {Timestamp} | Details: {Details}",
                     entry.Message,
                     entry.Source ?? "unknown",
-                    entry.Timestamp,
+                    entry.Timestamp ?? DateTimeOffset.UtcNow,
                     entry.Details ?? "-");
             }
         }

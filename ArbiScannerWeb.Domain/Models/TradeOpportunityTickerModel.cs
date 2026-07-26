@@ -53,35 +53,38 @@ namespace ArbiScannerWeb.Domain.Models
 
         public List<OrderLevelModel>? AsksExchangeB { get; set; }
     }
-}
-public class TradeOpportunityTickerModelConfiguration : IEntityTypeConfiguration<TradeOpportunityTickerModel>
-{
-   public void Configure(EntityTypeBuilder<TradeOpportunityTickerModel> builder)
+
+    public class TradeOpportunityTickerModelConfiguration : IEntityTypeConfiguration<TradeOpportunityTickerModel>
     {
-    var jsonConverter = new ValueConverter<List<OrderLevelModel>?, string>(
-        v => JsonSerializer.Serialize(v ?? new List<OrderLevelModel>(), new JsonSerializerOptions()),
-        v => JsonSerializer.Deserialize<List<OrderLevelModel>>(v, new JsonSerializerOptions())
-    );
+        private const string JsonbColumnType = "jsonb";
 
-    builder.Property(p => p.BidsExchangeA)
-           .HasConversion(jsonConverter)
-           .HasColumnType("jsonb"); // Changed from nvarchar(max)
+        public void Configure(EntityTypeBuilder<TradeOpportunityTickerModel> builder)
+        {
+            var jsonConverter = new ValueConverter<List<OrderLevelModel>?, string>(
+                v => JsonSerializer.Serialize(v ?? new List<OrderLevelModel>(), new JsonSerializerOptions()),
+                v => JsonSerializer.Deserialize<List<OrderLevelModel>>(v, new JsonSerializerOptions())
+            );
 
-    builder.Property(p => p.AsksExchangeA)
-           .HasConversion(jsonConverter)
-           .HasColumnType("jsonb");
+            builder.Property(p => p.BidsExchangeA)
+                   .HasConversion(jsonConverter)
+                   .HasColumnType(JsonbColumnType); // Changed from nvarchar(max)
 
-    builder.Property(p => p.BidsExchangeB)
-           .HasConversion(jsonConverter)
-           .HasColumnType("jsonb");
+            builder.Property(p => p.AsksExchangeA)
+                   .HasConversion(jsonConverter)
+                   .HasColumnType(JsonbColumnType);
 
-    builder.Property(p => p.AsksExchangeB)
-           .HasConversion(jsonConverter)
-           .HasColumnType("jsonb");
+            builder.Property(p => p.BidsExchangeB)
+                   .HasConversion(jsonConverter)
+                   .HasColumnType(JsonbColumnType);
 
-    builder.HasOne<TradeOpportunityModel>()
-           .WithMany()
-           .HasForeignKey(p => p.Guid)
-           .HasPrincipalKey(p => p.Guid);
+            builder.Property(p => p.AsksExchangeB)
+                   .HasConversion(jsonConverter)
+                   .HasColumnType(JsonbColumnType);
+
+            builder.HasOne<TradeOpportunityModel>()
+                   .WithMany()
+                   .HasForeignKey(p => p.Guid)
+                   .HasPrincipalKey(p => p.Guid);
+        }
     }
 }

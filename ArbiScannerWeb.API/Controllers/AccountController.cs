@@ -168,7 +168,7 @@ namespace ArbiScannerWeb.API.Controllers
             return new CookieOptions
             {
                 HttpOnly = true,
-                Secure = Request.IsHttps,
+                Secure = true,
                 SameSite = SameSiteMode.Lax,
                 Expires = DateTimeOffset.UtcNow.Add(lifetime),
                 Path = "/"
@@ -180,7 +180,7 @@ namespace ArbiScannerWeb.API.Controllers
             var options = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = Request.IsHttps,
+                Secure = true,
                 SameSite = SameSiteMode.Lax,
                 Path = "/"
             };

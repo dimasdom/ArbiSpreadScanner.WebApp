@@ -80,7 +80,8 @@ namespace ArbiScannerWeb.Infrastructure
         }
 
         public static void AddServices(this IServiceCollection services) =>
-            services.AddScoped<IAccountService, AccountService>()
+            services.AddScoped<AccountServiceContext>()
+            .AddScoped<IAccountService, AccountService>()
             .AddScoped<IAccountRepository, AccountRepository>()
             .AddScoped<ITradeOpportunityService, ArbiScannerWeb.Infrastructure.Services.TradeOpportunityService>()
             .AddSingleton<ITradeOpportunityRepository, TradeOpportunityRepositoryMongo>()
@@ -175,6 +176,8 @@ namespace ArbiScannerWeb.Infrastructure
             await SeedExchangeLinksAsync(context);
         }
 
+        private const string KuCoinFuturesUrl = "https://www.kucoin.com/futures/trade/{base}{quote}M";
+
         private static async Task SeedExchangeLinksAsync(AppDbContext context)
         {
             var links = new[]
@@ -185,8 +188,8 @@ namespace ArbiScannerWeb.Infrastructure
                 new ExchangeLinkModel { Exchange = "OKX",           Spot = "https://www.okx.com/trade-spot/{base}-{quote}",             Futures = "https://www.okx.com/trade-swap/{base}-{quote}-SWAP",                                                                                      Funding = "https://www.okx.com/trade-swap/{base}-{quote}-SWAP" },
                 new ExchangeLinkModel { Exchange = "HTX",           Spot = "https://www.htx.com/trade/{base}_{quote}?type=spot",        Futures = "https://www.htx.com/futures/linear_swap/exchange#contract_code={base}-{quote}&contract_type=swap&type=cross",                             Funding = "https://www.htx.com/futures/linear_swap/exchange#contract_code={base}-{quote}&contract_type=swap&type=cross" },
                 new ExchangeLinkModel { Exchange = "CoinEX",        Spot = "https://www.coinex.com/en/exchange/{base}-{quote}",         Futures = "https://www.coinex.com/en/futures/{base}-{quote}",                                                                                        Funding = "https://www.coinex.com/en/futures/{base}-{quote}" },
-                new ExchangeLinkModel { Exchange = "KuCoinFutures", Spot = "https://www.kucoin.com/trade/{base}-{quote}",               Futures = "https://www.kucoin.com/futures/trade/{base}{quote}M",                                                                                     Funding = "https://www.kucoin.com/futures/trade/{base}{quote}M" },
-                new ExchangeLinkModel { Exchange = "KuCoin Futures", Spot = "https://www.kucoin.com/trade/{base}-{quote}",               Futures = "https://www.kucoin.com/futures/trade/{base}{quote}M",                                                                                     Funding = "https://www.kucoin.com/futures/trade/{base}{quote}M" },
+                new ExchangeLinkModel { Exchange = "KuCoinFutures", Spot = "https://www.kucoin.com/trade/{base}-{quote}",               Futures = KuCoinFuturesUrl,                                                                                     Funding = KuCoinFuturesUrl },
+                new ExchangeLinkModel { Exchange = "KuCoin Futures", Spot = "https://www.kucoin.com/trade/{base}-{quote}",               Futures = KuCoinFuturesUrl,                                                                                     Funding = KuCoinFuturesUrl },
                 new ExchangeLinkModel { Exchange = "BingX",         Spot = "https://bingx.com/en/spot/{base}{quote}",                   Futures = "https://bingx.com/en/perpetual/{base}-{quote}",                                                                                           Funding = "https://bingx.com/en/perpetual/{base}-{quote}" },
                 new ExchangeLinkModel { Exchange = "Gateio",        Spot = "https://www.gate.io/en/trade/{base}_{quote}",               Futures = "https://www.gate.io/en/futures/USDT/{base}_{quote}",                                                                                      Funding = "https://www.gate.io/en/futures/USDT/{base}_{quote}" },
                 new ExchangeLinkModel { Exchange = "XT",            Spot = "https://www.xt.com/en/trade/{base}_{quote}",                Futures = "https://www.xt.com/en/futures/trade/{base}_{quote}",                                                                                      Funding = "https://www.xt.com/en/futures/trade/{base}_{quote}" },

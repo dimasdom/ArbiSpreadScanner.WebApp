@@ -9,7 +9,6 @@ using FluentResults;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -33,6 +32,8 @@ namespace ArbiScannerWeb.Infrastructure.Services
             public bool EmailConfirmed { get; set; }
         }
 
+        private const string UserNotFoundMessage = "User not found.";
+
         private readonly IEmailService _emailService;
         private readonly AppDbContext _context;
         private readonly IAccountRepository _accountRepository;
@@ -41,31 +42,26 @@ namespace ArbiScannerWeb.Infrastructure.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly JwtOptions _jwtOptions;
         private readonly string _clientUrl;
-        private static string usernameChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        private static string passwordChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         private readonly IDatabase _redis;
         private readonly ILogger<AccountService> _logger;
 
-        public AccountService(SignInManager<AccountModel> signInManager,
-            UserManager<AccountModel> userManager,
+        public AccountService(AccountServiceContext accountServiceContext,
             IConnectionMultiplexer redis,
-            IHttpContextAccessor httpContextAccessor,
             AppDbContext appDbContext,
             IAccountRepository accountRepository,
             IEmailService emailService,
             IOptions<JwtOptions> jwtOptions,
-            IConfiguration configuration,
             ILogger<AccountService> logger)
         {
-            _signInManager = signInManager;
-            _userManager = userManager;
+            _signInManager = accountServiceContext.SignInManager;
+            _userManager = accountServiceContext.UserManager;
             _redis = redis.GetDatabase();
-            _httpContextAccessor = httpContextAccessor;
+            _httpContextAccessor = accountServiceContext.HttpContextAccessor;
             _context = appDbContext;
             _accountRepository = accountRepository;
             _emailService = emailService;
             _jwtOptions = jwtOptions.Value;
-            _clientUrl = configuration["ClientUrl"] ?? "http://localhost:3001";
+            _clientUrl = accountServiceContext.ClientUrl;
             _logger = logger;
         }
 
@@ -132,34 +128,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
             return Result.Fail(TypedErrors.Unauthorized("Invalid username or password."));
 
         }
-        static string GenerateUsername()
-        {
-            Random random = new Random();
-            StringBuilder username = new StringBuilder();
-
-            for (int i = 0; i < 8; i++)
-            {
-                int index = random.Next(usernameChars.Length);
-                username.Append(usernameChars[index]);
-            }
-
-            return username.ToString();
-        }
-
-        static string GeneratePassword()
-        {
-            Random random = new Random();
-            StringBuilder password = new StringBuilder();
-
-            for (int i = 0; i < 8; i++)
-            {
-                int index = random.Next(passwordChars.Length);
-                password.Append(passwordChars[index]);
-            }
-
-            return password.ToString();
-        }
-
         public async Task<Result<EmailConfirmationCodes>> RegisterUser(AccountLoginDto model)
         {
             try
@@ -220,7 +188,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 var user =  await _userManager.FindByIdAsync(emailConfirmation.UserId);
                 if(user == null)
                 {
-                    return Result.Fail(TypedErrors.NotFound("User not found."));
+                    return Result.Fail(TypedErrors.NotFound(UserNotFoundMessage));
                 }
                 user.UserName = emailConfirmation.Email;
                 user.Email = emailConfirmation.Email;
@@ -236,10 +204,9 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        private int GenerateConfirmationCode()
+        private static int GenerateConfirmationCode()
         {
-            Random random = new Random();
-            return random.Next(100000, 999999);
+            return System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999);
         }
 
         public async Task<Result> SendForgetPasswordCode(string email)
@@ -287,21 +254,21 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        public async Task<Result<AccountEditDto>> UpdateDetails(AccountEditDto accountDTO)
+        public async Task<Result<AccountEditDto>> UpdateDetails(AccountEditDto account)
         {
             var userIdString = _httpContextAccessor.HttpContext?.User?.Identity?.Name;
             if (string.IsNullOrEmpty(userIdString))
             {
                 return Result.Fail(TypedErrors.Unauthorized("User is not authenticated."));
             }
-            var account = await _context.Users
+            var accountModel = await _context.Users
                 .Include(a => a.UserSettings)
                     .ThenInclude(s => s.Exchanges)
                 .FirstOrDefaultAsync(a => a.Id == userIdString);
-            if (account is null)
+            if (accountModel is null)
                 return Result.Fail(TypedErrors.NotFound("There are no user"));
-            MapAccountEditDTOToAccountModel(accountDTO, account);
-            var exchangeNames = accountDTO.Exchanges
+            MapAccountEditDTOToAccountModel(account, accountModel);
+            var exchangeNames = account.Exchanges
                 .Select(e => e.Exchange?.Name)
                 .Where(n => n != null)
                 .ToList();
@@ -309,18 +276,18 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 .Where(e => exchangeNames.Contains(e.Name))
                 .ToListAsync();
 
-            _context.UserExchanges.RemoveRange(account.UserSettings.Exchanges);
-            account.UserSettings.Exchanges = exchangeModels
-                .Select(e => new UserExchangeModel { ExchangeId = e.Id, UserAccountId = account.Id, Exchange = e })
+            _context.UserExchanges.RemoveRange(accountModel.UserSettings.Exchanges);
+            accountModel.UserSettings.Exchanges = exchangeModels
+                .Select(e => new UserExchangeModel { ExchangeId = e.Id, UserAccountId = accountModel.Id, Exchange = e })
                 .ToList();
-            _context.Users.Update(account);
+            _context.Users.Update(accountModel);
             await _context.SaveChangesAsync();
-            await _redis.StringSetAsync($"userEntity:{account.Id}", SerializeCachedAccount(account), TimeSpan.FromHours(1));
-            accountDTO.Exchanges = account.UserSettings.Exchanges;
-            return Result.Ok(accountDTO);
+            await _redis.StringSetAsync($"userEntity:{accountModel.Id}", SerializeCachedAccount(accountModel), TimeSpan.FromHours(1));
+            account.Exchanges = accountModel.UserSettings.Exchanges;
+            return Result.Ok(account);
         }
 
-        private void MapAccountEditDTOToAccountModel(AccountEditDto dto, AccountModel model)
+        private static void MapAccountEditDTOToAccountModel(AccountEditDto dto, AccountModel model)
         {
             model.UserSettings.SpreadSize = dto.SpreadSize;
             model.UserSettings.PositionSize = dto.PositionSize;
@@ -358,7 +325,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                return Result.Fail(TypedErrors.NotFound("User not found."));
+                return Result.Fail(TypedErrors.NotFound(UserNotFoundMessage));
             }
             var existing = await _userManager.FindByEmailAsync(newEmail);
             if (existing != null && existing.Id != userId)
@@ -383,7 +350,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             var user = await _userManager.FindByIdAsync(emailConfirmation.UserId);
             if(user == null)
             {
-                return Result.Fail(TypedErrors.NotFound("User not found."));
+                return Result.Fail(TypedErrors.NotFound(UserNotFoundMessage));
             }
             emailConfirmation.ExpirationTime = DateTime.UtcNow.AddMinutes(10);
             emailConfirmation.Code = GenerateConfirmationCode().ToString();
@@ -417,7 +384,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             var user = await _context.Users.Include(u => u.UserSettings).ThenInclude(u=>u.Exchanges).ThenInclude(e => e.Exchange).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
-                return Result.Fail(TypedErrors.NotFound("User not found."));
+                return Result.Fail(TypedErrors.NotFound(UserNotFoundMessage));
             }
             var accountDto = new AccountDto();
             accountDto.UserSettings = user.UserSettings;
@@ -561,8 +528,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
         {
             var tokenToRevoke = token;
 
-            var tokensInChain = new List<RefreshTokenModel> { token };
-
             tokenToRevoke.RevokedAt = DateTime.UtcNow;
             tokenToRevoke.RevocationReason = reason;
             tokenToRevoke.RevokedByIp = ipAddress;
@@ -592,7 +557,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
         }
 
-        private string HashToken(string token)
+        private static string HashToken(string token)
         {
             using (var sha = System.Security.Cryptography.SHA256.Create())
             {
@@ -635,7 +600,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
-                    return Result.Fail(TypedErrors.NotFound("User not found."));
+                    return Result.Fail(TypedErrors.NotFound(UserNotFoundMessage));
                 }
 
                 var claims = new List<Claim>

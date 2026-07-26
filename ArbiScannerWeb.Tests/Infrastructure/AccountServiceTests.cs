@@ -33,16 +33,19 @@ public class AccountServiceTests
         var config = new Mock<IConfiguration>();
         config.Setup(c => c["ClientUrl"]).Returns("http://localhost:3001");
 
-        _sut = new AccountService(
+        var accountServiceContext = new AccountServiceContext(
             _signInManager.Object,
             _userManager.Object,
-            redis.Object,
             new Mock<IHttpContextAccessor>().Object,
+            config.Object);
+
+        _sut = new AccountService(
+            accountServiceContext,
+            redis.Object,
             MockHelpers.CreateInMemoryDbContext(),
             _repo.Object,
             _email.Object,
             Options.Create(MockHelpers.CreateTestJwtOptions()),
-            config.Object,
             NullLogger<AccountService>.Instance);
     }
 

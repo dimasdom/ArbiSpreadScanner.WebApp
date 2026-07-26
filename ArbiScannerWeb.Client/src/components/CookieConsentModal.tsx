@@ -32,7 +32,7 @@ const CookieConsentModal: React.FC = () => {
           <Trans i18nKey="cookieConsent.body" ns="common" components={{ strong: <strong /> }} />
         </p>
         <div className="flex justify-end">
-          <button
+          <button type="button"
             onClick={handleAccept}
             className="px-6 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors"
           >

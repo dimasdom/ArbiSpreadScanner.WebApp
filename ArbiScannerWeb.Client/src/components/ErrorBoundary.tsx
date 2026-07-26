@@ -34,7 +34,7 @@ class ErrorBoundary extends Component<Props, State> {
                 <div className="flex flex-col items-center justify-center min-h-screen gap-4 p-8 text-center">
                     <h1 className="text-2xl font-semibold">Something went wrong</h1>
                     <p className="text-gray-500">An unexpected error occurred. Please refresh the page.</p>
-                    <button
+                    <button type="button"
                         className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
                         onClick={() => window.location.reload()}
                     >

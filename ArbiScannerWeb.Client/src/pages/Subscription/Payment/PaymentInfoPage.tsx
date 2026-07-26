@@ -55,7 +55,7 @@ function PaymentInfoPage() {
                         </div>
                     </div>
 
-                    <button
+                    <button type="button"
                         onClick={handlePayClick}
                         className="w-full py-4 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-bold transition-all duration-200 shadow-lg hover:shadow-indigo-200 transform hover:-translate-y-0.5"
                     >

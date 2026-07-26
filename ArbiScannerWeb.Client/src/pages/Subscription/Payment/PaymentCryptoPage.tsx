@@ -68,7 +68,7 @@ function PaymentCryptoPage() {
                 </div>
 
                 <div className="p-8 bg-gray-50 dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
-                    <button
+                    <button type="button"
                         onClick={handleCancel}
                         className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-lg hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 shadow-sm"
                     >
@@ -104,7 +104,7 @@ function PaymentCryptoPage() {
                     <p className="text-sm text-gray-500 dark:text-gray-500 mb-8">
                         {t('payment.crypto.thankYouSubBody')}
                     </p>
-                    <button
+                    <button type="button"
                         onClick={handleCloseThankYouModal}
                         className="w-full py-3 px-6 rounded-xl bg-green-600 text-white font-bold text-lg hover:bg-green-700 transition-all duration-200 shadow-md"
                     >

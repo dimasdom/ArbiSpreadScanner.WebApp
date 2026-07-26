@@ -31,7 +31,7 @@ const TelegramLinkModal: React.FC<TelegramLinkModalProps> = ({ isOpen, linkReque
               </div>
               <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{t('telegramLink.title')}</h2>
             </div>
-            <button
+            <button type="button"
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               aria-label={t('actions.close')}
@@ -74,13 +74,13 @@ const TelegramLinkModal: React.FC<TelegramLinkModalProps> = ({ isOpen, linkReque
         </div>
 
         <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
-          <button
+          <button type="button"
             onClick={onClose}
             className="px-6 py-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             {t('actions.cancel')}
           </button>
-          <button
+          <button type="button"
             onClick={handleLinkTelegram}
             className="px-6 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
           >

@@ -61,7 +61,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/50 dark:bg-black/50">
             {/* Backdrop close button */}
-            <button
+            <button type="button"
                 className="absolute opacity-0 inset-0 w-full h-full cursor-default"
                 onClick={handleClose}
                 aria-label={t('guide.close')}
@@ -80,7 +80,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                         </svg>
                         <h2 className="text-base font-bold tracking-wide">{title}</h2>
                     </div>
-                    <button
+                    <button type="button"
                         onClick={handleClose}
                         className="text-white/70 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
                         aria-label={t('guide.close')}
@@ -104,7 +104,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                 {steps.length > 1 && (
                     <div className="flex justify-center gap-2 pb-2">
                         {steps.map((s, i) => (
-                            <button
+                            <button type="button"
                                 key={s.title}
                                 onClick={() => setCurrentStep(i)}
                                 aria-label={t('guide.goToStep', { step: i + 1 })}
@@ -120,7 +120,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3">
-                    <button
+                    <button type="button"
                         onClick={handleDontShowAgain}
                         className="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm shrink-0"
                     >
@@ -129,7 +129,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
 
                     <div className="flex gap-2">
                         {!isFirst && (
-                            <button
+                            <button type="button"
                                 onClick={handleBack}
                                 className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                             >
@@ -137,14 +137,14 @@ const GuideModal: React.FC<GuideModalProps> = ({ storageKey, title, steps }) => 
                             </button>
                         )}
                         {isLast ? (
-                            <button
+                            <button type="button"
                                 onClick={handleGotIt}
                                 className="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
                             >
                                 {t('guide.gotIt')}
                             </button>
                         ) : (
-                            <button
+                            <button type="button"
                                 onClick={handleNext}
                                 className="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1"
                             >

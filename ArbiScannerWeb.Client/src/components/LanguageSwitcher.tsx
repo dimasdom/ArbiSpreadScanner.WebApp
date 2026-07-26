@@ -9,7 +9,7 @@ interface LanguageSwitcherProps {
     onSelect?: () => void;
 }
 
-export default function LanguageSwitcher({ onSelect }: LanguageSwitcherProps) {
+export default function LanguageSwitcher({ onSelect }: Readonly<LanguageSwitcherProps>) {
     const { t } = useTranslation('common');
     const [open, setOpen] = useState(false);
     const location = useLocation();
@@ -31,7 +31,7 @@ export default function LanguageSwitcher({ onSelect }: LanguageSwitcherProps) {
 
     return (
         <div className="relative">
-            <button
+            <button type="button"
                 onClick={() => setOpen((o) => !o)}
                 className="p-2 rounded-md bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1"
                 aria-label={t('language.switchAria')}
@@ -47,7 +47,7 @@ export default function LanguageSwitcher({ onSelect }: LanguageSwitcherProps) {
                     <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
                     <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 py-1 border border-gray-100 dark:border-gray-700">
                         {SUPPORTED_LANGUAGES.map((l) => (
-                            <button
+                            <button type="button"
                                 key={l.code}
                                 onClick={() => select(l.code)}
                                 className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 ${l.code === current.code ? 'font-semibold text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300'

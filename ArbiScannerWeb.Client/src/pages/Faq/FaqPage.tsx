@@ -104,7 +104,7 @@ function FaqPage() {
 
                     {/* Reset guides */}
                     <div className="mt-8 text-center">
-                        <button
+                        <button type="button"
                             onClick={() => {
                                 localStorage.removeItem('guides-all-disabled');
                                 const keys = Object.keys(localStorage).filter(k => k !== 'guides-all-disabled');

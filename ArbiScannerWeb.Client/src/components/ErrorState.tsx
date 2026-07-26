@@ -5,7 +5,7 @@ interface ErrorStateProps {
     onRetry?: () => void;
 }
 
-function ErrorState({ message, onRetry }: ErrorStateProps) {
+function ErrorState({ message, onRetry }: Readonly<ErrorStateProps>) {
     const { t } = useTranslation('common');
     return (
         <div className="flex h-[80vh] flex-col items-center justify-center gap-4">

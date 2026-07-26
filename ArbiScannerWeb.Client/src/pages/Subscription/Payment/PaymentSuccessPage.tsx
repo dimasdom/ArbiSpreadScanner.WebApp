@@ -51,7 +51,7 @@ function PaymentSuccessPage() {
                         </div>
                     </div>
 
-                    <button
+                    <button type="button"
                         onClick={handleGoHome}
                         className="w-full md:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-200 transform hover:-translate-y-0.5 transition-all duration-200 text-lg"
                     >

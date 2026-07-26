@@ -3,7 +3,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedNavigate } from '../../i18n/routing';
 
-function SubscriptionElement(subscription: SubscriptionModel) {
+function SubscriptionElement(subscription: Readonly<SubscriptionModel>) {
     const { t } = useTranslation('subscription');
     const navigate = useLocalizedNavigate();
 
@@ -38,7 +38,7 @@ function SubscriptionElement(subscription: SubscriptionModel) {
                 </ul>
             </div>
 
-            <button 
+            <button type="button" 
                 onClick={handleSubscribe} 
                 className="w-full py-3 px-6 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold hover:bg-white/20 transition-all duration-200 shadow-lg group"
             >

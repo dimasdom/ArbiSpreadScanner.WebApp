@@ -11,7 +11,7 @@ const FaqElement: React.FC<FaqProps> = ({ question, answer }) => {
 
     return (
         <div className="bg-white dark:bg-gray-800 last:border-0 shadow-lg hover:shadow-2xl transition-shadow rounded-2xl">
-            <button
+            <button type="button"
                 className="w-full py-5 flex bg-white dark:bg-gray-800 border-none justify-between items-center text-left focus:outline-none group px-4 rounded-2xl"
                 onClick={() => setIsOpen(!isOpen)}
             >

@@ -6,7 +6,7 @@ interface SuccessProps {
     className?: string;
 }
 
-export default function SuccessComponent({ message, title, className = '' }: SuccessProps) {
+export default function SuccessComponent({ message, title, className = '' }: Readonly<SuccessProps>) {
     const { t } = useTranslation('common');
     return (
         <div className={`w-full max-w-md ${className}`}>

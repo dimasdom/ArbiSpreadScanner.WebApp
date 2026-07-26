@@ -131,7 +131,7 @@ export function AccountPage() {
         setExchanges((userSettings.exchanges || []).map(e => e.exchange?.name ?? '').filter(Boolean));
     }, [userSettings, userAccount.email]);
     const validateEmail = () => {
-        const re = /^\S+@\S+\.\S+$/;
+        const re = /^[^\s@]+@[^\s@.]+\.[^\s@]+$/;
         if (!email || !re.test(email)) {
             setEmailError(t('common:validation.email.invalid'));
             return false;
@@ -162,6 +162,10 @@ export function AccountPage() {
                 .then(() => toast.success(t('accountPage.toasts.saveSuccess')))
                 .catch(() => toast.error(t('accountPage.toasts.saveError')));
         }
+    };
+
+    const toggleExchange = (ex: string) => {
+        setExchanges(prev => prev.includes(ex) ? prev.filter(e => e !== ex) : [...prev, ex]);
     };
 
     const handleEmailChangeConfirm = async () => {
@@ -234,7 +238,7 @@ export function AccountPage() {
         <GuideModal storageKey="guide_account_seen" title={t('accountPage.guide.title')} steps={accountGuideSteps} />
         {emailDialogOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/50 dark:bg-black/50">
-                <button
+                <button type="button"
                     className="absolute opacity-0 inset-0 w-full h-full cursor-default"
                     onClick={handleEmailChangeCancel}
                     aria-label={t('common:actions.close')}
@@ -251,7 +255,7 @@ export function AccountPage() {
                             </svg>
                             <h2 className="text-base font-bold tracking-wide">{t('accountPage.emailChangeDialog.title')}</h2>
                         </div>
-                        <button
+                        <button type="button"
                             onClick={handleEmailChangeCancel}
                             className="text-white/70 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
                             aria-label={t('common:actions.close')}
@@ -280,14 +284,14 @@ export function AccountPage() {
                         )}
                     </div>
                     <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-end gap-3">
-                        <button
+                        <button type="button"
                             onClick={handleEmailChangeCancel}
                             disabled={emailChangeLoading}
                             className="px-5 py-2 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                         >
                             {t('common:actions.cancel')}
                         </button>
-                        <button
+                        <button type="button"
                             onClick={handleEmailChangeConfirm}
                             disabled={emailChangeLoading}
                             className="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
@@ -353,7 +357,7 @@ export function AccountPage() {
                             <p className="text-gray-700 dark:text-gray-300 mb-4">
                                 {t('accountPage.subscription.none.body')}
                             </p>
-                            <button
+                            <button type="button"
                                 onClick={() => navigate('/subscriptions')}
                                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md"
                             >
@@ -419,7 +423,7 @@ export function AccountPage() {
                                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                                                 {t('accountPage.telegram.notConnected.description')}
                                             </p>
-                                            <button
+                                            <button type="button"
                                                 onClick={handleLinkTelegram}
                                                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm"
                                             >
@@ -530,7 +534,7 @@ export function AccountPage() {
                                     <button
                                         key={ex}
                                         type="button"
-                                        onClick={() => active ? setExchanges(prev => prev.filter(e => e !== ex)) : setExchanges(prev => [...prev, ex])}
+                                        onClick={() => toggleExchange(ex)}
                                         className={`
                                             px-5 py-2.5 rounded-full font-medium text-sm transition-all duration-200 shadow-sm border
                                             ${active
@@ -556,7 +560,7 @@ export function AccountPage() {
                                 {error}
                             </div>
                         )}
-                        <button
+                        <button type="button"
                             onClick={handleSave}
                             disabled={loading}
                             className={`

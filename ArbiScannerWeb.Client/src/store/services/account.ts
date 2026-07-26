@@ -173,6 +173,8 @@ export const accountApi = createApi({
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 try {
                     await queryFulfilled;
+                } catch {
+                    // ignore - session is cleared client-side regardless of server response
                 } finally {
                     dispatch(logout());
                 }

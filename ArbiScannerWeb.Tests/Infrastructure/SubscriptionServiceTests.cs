@@ -225,4 +225,92 @@ public class SubscriptionServiceTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().HaveCount(2);
     }
+
+    [Fact]
+    public async Task GetAllSubscriptions_AdminServiceFails_ReturnsFail()
+    {
+        _adminService.Setup(a => a.GetAllSubscriptionsAsync())
+            .ReturnsAsync(Result.Fail<List<SubscriptionModel>>("boom"));
+
+        var result = await _sut.GetAllSubscriptionsAsync();
+
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CancelPayment_DelegatesToAdminService_Success()
+    {
+        _adminService.Setup(a => a.CancelPayment(9)).ReturnsAsync(Result.Ok());
+
+        var result = await _sut.CancelPayment(9);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CancelPayment_AdminServiceFails_ReturnsFail()
+    {
+        _adminService.Setup(a => a.CancelPayment(9)).ReturnsAsync(Result.Fail("already cancelled"));
+
+        var result = await _sut.CancelPayment(9);
+
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetPaymentStatus_DelegatesToAdminService_Success()
+    {
+        var payment = new UserSubscriptionPayment { Id = 4 };
+        _adminService.Setup(a => a.GetPaymentStatusAsync(4)).ReturnsAsync(Result.Ok(payment));
+
+        var result = await _sut.GetPaymentStatusAsync(4);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Id.Should().Be(4);
+    }
+
+    [Fact]
+    public async Task GetPaymentStatus_AdminServiceFails_ReturnsFail()
+    {
+        _adminService.Setup(a => a.GetPaymentStatusAsync(4))
+            .ReturnsAsync(Result.Fail<UserSubscriptionPayment>("not found"));
+
+        var result = await _sut.GetPaymentStatusAsync(4);
+
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetSubscriptionDetails_DelegatesToAdminService_Success()
+    {
+        var sub = new SubscriptionModel { Id = 6 };
+        _adminService.Setup(a => a.GetSubscriptionDetailsAsync(6)).ReturnsAsync(Result.Ok(sub));
+
+        var result = await _sut.GetSubscriptionDetailsAsync(6);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Id.Should().Be(6);
+    }
+
+    [Fact]
+    public async Task GetSubscriptionDetails_AdminServiceFails_ReturnsFail()
+    {
+        _adminService.Setup(a => a.GetSubscriptionDetailsAsync(6))
+            .ReturnsAsync(Result.Fail<SubscriptionModel>("not found"));
+
+        var result = await _sut.GetSubscriptionDetailsAsync(6);
+
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetUserActivePayments_AdminServiceFails_ReturnsFail()
+    {
+        _adminService.Setup(a => a.GetUserActivePaymentsAsync(UserId))
+            .ReturnsAsync(Result.Fail<UserSubscriptionPayment>("none found"));
+
+        var result = await _sut.GetUserActivePaymentsAsync();
+
+        result.IsFailed.Should().BeTrue();
+    }
 }

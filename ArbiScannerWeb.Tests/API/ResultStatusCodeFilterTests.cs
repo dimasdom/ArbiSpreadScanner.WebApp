@@ -112,6 +112,42 @@ public class ResultStatusCodeFilterTests
     }
 
     [Fact]
+    public async Task OnActionExecutionAsync_FailResultWithNoReasons_DefaultsTo400()
+    {
+        var (filter, _) = Create();
+        var failObj = new SerializableResult<string> { IsSuccess = false, Reasons = new List<IReason>() };
+        var executedCtx = BuildExecutedContext(failObj);
+        var executingCtx = BuildExecutingContext(executedCtx.HttpContext);
+
+        await filter.OnActionExecutionAsync(executingCtx, DelegateReturning(executedCtx));
+
+        ((ObjectResult)executedCtx.Result!).StatusCode.Should().Be(400);
+    }
+
+    private sealed class ReasonWithHiddenMetadata : IReason
+    {
+        public string Message => "hidden";
+        Dictionary<string, object> IReason.Metadata => new();
+    }
+
+    [Fact]
+    public async Task OnActionExecutionAsync_FailResultWithReasonMissingMetadataProperty_DefaultsTo400()
+    {
+        var (filter, _) = Create();
+        var failObj = new SerializableResult<string>
+        {
+            IsSuccess = false,
+            Reasons = new List<IReason> { new ReasonWithHiddenMetadata() }
+        };
+        var executedCtx = BuildExecutedContext(failObj);
+        var executingCtx = BuildExecutingContext(executedCtx.HttpContext);
+
+        await filter.OnActionExecutionAsync(executingCtx, DelegateReturning(executedCtx));
+
+        ((ObjectResult)executedCtx.Result!).StatusCode.Should().Be(400);
+    }
+
+    [Fact]
     public async Task OnActionExecutionAsync_NullObjectResult_SkipsLogging()
     {
         var (filter, logger) = Create();

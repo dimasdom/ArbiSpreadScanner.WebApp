@@ -210,4 +210,201 @@ public class TradeOpportunityServiceTests
         result.Value.GroupName.Should().Be(guid.ToString().ToLowerInvariant());
         result.Value.PositionModel.Should().BeSameAs(model);
     }
+
+    [Fact]
+    public async Task GetSpreadInfo_InvalidGuid_ReturnsFail()
+    {
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+
+        var result = await _sut.GetSpreadInfo("not-a-guid");
+
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetSpreadInfo_SpreadNotFound_ReturnsNotFoundFail()
+    {
+        var guid = Guid.NewGuid();
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync((TradeOpportunityModel?)null);
+        _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync((TradeOpportunityTickerModel?)null);
+
+        var result = await _sut.GetSpreadInfo(guid.ToString());
+
+        result.IsFailed.Should().BeTrue();
+        result.Errors[0].Message.Should().Contain("not found");
+    }
+
+    [Fact]
+    public async Task GetSpreadInfo_RepositoryThrows_ReturnsFail()
+    {
+        var guid = Guid.NewGuid();
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ThrowsAsync(new Exception("mongo down"));
+
+        var result = await _sut.GetSpreadInfo(guid.ToString());
+
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetCurrentFuturesSpreads_DelegatesWithFuturesType()
+    {
+        _spreadRepo.Setup(r => r.GetByTypeAsync(SpreadType.Futures)).ReturnsAsync(new List<TradeOpportunityModel>());
+
+        var result = await _sut.GetCurrentFuturesSpreads();
+
+        result.IsSuccess.Should().BeTrue();
+        _spreadRepo.Verify(r => r.GetByTypeAsync(SpreadType.Futures), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetCurrentFundingSpreads_DelegatesWithFundingType()
+    {
+        _spreadRepo.Setup(r => r.GetByTypeAsync(SpreadType.Funding)).ReturnsAsync(new List<TradeOpportunityModel>());
+
+        var result = await _sut.GetCurrentFundingSpreads();
+
+        result.IsSuccess.Should().BeTrue();
+        _spreadRepo.Verify(r => r.GetByTypeAsync(SpreadType.Funding), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetCurrentSpotSpreads_DelegatesWithSpotType()
+    {
+        _spreadRepo.Setup(r => r.GetByTypeAsync(SpreadType.Spot)).ReturnsAsync(new List<TradeOpportunityModel>());
+
+        var result = await _sut.GetCurrentSpotSpreads();
+
+        result.IsSuccess.Should().BeTrue();
+        _spreadRepo.Verify(r => r.GetByTypeAsync(SpreadType.Spot), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetCurrentFuturesSpreads_ChatIdZero_UsesGetByTypeAsync()
+    {
+        _spreadRepo.Setup(r => r.GetByTypeAsync(SpreadType.Futures)).ThrowsAsync(new Exception("boom"));
+
+        var result = await _sut.GetCurrentFuturesSpreads(0);
+
+        result.IsFailed.Should().BeTrue();
+    }
+
+    private static AppDbContext CreateSharedContext(string dbName)
+    {
+        var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(dbName).Options;
+        return new AppDbContext(options);
+    }
+
+    private void SetupContextFactory(string dbName) =>
+        _ctxFactory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => CreateSharedContext(dbName));
+
+    [Fact]
+    public async Task GetCurrentFuturesSpreads_ChatIdSet_UserSettingsNotFound_ReturnsFail()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+
+        var result = await _sut.GetCurrentFuturesSpreads(999);
+
+        result.IsFailed.Should().BeTrue();
+        result.Errors[0].Message.Should().Contain("not found");
+    }
+
+    [Fact]
+    public async Task GetCurrentFuturesSpreads_ChatIdSet_FiltersBySpreadSizeAndExchangesAndVolume()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        using (var seed = CreateSharedContext(dbName))
+        {
+            var exchange = new ExchangeModel { Id = 1, Name = "binance" };
+            var userSettings = new UserSettingsModel { Id = 42, AccountId = "acc1", SpreadSize = 1.0, PositionSize = 10 };
+            userSettings.Exchanges.Add(new UserExchangeModel { UserAccountId = "acc1", Exchange = exchange });
+            seed.UsersSettings.Add(userSettings);
+            await seed.SaveChangesAsync();
+        }
+
+        var matching = MakeModel();
+        matching.StartSpread = 2.0;
+        matching.ExchangeRateA = new ExchangeRateModel { Symbol = "BTC/USDT", Exchange = "binance", VolumeAsk = 1000, VolumeBid = 1000 };
+        matching.ExchangeRateB = new ExchangeRateModel { Symbol = "BTC/USDT", Exchange = "binance", VolumeAsk = 1000, VolumeBid = 1000 };
+
+        var nonMatching = MakeModel();
+        nonMatching.StartSpread = 0.1;
+
+        _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Futures))
+            .ReturnsAsync(new List<TradeOpportunityModel> { matching, nonMatching });
+
+        var result = await _sut.GetCurrentFuturesSpreads(42);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().ContainSingle(x => x.Guid == matching.Guid);
+    }
+
+    [Fact]
+    public async Task GetSpreadsForUser_NoActiveSubscription_ReturnsFail()
+    {
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(false);
+
+        var result = await _sut.GetSpreadsForUser("u1");
+
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetSpreadsForUser_UserNotFound_ReturnsFail()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+
+        var result = await _sut.GetSpreadsForUser("missing");
+
+        result.IsFailed.Should().BeTrue();
+        result.Errors[0].Message.Should().Contain("User not found");
+    }
+
+    [Fact]
+    public async Task GetSpreadsForUser_NoSpreadTypesEnabled_ReturnsEmptyList()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        using (var seed = CreateSharedContext(dbName))
+        {
+            seed.UsersSettings.Add(new UserSettingsModel { Id = 1, AccountId = "acc1" });
+            seed.Users.Add(new AccountModel { Id = "acc1", UserSettingsId = 1, UserSettings = null! });
+            await seed.SaveChangesAsync();
+        }
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+
+        var result = await _sut.GetSpreadsForUser("acc1");
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetSpreadsForUser_FuturesEnabled_ReturnsDtosWithExchangeLinks()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        using (var seed = CreateSharedContext(dbName))
+        {
+            seed.UsersSettings.Add(new UserSettingsModel { Id = 2, AccountId = "acc2", FuturesSpread = true });
+            seed.Users.Add(new AccountModel { Id = "acc2", UserSettingsId = 2, UserSettings = null! });
+            await seed.SaveChangesAsync();
+        }
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        var spread = MakeModel();
+        _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Futures)).ReturnsAsync(new List<TradeOpportunityModel>());
+        _spreadRepo.Setup(r => r.GetByTypeAsync(SpreadType.Futures)).ReturnsAsync(new List<TradeOpportunityModel> { spread });
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetSpreadsForUser("acc2");
+
+        result.IsSuccess.Should().BeTrue();
+    }
 }

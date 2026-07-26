@@ -89,6 +89,10 @@ jobs:
         run: npm test -- --coverage --reporter=junit --outputFile=./TestResults/junit.xml
         working-directory: ArbiScannerWeb.Client
 
+      - name: Fix lcov paths for SonarCloud (must be relative to repo root, not the client dir)
+        run: sed -i 's|^SF:|SF:ArbiScannerWeb.Client/|' coverage/lcov.info
+        working-directory: ArbiScannerWeb.Client
+
       - name: Restore
         run: dotnet restore ArbiScannerWebApp.sln
 

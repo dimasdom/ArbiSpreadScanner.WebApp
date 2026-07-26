@@ -54,4 +54,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-
 
 COPY --from=build-env /app/publish .
 
+USER app
+
 ENTRYPOINT ["dotnet", "ArbiScannerWeb.API.dll"]

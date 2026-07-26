@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useIsMobile } from './useIsMobile';
 
@@ -13,22 +13,14 @@ describe('useIsMobile', () => {
         setWindowWidth(originalWidth);
     });
 
-    it('returns true when window width is below default breakpoint (768)', () => {
-        setWindowWidth(600);
+    it.each([
+        [600, true],
+        [768, false],
+        [1200, false],
+    ])('returns %s for window width %i against the default breakpoint (768)', (width, expected) => {
+        setWindowWidth(width);
         const { result } = renderHook(() => useIsMobile());
-        expect(result.current).toBe(true);
-    });
-
-    it('returns false when window width equals the breakpoint', () => {
-        setWindowWidth(768);
-        const { result } = renderHook(() => useIsMobile());
-        expect(result.current).toBe(false);
-    });
-
-    it('returns false when window width is above the breakpoint', () => {
-        setWindowWidth(1200);
-        const { result } = renderHook(() => useIsMobile());
-        expect(result.current).toBe(false);
+        expect(result.current).toBe(expected);
     });
 
     it('respects a custom breakpoint', () => {

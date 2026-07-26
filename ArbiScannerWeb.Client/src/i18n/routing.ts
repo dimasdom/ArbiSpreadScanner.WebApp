@@ -18,7 +18,7 @@ function withLangTo(to: To, lang: string): To {
 // Strips a leading /<lang> segment so page-transition keys and other
 // path comparisons ignore the language, e.g. "/uk/faq" -> "/faq".
 export function stripLangPrefix(pathname: string): string {
-    const match = pathname.match(/^\/([a-zA-Z]{2})(?=\/|$)/);
+    const match = /^\/([a-zA-Z]{2})(?=\/|$)/.exec(pathname);
     if (match && isSupportedLang(match[1])) {
         return pathname.slice(match[0].length) || '/';
     }

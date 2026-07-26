@@ -1,4 +1,4 @@
-export const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@.]+\.[^\s@]+$/;
 
 // Returns an i18n key (under common:validation.*), not a message, so
 // callers translate it with the user's current language.

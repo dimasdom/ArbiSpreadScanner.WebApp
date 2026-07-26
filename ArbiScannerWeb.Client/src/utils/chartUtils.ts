@@ -16,7 +16,8 @@ export function convertToOHLC(tickers: PossiblePositionTickerModel[]) {
     }
 
     const candles = Array.from(grouped.entries()).map(([, group]) => {
-        const sorted = group.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+        group.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+        const sorted = group;
         const open = Math.abs(sorted[0].spread);
         const close = Math.abs(sorted[sorted.length - 1].spread);
         const high = Math.max(...sorted.map((t) => Math.abs(t.spread)));
@@ -37,6 +38,6 @@ export function convertToSeries(tickers: PossiblePositionTickerModel[]) {
             x: new Date(tick.dateTime).getTime(),
             y: Math.abs(tick.spread),
         }))
-        .filter((point) => !isNaN(point.x) && typeof point.y === 'number')
+        .filter((point) => !Number.isNaN(point.x) && typeof point.y === 'number')
         .sort((a, b) => a.x - b.x);
 }

@@ -26,6 +26,7 @@ namespace ArbiScannerWeb.Infrastructure
     public static class StartupSetup
     {
         private const string AccessTokenCookieName = "arbiscanner.access_token";
+        private static readonly object MongoClassMapLock = new();
 
         public static void AddDbContext(this IServiceCollection services, IConfiguration configuration)
         {
@@ -42,34 +43,37 @@ namespace ArbiScannerWeb.Infrastructure
         {
             BsonSerializer.TryRegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 
-            if (!BsonClassMap.IsClassMapRegistered(typeof(TradeOpportunityTickerModel)))
+            lock (MongoClassMapLock)
             {
-                BsonClassMap.RegisterClassMap<TradeOpportunityTickerModel>(cm =>
+                if (!BsonClassMap.IsClassMapRegistered(typeof(TradeOpportunityTickerModel)))
                 {
-                    cm.AutoMap();
-                    cm.UnmapProperty(x => x.Id);
-                    cm.SetIdMember(null);
-                    cm.SetIgnoreExtraElements(true);
-                });
-            }
+                    BsonClassMap.RegisterClassMap<TradeOpportunityTickerModel>(cm =>
+                    {
+                        cm.AutoMap();
+                        cm.UnmapProperty(x => x.Id);
+                        cm.SetIdMember(null);
+                        cm.SetIgnoreExtraElements(true);
+                    });
+                }
 
-            if (!BsonClassMap.IsClassMapRegistered(typeof(ExchangeRateModel)))
-            {
-                BsonClassMap.RegisterClassMap<ExchangeRateModel>(cm =>
+                if (!BsonClassMap.IsClassMapRegistered(typeof(ExchangeRateModel)))
                 {
-                    cm.AutoMap();
-                    cm.SetIgnoreExtraElements(true);
-                });
-            }
+                    BsonClassMap.RegisterClassMap<ExchangeRateModel>(cm =>
+                    {
+                        cm.AutoMap();
+                        cm.SetIgnoreExtraElements(true);
+                    });
+                }
 
-            if (!BsonClassMap.IsClassMapRegistered(typeof(TradeOpportunityModel)))
-            {
-                BsonClassMap.RegisterClassMap<TradeOpportunityModel>(cm =>
+                if (!BsonClassMap.IsClassMapRegistered(typeof(TradeOpportunityModel)))
                 {
-                    cm.AutoMap();
-                    cm.MapIdProperty(x => x.Guid);
-                    cm.SetIgnoreExtraElements(true);
-                });
+                    BsonClassMap.RegisterClassMap<TradeOpportunityModel>(cm =>
+                    {
+                        cm.AutoMap();
+                        cm.MapIdProperty(x => x.Guid);
+                        cm.SetIgnoreExtraElements(true);
+                    });
+                }
             }
 
             services.AddSingleton(sp => configuration.GetSection(MongoDbSettings.SectionName).Get<MongoDbSettings>()

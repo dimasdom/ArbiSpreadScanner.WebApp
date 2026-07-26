@@ -56,6 +56,7 @@ jobs:
           /d:sonar.host.url="https://sonarcloud.io"
           /d:sonar.cs.vstest.reportsPaths="TestResults/*.trx"
           /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml"
+          /d:sonar.exclusions="**/Program.cs,**/ArbiScannerWeb.Domain/Models/**,**/ArbiScannerWeb.Infrastructure/Settings/**,**/ArbiScannerWeb.Infrastructure/DbContext/**,**/ArbiScannerWeb.Infrastructure/Migrations/**,**/ArbiScannerWeb.Abstractions/Interfaces/**,**/ArbiScannerWeb.Client/src/types/**"
 
       # CodeQL is free for public GitHub repos, no external account/secrets needed.
       # JS/TS only supports build-mode "none" (it's not compiled), while C# needs "manual"

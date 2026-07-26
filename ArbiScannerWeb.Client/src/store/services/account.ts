@@ -153,13 +153,13 @@ export const accountApi = createApi({
         }),
         createTelegramLinkRequest: builder.mutation<FluentResult<TelegramLinkRequest>, void>({
             query: () => ({
-                url: '/Account/CreateTelegramLinkRequest',
+                url: '/TelegramLink/CreateTelegramLinkRequest',
                 method: 'POST',
             }),
         }),
         removeTelegramLink: builder.mutation<FluentResult, void>({
             query: () => ({
-                url: '/Account/RemoveTelegramLink',
+                url: '/TelegramLink/RemoveTelegramLink',
                 method: 'POST',
             }),
             invalidatesTags: ['Account'],

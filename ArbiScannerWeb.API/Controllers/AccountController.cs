@@ -19,13 +19,11 @@ namespace ArbiScannerWeb.API.Controllers
         private const string RefreshTokenCookieName = "arbiscanner.refresh_token";
 
         private readonly IAccountService _accountService;
-        private readonly IUserSettingsService _telegramUserService;
         private readonly JwtOptions _jwtOptions;
 
-        public AccountController(IAccountService accountService, IUserSettingsService telegramUserService, IOptions<JwtOptions> jwtOptions)
+        public AccountController(IAccountService accountService, IOptions<JwtOptions> jwtOptions)
         {
             _accountService = accountService;
-            _telegramUserService = telegramUserService;
             _jwtOptions = jwtOptions.Value;
         }
 
@@ -93,20 +91,6 @@ namespace ArbiScannerWeb.API.Controllers
         public async Task<ActionResult<Result<AccountDto>>> GetUserData()
         {
             return (await _accountService.GetUserData()).ToSerializable();
-        }
-
-        [Authorize]
-        [HttpPost("CreateTelegramLinkRequest")]
-        public async Task<ActionResult<Result<TelegramLinkRequest>>> CreateTelegramLinkRequest()
-        {
-            return (await _telegramUserService.CreateLinkRequestAsyncForAuthUser()).ToSerializable();
-        }
-
-        [Authorize]
-        [HttpPost("RemoveTelegramLink")]
-        public async Task<ActionResult<Result>> RemoveTelegramLink()
-        {
-            return (await _telegramUserService.RemoveTelegramLinkAsyncForAuthUser()).ToSerializable();
         }
 
         [AllowAnonymous]
@@ -193,8 +177,15 @@ namespace ArbiScannerWeb.API.Controllers
 
         private void ClearAuthCookies()
         {
-            Response.Cookies.Delete(AccessTokenCookieName, new CookieOptions { Path = "/" });
-            Response.Cookies.Delete(RefreshTokenCookieName, new CookieOptions { Path = "/" });
+            var options = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Path = "/"
+            };
+            Response.Cookies.Delete(AccessTokenCookieName, options);
+            Response.Cookies.Delete(RefreshTokenCookieName, options);
         }
 
         private static void ClearAuthTokens(AccountDto accountDto)

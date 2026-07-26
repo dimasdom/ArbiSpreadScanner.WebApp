@@ -16,13 +16,11 @@ namespace ArbiScannerWeb.Tests.API;
 public class AccountControllerTests
 {
     private readonly Mock<IAccountService> _accountService = new();
-    private readonly Mock<IUserSettingsService> _userSettings = new();
 
     private AccountController CreateController(DefaultHttpContext? httpContext = null)
     {
         var ctrl = new AccountController(
             _accountService.Object,
-            _userSettings.Object,
             Options.Create(MockHelpers.CreateTestJwtOptions()));
 
         ctrl.ControllerContext = new ControllerContext

@@ -56,7 +56,7 @@ jobs:
           /d:sonar.host.url="https://sonarcloud.io"
           /d:sonar.cs.vstest.reportsPaths="TestResults/*.trx"
           /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml"
-          /d:sonar.exclusions="**/Program.cs,**/ArbiScannerWeb.Domain/Models/**,**/ArbiScannerWeb.Infrastructure/Settings/**,**/ArbiScannerWeb.Infrastructure/DbContext/**,**/ArbiScannerWeb.Infrastructure/Migrations/**,**/ArbiScannerWeb.Abstractions/Interfaces/**,**/ArbiScannerWeb.Client/src/types/**,**/ArbiScannerWeb.Client/coverage/**"
+          /d:sonar.exclusions="**/Program.cs,**/ArbiScannerWeb.Domain/Models/**,**/ArbiScannerWeb.Infrastructure/Settings/**,**/ArbiScannerWeb.Infrastructure/DbContext/**,**/ArbiScannerWeb.Infrastructure/Migrations/**,**/ArbiScannerWeb.Abstractions/Interfaces/**,**/ArbiScannerWeb.Client/src/types/**,**/ArbiScannerWeb.Client/coverage/lcov-report/**"
           /d:sonar.javascript.lcov.reportPaths="ArbiScannerWeb.Client/coverage/lcov.info"
           /d:sonar.typescript.lcov.reportPaths="ArbiScannerWeb.Client/coverage/lcov.info"
 

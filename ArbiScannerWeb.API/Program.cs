@@ -76,26 +76,30 @@ try
         client.BaseAddress = new Uri(adminApiUrl);
         client.Timeout = TimeSpan.FromSeconds(30);
     });
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(r => r.AddService("arbiscanner-web", serviceVersion: "1.0.0"))
-        .WithTracing(tracing => tracing
-            .AddAspNetCoreInstrumentation(o =>
-            {
-                o.RecordException = true;
-                o.Filter = ctx => ctx.Request.Path != "/metrics"
-                               && !ctx.Request.Path.StartsWithSegments("/hubs");
-            })
-            .AddHttpClientInstrumentation(o => o.RecordException = true)
-            .AddEntityFrameworkCoreInstrumentation()
-            .AddRedisInstrumentation()
-            .AddSource("RabbitMQ.Client.*")
-            .AddSource("MongoDB.Driver.Core.Extensions.DiagnosticSources")
-            .AddOtlpExporter())
-        .WithMetrics(metrics => metrics
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddRuntimeInstrumentation()
-            .AddPrometheusExporter());
+    var observabilityEnabled = builder.Configuration.GetValue("Observability:Enabled", true);
+    if (observabilityEnabled)
+    {
+        builder.Services.AddOpenTelemetry()
+            .ConfigureResource(r => r.AddService("arbiscanner-web", serviceVersion: "1.0.0"))
+            .WithTracing(tracing => tracing
+                .AddAspNetCoreInstrumentation(o =>
+                {
+                    o.RecordException = true;
+                    o.Filter = ctx => ctx.Request.Path != "/metrics"
+                                   && !ctx.Request.Path.StartsWithSegments("/hubs");
+                })
+                .AddHttpClientInstrumentation(o => o.RecordException = true)
+                .AddEntityFrameworkCoreInstrumentation()
+                .AddRedisInstrumentation()
+                .AddSource("RabbitMQ.Client.*")
+                .AddSource("MongoDB.Driver.Core.Extensions.DiagnosticSources")
+                .AddOtlpExporter())
+            .WithMetrics(metrics => metrics
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddRuntimeInstrumentation()
+                .AddPrometheusExporter());
+    }
     builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
     builder.Services.AddRateLimiter(options =>
     {
@@ -136,7 +140,10 @@ try
             "0 0 * * *",
             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
-    app.UseOpenTelemetryPrometheusScrapingEndpoint();
+    if (observabilityEnabled)
+    {
+        app.UseOpenTelemetryPrometheusScrapingEndpoint();
+    }
     app.UseMiddleware<ExceptionHandlingMiddleware>();
     app.UseSerilogRequestLogging();
     app.UseCors("AllowAll");

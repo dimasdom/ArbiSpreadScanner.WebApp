@@ -54,7 +54,9 @@ public class RabbitMqIntegrationTests(RabbitMqTestFixture fixture)
         var message = BuildSpread(MarketPositionAction.Open);
         await PublishAsync(message);
 
-        var client = fixture.Factory.CreateClient();
+        // CreateSecureClient(): the login cookie is Secure, so the client's CookieContainer
+        // only re-sends it on a base address it considers HTTPS.
+        var client = fixture.Factory.CreateSecureClient();
         var authedClient = await RegisterConfirmAndLoginAsync(client);
 
         var deadline = DateTime.UtcNow.AddSeconds(20);

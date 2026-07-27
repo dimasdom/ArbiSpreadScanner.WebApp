@@ -14,7 +14,9 @@ public class AccountFlowTests(WebApiTestFixture fixture)
     [Fact]
     public async Task FullAuthLifecycle_Succeeds()
     {
-        var client = fixture.Factory.CreateClient();
+        // Uses CreateSecureClient(): the access/refresh cookies are Secure, so the client's
+        // CookieContainer only re-sends them on a base address it considers HTTPS.
+        var client = fixture.Factory.CreateSecureClient();
         var email = $"integration-{Guid.NewGuid():N}@example.com";
         const string password = "IntegrationTest@123";
 

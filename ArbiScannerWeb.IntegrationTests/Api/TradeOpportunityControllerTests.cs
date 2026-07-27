@@ -68,7 +68,9 @@ public class TradeOpportunityControllerTests(WebApiTestFixture fixture)
 
     private async Task<HttpClient> RegisterConfirmAndLoginAsync()
     {
-        var client = fixture.Factory.CreateClient();
+        // CreateSecureClient(): the login cookie is Secure, so the client's CookieContainer
+        // only re-sends it on a base address it considers HTTPS.
+        var client = fixture.Factory.CreateSecureClient();
         var email = $"integration-{Guid.NewGuid():N}@example.com";
         const string password = "IntegrationTest@123";
 

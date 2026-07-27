@@ -61,6 +61,15 @@ public class AdminServiceTests
         Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
     };
 
+    // Mirrors AdminPanel's real Authenticate response: token is blanked from the body and
+    // returned only via the adminpanel.access_token cookie (see AccountController.AppendAuthCookies).
+    private static HttpResponseMessage AuthenticateResponse(string token)
+    {
+        var response = JsonResponse(HttpStatusCode.OK, """{"value":{"token":""}}""");
+        response.Headers.Add("Set-Cookie", $"adminpanel.access_token={token}; path=/; httponly");
+        return response;
+    }
+
     [Fact]
     public void Constructor_MissingAdminApiUrl_Throws()
     {
@@ -98,7 +107,7 @@ public class AdminServiceTests
         {
             callCount++;
             if (req.RequestUri!.AbsolutePath.Contains("Authenticate"))
-                return JsonResponse(HttpStatusCode.OK, """{"value":{"token":"fresh-token"}}""");
+                return AuthenticateResponse("fresh-token");
             return JsonResponse(HttpStatusCode.OK, """{"value":[{"Id":1}]}""");
         };
 
@@ -193,7 +202,7 @@ public class AdminServiceTests
         _handler.OnRequest = req =>
         {
             if (req.RequestUri!.AbsolutePath.Contains("Authenticate"))
-                return JsonResponse(HttpStatusCode.OK, """{"value":{"token":"new-token"}}""");
+                return AuthenticateResponse("new-token");
             getCalls++;
             return getCalls == 1
                 ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
@@ -324,7 +333,7 @@ public class AdminServiceTests
         _handler.OnRequest = req =>
         {
             if (req.RequestUri!.AbsolutePath.Contains("Authenticate"))
-                return JsonResponse(HttpStatusCode.OK, """{"value":{"token":"new-token"}}""");
+                return AuthenticateResponse("new-token");
             postCalls++;
             return postCalls == 1
                 ? new HttpResponseMessage(HttpStatusCode.Unauthorized)

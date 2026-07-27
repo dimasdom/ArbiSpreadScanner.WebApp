@@ -25,6 +25,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
         private readonly IDatabase _redis;
         private readonly string _adminApiUrl;
         private const string TokenCacheKey = "admin_service:jwt_token";
+        private const string AccessTokenCookieName = "adminpanel.access_token";
         private readonly SemaphoreSlim _authLock = new SemaphoreSlim(1, 1);
         private readonly ILogger<AdminService> _logger;
 
@@ -76,20 +77,15 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 var response = await _httpClient.PostAsync($"{_adminApiUrl}/api/account/Authenticate", content);
                 if (!response.IsSuccessStatusCode) return;
 
-                var responseBody = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(responseBody);
-                var root = doc.RootElement;
-
-                if (root.TryGetProperty("value", out var valueElement) &&
-                    valueElement.TryGetProperty("token", out var tokenElement))
+                // AdminPanel's Authenticate response blanks the token out of the JSON body and
+                // returns it only as an HttpOnly cookie (see AccountController.AppendAuthCookies).
+                // This client has no cookie jar, so pull the JWT out of Set-Cookie directly.
+                var token = ExtractCookieValue(response, AccessTokenCookieName);
+                if (!string.IsNullOrEmpty(token))
                 {
-                    var token = tokenElement.GetString();
-                    if (!string.IsNullOrEmpty(token))
-                    {
-                        await _redis.StringSetAsync(TokenCacheKey, token, TimeSpan.FromHours(23));
-                        _httpClient.DefaultRequestHeaders.Authorization =
-                            new AuthenticationHeaderValue("Bearer", token);
-                    }
+                    await _redis.StringSetAsync(TokenCacheKey, token, TimeSpan.FromHours(23));
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new AuthenticationHeaderValue("Bearer", token);
                 }
             }
             catch (Exception ex)
@@ -100,6 +96,25 @@ namespace ArbiScannerWeb.Infrastructure.Services
             {
                 _authLock.Release();
             }
+        }
+
+        private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
+        {
+            if (!response.Headers.TryGetValues("Set-Cookie", out var cookieHeaders))
+                return null;
+
+            var namePrefix = $"{cookieName}=";
+            foreach (var header in cookieHeaders)
+            {
+                if (!header.StartsWith(namePrefix, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var valueAndAttributes = header[namePrefix.Length..];
+                var semicolonIndex = valueAndAttributes.IndexOf(';');
+                return semicolonIndex >= 0 ? valueAndAttributes[..semicolonIndex] : valueAndAttributes;
+            }
+
+            return null;
         }
 
         private async Task<Result<T>> GetResultAsync<T>(string url)

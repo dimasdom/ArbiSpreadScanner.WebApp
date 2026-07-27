@@ -43,6 +43,35 @@ public class RabbitMqIdempotencyTests(RabbitMqTestFixture fixture)
         count.Should().Be(1, "the Redis dedupe key should have skipped the second, duplicate delivery");
     }
 
+    [Fact]
+    public async Task DistinctUpdates_ForSamePosition_AreAllProcessed()
+    {
+        var open = BuildSpread();
+        await PublishAsync(open);
+
+        // Same Guid and ActionType as every other Update for this position — only the
+        // spread/rate differ. These must NOT collide with the dedupe key and get skipped
+        // as if they were a redelivery of the previous tick.
+        await PublishAsync(BuildSpread(MarketPositionAction.Update, open.Guid, spread: 2.50));
+        await PublishAsync(BuildSpread(MarketPositionAction.Update, open.Guid, spread: 2.75));
+
+        var tickers = fixture.Factory.Services.GetRequiredService<IMongoDatabase>()
+            .GetCollection<TradeOpportunityTickerModel>("SpreadsTicker");
+
+        var deadline = DateTime.UtcNow.AddSeconds(20);
+        long count = 0;
+        while (DateTime.UtcNow < deadline)
+        {
+            count = await tickers.CountDocumentsAsync(Builders<TradeOpportunityTickerModel>.Filter.Eq(x => x.Guid, open.Guid));
+            if (count >= 3)
+                break;
+
+            await Task.Delay(500);
+        }
+
+        count.Should().Be(3, "each distinct spread/rate update for the same position is new data, not a redelivery, and must not be skipped by the dedupe key");
+    }
+
     private async Task PublishAsync(TradeOpportunityModel message)
     {
         var factory = new ConnectionFactory
@@ -67,7 +96,7 @@ public class RabbitMqIdempotencyTests(RabbitMqTestFixture fixture)
         await channel.BasicPublishAsync(RabbitMqTestFixture.Exchange, routingKey: "", body: body);
     }
 
-    private static TradeOpportunityModel BuildSpread()
+    private static TradeOpportunityModel BuildSpread(MarketPositionAction actionType = MarketPositionAction.Open, Guid? guid = null, double spread = 2.25)
     {
         ExchangeRateModel Rate(string exchange) => new()
         {
@@ -80,15 +109,15 @@ public class RabbitMqIdempotencyTests(RabbitMqTestFixture fixture)
 
         return new TradeOpportunityModel
         {
-            Guid = Guid.NewGuid(),
+            Guid = guid ?? Guid.NewGuid(),
             Symbol = "BTC/USDT",
             Type = SpreadType.Spot,
-            ActionType = MarketPositionAction.Open,
+            ActionType = actionType,
             ExchangeRateA = Rate("Binance"),
             ExchangeRateB = Rate("Bybit"),
             ExchangeShort = Rate("Binance"),
             ExchangeLong = Rate("Bybit"),
-            Spread = 2.25,
+            Spread = spread,
             StartSpread = 2.25,
             SummaryTarrif = 0.1,
             PossibleProfit = 15,

@@ -4,7 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
@@ -91,6 +93,17 @@ namespace ArbiScannerWeb.Infrastructure.Services
             return model;
         }
 
+        // Hashes the fields that actually change tick-to-tick into a fixed-size fingerprint
+        // instead of keying on the raw values, so the Redis key stays short and cheap to
+        // store/compare no matter how many fields are checked for a genuine change.
+        private static string BuildDedupeKey(string queueName, TradeOpportunityModel position)
+        {
+            var fingerprint = string.Create(CultureInfo.InvariantCulture, $"{position.Spread}|{position.ExchangeRateA.ExchangeRate}|{position.ExchangeRateA.VolumeAsk}|{position.ExchangeRateA.VolumeBid}|{position.ExchangeRateB.ExchangeRate}|{position.ExchangeRateB.VolumeAsk}|{position.ExchangeRateB.VolumeBid}|{position.PossibleProfit}|{position.SummaryTarrif}|{position.StartSpread}|{position.TotalFunding}");
+            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fingerprint)));
+
+            return $"spread-dedupe:{queueName}:{position.Guid}:{position.ActionType}:{hash}";
+        }
+
         private async Task<bool> EnsureConnectedAsync()
         {
             if (_connection?.IsOpen == true && _channel?.IsOpen == true)
@@ -157,7 +170,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
                         _logger.LogInformation("Received message: {Message}", position.Spread);
 
-                        var dedupeKey = $"spread-dedupe:{_queueName}:{position.Guid}:{position.ActionType}";
+                        var dedupeKey = BuildDedupeKey(_queueName, position);
                         var claimed = await _redis.StringSetAsync(dedupeKey, "1", DedupeWindow, When.NotExists);
                         if (!claimed)
                         {

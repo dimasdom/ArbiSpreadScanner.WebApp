@@ -1,5 +1,8 @@
 # ArbiScannerWebApp
 
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=dimasdom_ArbiSpreadScanner.WebApp)](https://sonarcloud.io/summary/new_code?id=dimasdom_ArbiSpreadScanner.WebApp)
+
+
 The main user-facing web application for the ArbiScanner platform. It displays real-time cryptocurrency arbitrage spread opportunities discovered by the ArbitrageScanner engine. Users can browse current spreads, view historical ticker data, set alerts, and manage their account — including linking a Telegram account for push notifications.
 
 ---

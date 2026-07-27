@@ -6,6 +6,7 @@
 # Environment secrets
 .env
 *.env.local
+nginx/prometheus.htpasswd
 
 # User-specific files
 *.rsuser
@@ -115,6 +116,8 @@ coverage*.xml
 coverage*.info
 *.coverage
 *.coveragexml
+# JS/TS test coverage output (vitest --coverage)
+coverage/
 _NCrunch_*
 .*crunch*.local.xml
 nCrunchTemp_*

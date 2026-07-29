@@ -6,7 +6,6 @@
 # Environment secrets
 .env
 *.env.local
-nginx/prometheus.htpasswd
 
 # User-specific files
 *.rsuser

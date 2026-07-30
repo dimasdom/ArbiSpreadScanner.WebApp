@@ -61,6 +61,8 @@ jobs:
           /d:sonar.javascript.lcov.reportPaths="${{ github.workspace }}/ArbiScannerWeb.Client/coverage/lcov.info"
           /d:sonar.typescript.lcov.reportPaths="${{ github.workspace }}/ArbiScannerWeb.Client/coverage/lcov.info"
           /d:sonar.verbose=true
+          /d:sonar.qualitygate.wait=true
+          /d:sonar.qualitygate.timeout=300
 
       # CodeQL is free for public GitHub repos, no external account/secrets needed.
       # JS/TS only supports build-mode "none" (it's not compiled), while C# needs "manual"
@@ -127,11 +129,7 @@ jobs:
       - name: End SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >
-          dotnet-sonarscanner end
-          /d:sonar.token="$SONAR_TOKEN"
-          /d:sonar.qualitygate.wait=true
-          /d:sonar.qualitygate.timeout=300
+        run: dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4

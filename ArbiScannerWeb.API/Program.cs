@@ -187,7 +187,6 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "Host terminated unexpectedly");
-    throw new InvalidOperationException("Host terminated unexpectedly", ex);
 }
 finally
 {

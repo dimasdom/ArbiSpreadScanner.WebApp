@@ -31,8 +31,17 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Host.UseSerilog((ctx, cfg) =>
+    {
         cfg.ReadFrom.Configuration(ctx.Configuration)
-           .Enrich.WithSpan());
+           .Enrich.WithSpan();
+
+        // VerboseLogging:Enabled (VERBOSE_CONSOLE_LOGS in .env) raises the minimum
+        // level to Debug when console output is easier to check than Grafana/Loki.
+        if (ctx.Configuration.GetValue("VerboseLogging:Enabled", false))
+        {
+            cfg.MinimumLevel.Debug();
+        }
+    });
 
     builder.Services.AddControllers(opts => opts.Filters.Add<ResultStatusCodeFilter>());
     builder.Services.AddOpenApi();

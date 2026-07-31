@@ -30,11 +30,11 @@ jobs:
       has_client_tests: true
       client_dir: ArbiScannerWebApp/ArbiScannerWeb.Client
       sonar_begin_extra_args: >-
-        /d:sonar.projectBaseDir="${{ github.workspace }}/ArbiScannerWebApp"
+        /d:sonar.projectBaseDir="$(pwd)"
         /d:sonar.exclusions="**/Program.cs,**/ArbiScannerWeb.Domain/Models/**,**/ArbiScannerWeb.Infrastructure/Settings/**,**/ArbiScannerWeb.Infrastructure/DbContext/**,**/ArbiScannerWeb.Infrastructure/Migrations/**,**/ArbiScannerWeb.Abstractions/Interfaces/**,**/ArbiScannerWeb.Client/src/types/**,**/ArbiScannerWeb.Client/coverage/lcov-report/**"
         /d:sonar.coverage.exclusions="**/ArbiScannerWeb.Client/src/test/**,**/ArbiScannerWeb.Client/src/main.tsx,**/ArbiScannerWeb.Client/*.config.ts,**/ArbiScannerWeb.Client/src/**/*.test.ts,**/ArbiScannerWeb.Client/src/**/*.test.tsx"
-        /d:sonar.javascript.lcov.reportPaths="${{ github.workspace }}/ArbiScannerWebApp/ArbiScannerWeb.Client/coverage/lcov.info"
-        /d:sonar.typescript.lcov.reportPaths="${{ github.workspace }}/ArbiScannerWebApp/ArbiScannerWeb.Client/coverage/lcov.info"
+        /d:sonar.javascript.lcov.reportPaths="$(pwd)/ArbiScannerWeb.Client/coverage/lcov.info"
+        /d:sonar.typescript.lcov.reportPaths="$(pwd)/ArbiScannerWeb.Client/coverage/lcov.info"
         /d:sonar.verbose=true
       sibling_repos: "[]"
       images: >-

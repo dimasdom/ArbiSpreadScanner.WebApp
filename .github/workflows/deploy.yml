@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    uses: dimasdom/SpreadScanner/.github/workflows/deploy-service.yml@d43f42f920c52ec9026517bc6bb86676680c2ffd # master
+    uses: dimasdom/SpreadScanner/.github/workflows/deploy-service.yml@f06e61425a422a4950b80ea8bb13fcdf69b5bc91 # master
     with:
       self_checkout_path: ArbiScannerWebApp
       sonar_project_key: dimasdom_ArbiSpreadScanner.WebApp

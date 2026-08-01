@@ -20,7 +20,7 @@ The main user-facing web application for the ArbiScanner platform. It displays r
 - [Message Processing Correctness](#message-processing-correctness)
 - [Internationalization](#internationalization)
 - [Database Migrations](#database-migrations)
-- [Code Quality & CI](#code-quality--ci)
+- [CI/CD](#cicd)
 - [Testing](#testing)
 - [Docker](#docker)
 - [Project Structure](#project-structure)
@@ -448,13 +448,36 @@ dotnet ef migrations remove --project ../ArbiScannerWeb.Infrastructure
 
 ---
 
-## Code Quality & CI
+## CI/CD
 
 `.editorconfig` and `Directory.Build.props` enable `AnalysisLevel=latest`/`AnalysisMode=Recommended` with `TreatWarningsAsErrors`. `Directory.Build.props` documents the specific pre-existing warning rule IDs grandfathered in — nullable-safety warnings are not among them and fail the build if introduced.
 
-`.github/workflows/ci.yml` runs restore → Node/npm install (the API references the React client as an MSBuild project) → build (with analyzers) → `ArbiScannerWeb.Tests` → `ArbiScannerWeb.IntegrationTests` on every push. The root monorepo also has `.github/workflows/docker-build.yml`, since this API's Dockerfile needs repo-root build context.
+This repo has its own GitHub Actions, independent of the monorepo root's Actions tab (it's a separate git remote — see the monorepo root's CI/CD section for how the two relate). Three workflows live under `.github/workflows/`:
 
-`.github/workflows/load-test.yml` runs `ArbiScannerWeb.LoadTests` separately (`workflow_dispatch` with `queries_per_minute`/`duration_seconds` inputs, plus a nightly cron at defaults), gated behind a `load-test` GitHub Environment holding the `WEB_LOADTEST_BASE_URL`/`_EMAIL`/`_PASSWORD` secrets — see [ArbiScannerWeb.LoadTests](#arbiscannerwebloadtests) below.
+### `ci.yml` — build, test, quality gate
+
+Runs on every push/PR to `main`:
+
+1. A SonarCloud scan (project `dimasdom_ArbiSpreadScanner.WebApp`) wraps everything below; `sonar.qualitygate.wait=true` fails the job on a red quality gate.
+2. CodeQL initializes twice — C# (`build-mode: manual`) and JavaScript/TypeScript (`build-mode: none`, since the client isn't compiled) — then analyzes both after the build/test steps.
+3. `npm ci --ignore-scripts` + `npm test -- --coverage --reporter=junit` in `ArbiScannerWeb.Client`, then the vitest lcov report's `SF:` source paths are rewritten to absolute (`sed`) so SonarCloud's coverage import resolves them correctly.
+4. `dotnet restore`/`build` on `ArbiScannerWebApp.sln` with analyzers (the API references the React client as an MSBuild project, so Node/npm needs to be set up first).
+5. `ArbiScannerWeb.Tests` (unit), then `ArbiScannerWeb.IntegrationTests` (Testcontainers — real Postgres/Mongo/RabbitMQ/Redis containers), both with coverage collection feeding the SonarCloud scan.
+6. `.trx` and JUnit results are published as check-run summaries via `dorny/test-reporter`.
+
+Both SonarCloud and CodeQL are free for this public repo; SonarCloud additionally requires a `SONAR_TOKEN` secret.
+
+### `deploy.yml` — manual deploy to the VPS
+
+A `workflow_dispatch`-triggered workflow (optional `dry_run` boolean input) that calls the monorepo root's reusable `deploy-service.yml` (`dimasdom/SpreadScanner/.github/workflows/deploy-service.yml`, pinned to a specific commit SHA) with this repo's specifics: solution/test project paths, `has_client_tests: true` + `client_dir`, the SonarCloud exclusion list, and two image specs — `arbiscanner-web` (API, build context `.`) and `arbiscanner-web-client` (client, build context `.` with `needs_root_checkout: true` since the client image also needs the repo-root `nginx/` directory).
+
+End to end: tests + client tests + quality gate → build and push `ghcr.io/dimasdom/arbiscanner-web(-client):latest` / `:sha-<commit>` to GHCR → (unless `dry_run: true`) SSH into the VPS and restart `web` then `web-client` via `scripts/deploy-remote.sh`. Requires `SONAR_TOKEN` plus `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY`/`VPS_SSH_PORT`/`VPS_DEPLOY_PATH` secrets on this repo.
+
+The root monorepo also has `.github/workflows/docker-build.yml`, since this API's Dockerfile needs repo-root build context — it builds this service's images alongside the other three on every push/PR to `master`, as a build-breakage smoke check separate from this repo's own CI.
+
+### `load-test.yml` — scheduled + on-demand load test
+
+Runs `ArbiScannerWeb.LoadTests` separately from `ci.yml` (`workflow_dispatch` with `queries_per_minute`/`duration_seconds` inputs, plus a nightly `0 3 * * *` cron at the defaults), gated behind a `load-test` GitHub Environment holding the `WEB_LOADTEST_BASE_URL`/`_EMAIL`/`_PASSWORD` secrets — see [ArbiScannerWeb.LoadTests](#arbiscannerwebloadtests) below.
 
 ### Health checks
 

@@ -52,3 +52,7 @@ export default tseslint.config({
   },
 })
 ```
+
+## CI/CD
+
+This client has no CI workflow of its own — it's tested and built as part of the parent [`ArbiScannerWebApp`](../README.md#cicd) repo's `.github/workflows/ci.yml` (`npm ci` → `npm test -- --coverage` → coverage forwarded to SonarCloud) and `deploy.yml` (built into the `arbiscanner-web-client` Docker image via `Dockerfile.client` and pushed to GHCR). See that README's CI/CD section for the full pipeline.

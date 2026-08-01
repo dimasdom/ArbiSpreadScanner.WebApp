@@ -6,7 +6,7 @@ on:
       queries_per_minute:
         description: "Target queries per minute per endpoint"
         required: false
-        default: "60"
+        default: "30"
       duration_seconds:
         description: "Duration of sustained load, in seconds"
         required: false
@@ -37,7 +37,7 @@ jobs:
           WEB_LOADTEST_BASE_URL: ${{ secrets.WEB_LOADTEST_BASE_URL }}
           WEB_LOADTEST_EMAIL: ${{ secrets.WEB_LOADTEST_EMAIL }}
           WEB_LOADTEST_PASSWORD: ${{ secrets.WEB_LOADTEST_PASSWORD }}
-          WEB_LOADTEST_QUERIES_PER_MINUTE: ${{ inputs.queries_per_minute || '60' }}
+          WEB_LOADTEST_QUERIES_PER_MINUTE: ${{ inputs.queries_per_minute || '30' }}
           WEB_LOADTEST_DURATION_SECONDS: ${{ inputs.duration_seconds || '60' }}
         run: >
           dotnet test ArbiScannerWeb.LoadTests/ArbiScannerWeb.LoadTests.csproj

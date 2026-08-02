@@ -17,7 +17,7 @@ describe('SubscriptionPage', () => {
 
         render(<SubscriptionPage />, { wrapper: MemoryRouter });
 
-        expect(document.querySelector('.MuiCircularProgress-root')).not.toBeNull();
+        expect(document.querySelector('.animate-spin')).not.toBeNull();
     });
 
     it('shows an error state when the query fails', () => {

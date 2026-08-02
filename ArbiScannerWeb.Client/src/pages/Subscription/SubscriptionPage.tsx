@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import SubscriptionElement from "./SubcriptionElement";
-import { CircularProgress } from "@mui/material";
 import type { SubscriptionModel } from '../../types/accountType';
 import { useSubscriptionPage } from '../../hooks/useSubscriptionPage';
 import ErrorState from '../../components/ErrorState';
@@ -11,8 +10,8 @@ function SubscriptionPage() {
 
      if (isLoading) {
          return (
-             <div className="flex h-[80vh] items-center justify-center">
-                 <CircularProgress size={60} thickness={4} className="text-indigo-600" />
+             <div className="flex items-center justify-center min-h-64 mt-6">
+                 <div className="w-10 h-10 border-4 border-gray-200 dark:border-gray-700 border-t-indigo-500 rounded-full animate-spin" />
              </div>
          );
      }

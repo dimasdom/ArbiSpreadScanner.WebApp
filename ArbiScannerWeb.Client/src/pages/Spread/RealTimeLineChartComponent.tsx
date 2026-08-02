@@ -4,7 +4,6 @@ import type { ApexOptions } from 'apexcharts';
 import { useTranslation } from 'react-i18next';
 import type { PossiblePositionTickerModel } from '../../types/tickerType';
 import { convertToSeries } from '../../utils/chartUtils';
-import { useChartWidth } from '../../hooks/useChartWidth';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface RealtimeChartProps {
@@ -13,7 +12,6 @@ interface RealtimeChartProps {
 }
 
 export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker }) => {
-    const chartWidth = useChartWidth(0.8);
     const { theme } = useTheme();
     const { t } = useTranslation('spreads');
     const series = useMemo(
@@ -99,8 +97,8 @@ export const RealtimeLineChart: React.FC<RealtimeChartProps> = ({ title, ticker 
 
     return (
         <div className='overflow-x-auto w-full mx-auto shadow-lg rounded-2xl bg-white dark:bg-gray-800 transition-colors duration-200'>
-            <div className='p-2 flex justify-center overflow-x-hidden overflow-y-hidden'>
-                <Chart options={options} series={series} type="line" height={350} width={chartWidth} />
+            <div className='p-2 overflow-x-hidden overflow-y-hidden'>
+                <Chart options={options} series={series} type="line" height={350} width="100%" />
             </div>
         </div>
     );

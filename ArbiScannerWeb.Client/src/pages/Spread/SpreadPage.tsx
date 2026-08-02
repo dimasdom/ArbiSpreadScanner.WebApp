@@ -102,136 +102,138 @@ function SpreadPage() {
     }
 
     return (
-        <div className="max-w-5xl mx-auto mt-6 shadow-2xl rounded-4xl bg-white dark:bg-gray-900 transition-colors duration-200">
+        <div className="max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8 pb-12">
             <GuideModal storageKey="guide_spread_seen" title={t('guide.spreadPage.title')} steps={getSpreadGuideSteps(t)} />
-            <Dialog
-                open={isSpreadClosedDialogOpen}
-                onClose={handleSpreadClosedConfirm}
-                maxWidth="xs"
-                fullWidth
-            >
-                <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    {t('spreadPage.closedDialog.title')}
-                </DialogTitle>
-                <DialogContent>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {t('spreadPage.closedDialog.message')}
-                    </p>
-                </DialogContent>
-                <DialogActions className="px-6 pb-4">
-                    <Button variant="contained" onClick={handleSpreadClosedConfirm}>
-                        {t('spreadPage.closedDialog.ok')}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <div className="shadow-2xl rounded-4xl bg-white dark:bg-gray-900 transition-colors duration-200">
+                <Dialog
+                    open={isSpreadClosedDialogOpen}
+                    onClose={handleSpreadClosedConfirm}
+                    maxWidth="xs"
+                    fullWidth
+                >
+                    <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {t('spreadPage.closedDialog.title')}
+                    </DialogTitle>
+                    <DialogContent>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {t('spreadPage.closedDialog.message')}
+                        </p>
+                    </DialogContent>
+                    <DialogActions className="px-6 pb-4">
+                        <Button variant="contained" onClick={handleSpreadClosedConfirm}>
+                            {t('spreadPage.closedDialog.ok')}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
 
-            <div className="shadow-inner pb-4 px-4 sm:px-6 rounded-4xl lg:px-8 w-full">
-                <div className="flex justify-center p-5 rounded-2xl">
-                    <RealtimeLineChart ticker={tickers} title={possiblePositionDTO?.positionModel.symbol} />
-                </div>
+                <div className="shadow-inner pb-4 px-4 sm:px-6 rounded-4xl lg:px-8 w-full">
+                    <div className="flex justify-center p-5 rounded-2xl">
+                        <RealtimeLineChart ticker={tickers} title={possiblePositionDTO?.positionModel.symbol} />
+                    </div>
 
-                <div className="px-3 pb-2">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                        <div className="md:col-span-2">
-                            <h2 className="text-2xl font-semibold dark:text-gray-100">{possiblePositionDTO?.positionModel.symbol}</h2>
+                    <div className="px-3 pb-2">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                            <div className="md:col-span-2">
+                                <h2 className="text-2xl font-semibold dark:text-gray-100">{possiblePositionDTO?.positionModel.symbol}</h2>
 
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                <span className={`${spreadClass} inline-flex items-center text-sm font-medium px-3 py-1 rounded-full`}>{spreadLabel ? t(`spreadType.${spreadLabel}`) : spreadLabel}</span>
-                                <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">{t('spreadPage.badges.volatility', { value: displayedVolatility?.toFixed(2) })}</span>
-                                <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${spreadVal > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>{t('spreadPage.badges.spread', { value: spreadVal.toFixed(2) })}</span>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    <span className={`${spreadClass} inline-flex items-center text-sm font-medium px-3 py-1 rounded-full`}>{spreadLabel ? t(`spreadType.${spreadLabel}`) : spreadLabel}</span>
+                                    <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">{t('spreadPage.badges.volatility', { value: displayedVolatility?.toFixed(2) })}</span>
+                                    <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${spreadVal > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>{t('spreadPage.badges.spread', { value: spreadVal.toFixed(2) })}</span>
+                                </div>
+
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">{t('spreadPage.details.startSpread', { value: possiblePositionDTO?.positionModel.startSpread.toFixed(2) })}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{t('spreadPage.details.summaryTariff', { value: possiblePositionDTO?.positionModel.summaryTarrif.toFixed(4) })}</p>
+                                <p className="text-base font-bold mt-2 dark:text-gray-100">{t('spreadPage.details.estimatedProfit', { value: possiblePositionDTO?.positionModel.possibleProfit.toFixed(2) })}</p>
+                                {totalSlippage != null && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${totalSlippage > Math.abs(spreadVal) ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'}`}>
+                                            {t('spreadPage.details.estSlippage', { value: totalSlippage.toFixed(3) })}
+                                        </span>
+                                        {positionSize > 0 && (
+                                            <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                                {t('spreadPage.details.forPosition', { amount: positionSize.toLocaleString() })}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">{t('spreadPage.details.startSpread', { value: possiblePositionDTO?.positionModel.startSpread.toFixed(2) })}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{t('spreadPage.details.summaryTariff', { value: possiblePositionDTO?.positionModel.summaryTarrif.toFixed(4) })}</p>
-                            <p className="text-base font-bold mt-2 dark:text-gray-100">{t('spreadPage.details.estimatedProfit', { value: possiblePositionDTO?.positionModel.possibleProfit.toFixed(2) })}</p>
-                            {totalSlippage != null && (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    <span className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full ${totalSlippage > Math.abs(spreadVal) ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'}`}>
-                                        {t('spreadPage.details.estSlippage', { value: totalSlippage.toFixed(3) })}
-                                    </span>
-                                    {positionSize > 0 && (
-                                        <span className="inline-flex items-center text-sm font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                                            {t('spreadPage.details.forPosition', { amount: positionSize.toLocaleString() })}
-                                        </span>
+                            <div className="md:col-span-1">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                    {t('spreadPage.tip')}
+                                </p>
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('spreadPage.shortExchange')}</h3>
+                                    <p className="text-gray-800 dark:text-gray-200">
+                                        {possiblePositionDTO?.shortExchangeUrl ? (
+                                            <a
+                                                href={possiblePositionDTO.shortExchangeUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                                            >
+                                                {possiblePositionDTO.positionModel.exchangeShort.exchange}
+                                            </a>
+                                        ) : (
+                                            possiblePositionDTO?.positionModel.exchangeShort.exchange
+                                        )}
+                                        {': '}{displayedShortRate}
+                                    </p>
+                                    {possiblePositionDTO?.positionModel.exchangeShort.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeShort.fundingRateValue !== 0 && (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {t('spreadPage.fundingLine', {
+                                                value: (possiblePositionDTO.positionModel.exchangeShort.fundingRateValue * 100).toFixed(2),
+                                                direction: t(fundingDirectionKey(possiblePositionDTO.positionModel.exchangeShort.fundingRateValue, false)),
+                                            })}
+                                        </p>
                                     )}
                                 </div>
-                            )}
-                        </div>
-
-                        <div className="md:col-span-1">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                {t('spreadPage.tip')}
-                            </p>
-                            <div>
-                                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('spreadPage.shortExchange')}</h3>
-                                <p className="text-gray-800 dark:text-gray-200">
-                                    {possiblePositionDTO?.shortExchangeUrl ? (
-                                        <a
-                                            href={possiblePositionDTO.shortExchangeUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-indigo-600 dark:text-indigo-400 hover:underline"
-                                        >
-                                            {possiblePositionDTO.positionModel.exchangeShort.exchange}
-                                        </a>
-                                    ) : (
-                                        possiblePositionDTO?.positionModel.exchangeShort.exchange
-                                    )}
-                                    {': '}{displayedShortRate}
-                                </p>
-                                {possiblePositionDTO?.positionModel.exchangeShort.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeShort.fundingRateValue !== 0 && (
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        {t('spreadPage.fundingLine', {
-                                            value: (possiblePositionDTO.positionModel.exchangeShort.fundingRateValue * 100).toFixed(2),
-                                            direction: t(fundingDirectionKey(possiblePositionDTO.positionModel.exchangeShort.fundingRateValue, false)),
-                                        })}
+                                <hr className="my-3 border-gray-200 dark:border-gray-700" />
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('spreadPage.longExchange')}</h3>
+                                    <p className="text-gray-800 dark:text-gray-200">
+                                        {possiblePositionDTO?.longExchangeUrl ? (
+                                            <a
+                                                href={possiblePositionDTO.longExchangeUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                                            >
+                                                {possiblePositionDTO.positionModel.exchangeLong.exchange}
+                                            </a>
+                                        ) : (
+                                            possiblePositionDTO?.positionModel.exchangeLong.exchange
+                                        )}
+                                        {': '}{displayedLongRate}
                                     </p>
-                                )}
-                            </div>
-                            <hr className="my-3 border-gray-200 dark:border-gray-700" />
-                            <div>
-                                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('spreadPage.longExchange')}</h3>
-                                <p className="text-gray-800 dark:text-gray-200">
-                                    {possiblePositionDTO?.longExchangeUrl ? (
-                                        <a
-                                            href={possiblePositionDTO.longExchangeUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-indigo-600 dark:text-indigo-400 hover:underline"
-                                        >
-                                            {possiblePositionDTO.positionModel.exchangeLong.exchange}
-                                        </a>
-                                    ) : (
-                                        possiblePositionDTO?.positionModel.exchangeLong.exchange
+                                    {!isSpotSpread && possiblePositionDTO?.positionModel.exchangeLong.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeLong.fundingRateValue !== 0 && (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {t('spreadPage.fundingLine', {
+                                                value: (possiblePositionDTO.positionModel.exchangeLong.fundingRateValue * 100).toFixed(2),
+                                                direction: t(fundingDirectionKey(possiblePositionDTO.positionModel.exchangeLong.fundingRateValue, true)),
+                                            })}
+                                        </p>
                                     )}
-                                    {': '}{displayedLongRate}
-                                </p>
-                                {!isSpotSpread && possiblePositionDTO?.positionModel.exchangeLong.fundingRateValue != null && possiblePositionDTO.positionModel.exchangeLong.fundingRateValue !== 0 && (
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        {t('spreadPage.fundingLine', {
-                                            value: (possiblePositionDTO.positionModel.exchangeLong.fundingRateValue * 100).toFixed(2),
-                                            direction: t(fundingDirectionKey(possiblePositionDTO.positionModel.exchangeLong.fundingRateValue, true)),
-                                        })}
-                                    </p>
-                                )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {(() => {
-                    const hasOrderData = asksA != null && bidsA != null && asksB != null && bidsB != null;
-                    return hasOrderData ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                                <OrderBlock title={pos?.exchangeRateA.exchange} asks={asksA} bids={bidsA} />
+                    {(() => {
+                        const hasOrderData = asksA != null && bidsA != null && asksB != null && bidsB != null;
+                        return hasOrderData ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <div>
+                                    <OrderBlock title={pos?.exchangeRateA.exchange} asks={asksA} bids={bidsA} />
+                                </div>
+                                <div>
+                                    <OrderBlock title={pos?.exchangeRateB.exchange} asks={asksB} bids={bidsB} />
+                                </div>
                             </div>
-                            <div>
-                                <OrderBlock title={pos?.exchangeRateB.exchange} asks={asksB} bids={bidsB} />
-                            </div>
-                        </div>
-                    ) : null;
-                })()}
+                        ) : null;
+                    })()}
+                </div>
             </div>
         </div>
     );

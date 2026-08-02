@@ -93,9 +93,11 @@ function SpreadsPage() {
     };
 
     return (
-        <div className="shadow-inner max-w-7xl mx-auto mt-6 rounded-4xl p-4 md:p-5 bg-white dark:bg-gray-900 min-h-screen md:min-h-auto relative transition-colors duration-200">
+        <div className="max-w-7xl mx-auto mt-6 px-4 sm:px-6 lg:px-8 pb-12">
             <GuideModal storageKey="guide_spreads_seen" title={t('guide.spreadsPage.title')} steps={getSpreadsGuideSteps(t)} />
-            {renderContent()}
+            <div className="shadow-inner rounded-4xl p-4 md:p-5 bg-white dark:bg-gray-900 relative transition-colors duration-200">
+                {renderContent()}
+            </div>
         </div>
     );
 }

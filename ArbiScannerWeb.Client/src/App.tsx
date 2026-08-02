@@ -1,6 +1,7 @@
 import './App.css';
 import { Toaster } from 'react-hot-toast';
 import NavBar from './components/NavBar';
+import AuthLoadingOverlay from './components/AuthLoadingOverlay';
 import { Route, Routes, useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -51,8 +52,10 @@ const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 function App() {
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
+    const sessionChecked = useSelector((state: IRootStore) => state.account.sessionChecked);
     const dispatch = useAppDispatch();
     const hadSession = hasStoredSession();
+    const showAuthLoader = hadSession && !sessionChecked;
     useGetUserDataQuery(undefined, { skip: !hadSession, refetchOnMountOrArgChange: true });
     useEffect(() => {
         if (!hadSession) {
@@ -71,6 +74,7 @@ function App() {
 
     return (
         <div className="flex flex-col min-h-screen dark:bg-gray-950 transition-colors duration-200">
+            <AuthLoadingOverlay show={showAuthLoader} />
             <NavBar isLoggedIn={isLoggedIn} isActiveSubscription={isActiveSubscription} onLogin={() => { dispatch(clearUserData()); navigate("/account/login") }} onLogout={() => { void logout(); }} />
 
             <main className="flex-1 pt-20">

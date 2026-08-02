@@ -101,5 +101,8 @@
   },
   "successState": {
     "defaultTitle": "Erfolg"
+  },
+  "loading": {
+    "tradingOpportunities": "Deine Handelsmöglichkeiten werden geladen"
   }
 }

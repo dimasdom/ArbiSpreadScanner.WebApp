@@ -101,5 +101,8 @@
   },
   "successState": {
     "defaultTitle": "Успішно"
+  },
+  "loading": {
+    "tradingOpportunities": "Завантажуємо ваші торгові можливості"
   }
 }

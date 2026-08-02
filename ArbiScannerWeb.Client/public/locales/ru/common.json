@@ -101,5 +101,8 @@
   },
   "successState": {
     "defaultTitle": "Готово"
+  },
+  "loading": {
+    "tradingOpportunities": "Загружаем ваши торговые возможности"
   }
 }

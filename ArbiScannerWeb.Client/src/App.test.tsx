@@ -56,7 +56,12 @@ vi.mock('./pages/Subscription/Payment/PaymentCryptoPage', () => ({ default: () =
 vi.mock('./pages/Subscription/Payment/PaymentInfoPage', () => ({ default: () => <div>PaymentInfoPage</div> }));
 vi.mock('./pages/Faq/FaqPage', () => ({ default: () => <div>FaqPage</div> }));
 
-function buildStore(preloadedAccount: Partial<ReturnType<typeof createEmptyAccountModel>> & { isLoggedIn?: boolean } = {}) {
+function buildStore(
+    preloadedAccount: Partial<ReturnType<typeof createEmptyAccountModel>> & {
+        isLoggedIn?: boolean;
+        sessionChecked?: boolean;
+    } = {},
+) {
     const store = configureStore({
         reducer: { account: accountReducer, language: (state = { language: 'en' }) => state },
         preloadedState: {
@@ -67,7 +72,7 @@ function buildStore(preloadedAccount: Partial<ReturnType<typeof createEmptyAccou
                 error: null,
                 emailConfirmToken: null,
                 needsEmailConfirmation: false,
-                sessionChecked: true,
+                sessionChecked: preloadedAccount.sessionChecked ?? true,
             },
             language: { language: 'en' },
         },
@@ -75,8 +80,8 @@ function buildStore(preloadedAccount: Partial<ReturnType<typeof createEmptyAccou
     return store;
 }
 
-function renderApp(path: string, isLoggedIn = false) {
-    const store = buildStore({ isLoggedIn });
+function renderApp(path: string, isLoggedIn = false, sessionChecked = true) {
+    const store = buildStore({ isLoggedIn, sessionChecked });
     const dispatchSpy = vi.spyOn(store, 'dispatch');
     render(
         <Provider store={store}>
@@ -159,5 +164,32 @@ describe('App', () => {
         const { dispatchSpy } = renderApp('/en/');
 
         expect(dispatchSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'account/markSessionChecked' }));
+    });
+
+    it('shows the auth loading overlay while a returning session is still being checked', () => {
+        const storage = createLocalStorageMock();
+        storage.setItem('arbiscanner.has_session', 'true');
+        vi.spyOn(globalThis, 'localStorage', 'get').mockReturnValue(storage);
+
+        renderApp('/en/', false, false);
+
+        expect(screen.getByRole('status')).toBeInTheDocument();
+    });
+
+    it('hides the auth loading overlay once the session check has completed (e.g. after a 403 -> refresh -> retry cycle)', () => {
+        const storage = createLocalStorageMock();
+        storage.setItem('arbiscanner.has_session', 'true');
+        vi.spyOn(globalThis, 'localStorage', 'get').mockReturnValue(storage);
+
+        renderApp('/en/', true, true);
+
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+        expect(screen.getByTestId('navbar-state')).toHaveTextContent('true-false');
+    });
+
+    it('does not show the auth loading overlay for a fresh visitor with no stored session', () => {
+        renderApp('/en/', false, false);
+
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 });

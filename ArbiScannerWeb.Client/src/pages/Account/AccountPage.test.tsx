@@ -10,7 +10,6 @@ import { createLocalStorageMock } from '../../test/localStorageMock';
 const navigateMock = vi.fn();
 const useGetUserDataQueryMock = vi.fn();
 const useUpdateAccountDetailsMutationMock = vi.fn();
-const useChangeEmailRequestMutationMock = vi.fn();
 const useCreateTelegramLinkRequestMutationMock = vi.fn();
 const useRemoveTelegramLinkMutationMock = vi.fn();
 const useGetUserActiveSubscriptionsQueryMock = vi.fn();
@@ -25,7 +24,6 @@ vi.mock('react-hot-toast', () => ({ default: { success: (...a: unknown[]) => toa
 vi.mock('../../store/services/account', () => ({
     useGetUserDataQuery: (...a: unknown[]) => useGetUserDataQueryMock(...a),
     useUpdateAccountDetailsMutation: () => useUpdateAccountDetailsMutationMock(),
-    useChangeEmailRequestMutation: () => useChangeEmailRequestMutationMock(),
     useCreateTelegramLinkRequestMutation: () => useCreateTelegramLinkRequestMutationMock(),
     useRemoveTelegramLinkMutation: () => useRemoveTelegramLinkMutationMock(),
 }));
@@ -63,8 +61,6 @@ function renderAccountPage(accountOverrides: Partial<ReturnType<typeof buildAcco
                 isLoggedIn: true,
                 loading: false,
                 error: null,
-                emailConfirmToken: null,
-                needsEmailConfirmation: false,
                 sessionChecked: true,
                 ...storeOverrides,
             },
@@ -88,15 +84,20 @@ describe('AccountPage', () => {
         useGetUserDataQueryMock.mockReturnValue({ data: undefined });
         useGetUserActiveSubscriptionsQueryMock.mockReturnValue({ data: undefined });
         useUpdateAccountDetailsMutationMock.mockReturnValue([mockTrigger({ isSuccess: true }), {}]);
-        useChangeEmailRequestMutationMock.mockReturnValue([mockTrigger({ isSuccess: true, value: { id: 'code-1' } }), {}]);
         useCreateTelegramLinkRequestMutationMock.mockReturnValue([mockTrigger({ isSuccess: true, value: { id: 'req-1' } }), {}]);
         useRemoveTelegramLinkMutationMock.mockReturnValue([mockTrigger({ isSuccess: true }), {}]);
+    });
+
+    it('shows the account email read-only, with a link to manage it in Keycloak', async () => {
+        await renderAccountPage();
+
+        expect(screen.getByDisplayValue('a@b.com')).toBeDisabled();
+        expect(screen.getByText('accountPage.form.manageInKeycloak')).toHaveAttribute('href', expect.stringContaining('/account'));
     });
 
     it('pre-fills the form from the current account settings', async () => {
         await renderAccountPage();
 
-        expect(screen.getByPlaceholderText('accountPage.form.emailPlaceholder')).toHaveValue('a@b.com');
         expect(screen.getByRole('button', { name: 'Binance' })).toHaveClass('bg-indigo-600');
     });
 
@@ -119,7 +120,7 @@ describe('AccountPage', () => {
         expect(screen.getByText('Pro')).toBeInTheDocument();
     });
 
-    it('saves settings and shows a success toast when the email is unchanged', async () => {
+    it('saves settings and shows a success toast', async () => {
         const trigger = mockTrigger({ isSuccess: true });
         useUpdateAccountDetailsMutationMock.mockReturnValue([trigger, {}]);
         await renderAccountPage();
@@ -137,64 +138,6 @@ describe('AccountPage', () => {
         await userEvent.click(screen.getByRole('button', { name: 'accountPage.actions.save' }));
 
         await waitFor(() => expect(toastErrorMock).toHaveBeenCalledOnce());
-    });
-
-    it('rejects an invalid email and does not save', async () => {
-        const trigger = mockTrigger({ isSuccess: true });
-        useUpdateAccountDetailsMutationMock.mockReturnValue([trigger, {}]);
-        await renderAccountPage();
-        const emailInput = screen.getByPlaceholderText('accountPage.form.emailPlaceholder');
-        await userEvent.clear(emailInput);
-        await userEvent.type(emailInput, 'not-an-email');
-
-        await userEvent.click(screen.getByRole('button', { name: 'accountPage.actions.save' }));
-
-        expect(screen.getByText('validation.email.invalid')).toBeInTheDocument();
-        expect(trigger).not.toHaveBeenCalled();
-    });
-
-    it('opens the email-change dialog when the email is edited, and confirms it', async () => {
-        const changeEmailTrigger = mockTrigger({ isSuccess: true, value: { id: 'code-1' } });
-        useChangeEmailRequestMutationMock.mockReturnValue([changeEmailTrigger, {}]);
-        await renderAccountPage();
-        const emailInput = screen.getByPlaceholderText('accountPage.form.emailPlaceholder');
-        await userEvent.clear(emailInput);
-        await userEvent.type(emailInput, 'new@b.com');
-
-        await userEvent.click(screen.getByRole('button', { name: 'accountPage.actions.save' }));
-        expect(screen.getByText('accountPage.emailChangeDialog.title')).toBeInTheDocument();
-
-        await userEvent.click(screen.getByRole('button', { name: 'accountPage.emailChangeDialog.confirm' }));
-
-        await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/account/confirmemail?emailConfirmToken=code-1'));
-        expect(changeEmailTrigger).toHaveBeenCalledWith({ email: 'new@b.com' });
-    });
-
-    it('shows an error in the email-change dialog when the request fails', async () => {
-        useChangeEmailRequestMutationMock.mockReturnValue([
-            mockTrigger({ isSuccess: false, errors: [{ message: 'Email already in use' }] }), {},
-        ]);
-        await renderAccountPage();
-        const emailInput = screen.getByPlaceholderText('accountPage.form.emailPlaceholder');
-        await userEvent.clear(emailInput);
-        await userEvent.type(emailInput, 'new@b.com');
-        await userEvent.click(screen.getByRole('button', { name: 'accountPage.actions.save' }));
-
-        await userEvent.click(screen.getByRole('button', { name: 'accountPage.emailChangeDialog.confirm' }));
-
-        await waitFor(() => expect(screen.getByText('Email already in use')).toBeInTheDocument());
-    });
-
-    it('closes the email-change dialog on cancel without saving', async () => {
-        await renderAccountPage();
-        const emailInput = screen.getByPlaceholderText('accountPage.form.emailPlaceholder');
-        await userEvent.clear(emailInput);
-        await userEvent.type(emailInput, 'new@b.com');
-        await userEvent.click(screen.getByRole('button', { name: 'accountPage.actions.save' }));
-
-        await userEvent.click(screen.getByRole('button', { name: 'actions.cancel' }));
-
-        expect(screen.queryByText('accountPage.emailChangeDialog.title')).not.toBeInTheDocument();
     });
 
     it('links Telegram and opens the modal with the request id', async () => {

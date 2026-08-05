@@ -40,11 +40,13 @@ public class AdminServiceTests
     {
         (_redis, _redisDb) = MockHelpers.CreateRedisMocks();
         _httpClientFactory.Setup(f => f.CreateClient("AdminApi")).Returns(() => new HttpClient(_handler));
+        _httpClientFactory.Setup(f => f.CreateClient("KeycloakAdminService"))
+            .Returns(() => new HttpClient(_handler) { BaseAddress = new Uri("http://keycloak.local/realms/arbiscanner-admin/") });
         _configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["AdminApiUrl"] = "http://admin.local",
-            ["AdminUser:UserName"] = "admin",
-            ["AdminUser:Password"] = "secret"
+            ["Keycloak:AdminService:ClientId"] = "arbiscanner-admin-service",
+            ["Keycloak:AdminService:ClientSecret"] = "test-secret"
         }).Build();
     }
 
@@ -61,14 +63,12 @@ public class AdminServiceTests
         Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
     };
 
-    // Mirrors AdminPanel's real Authenticate response: token is blanked from the body and
-    // returned only via the adminpanel.access_token cookie (see AccountController.AppendAuthCookies).
-    private static HttpResponseMessage AuthenticateResponse(string token)
-    {
-        var response = JsonResponse(HttpStatusCode.OK, """{"value":{"token":""}}""");
-        response.Headers.Add("Set-Cookie", $"adminpanel.access_token={token}; path=/; httponly");
-        return response;
-    }
+    // Mirrors Keycloak's real client_credentials token response.
+    private static HttpResponseMessage TokenResponse(string token, int expiresIn = 300) =>
+        JsonResponse(HttpStatusCode.OK, $$"""{"access_token":"{{token}}","expires_in":{{expiresIn}},"token_type":"Bearer"}""");
+
+    private static bool IsTokenRequest(HttpRequestMessage req) =>
+        req.RequestUri!.AbsolutePath.Contains("openid-connect/token");
 
     [Fact]
     public void Constructor_MissingAdminApiUrl_Throws()
@@ -106,8 +106,8 @@ public class AdminServiceTests
         _handler.OnRequest = req =>
         {
             callCount++;
-            if (req.RequestUri!.AbsolutePath.Contains("Authenticate"))
-                return AuthenticateResponse("fresh-token");
+            if (IsTokenRequest(req))
+                return TokenResponse("fresh-token");
             return JsonResponse(HttpStatusCode.OK, """{"value":[{"Id":1}]}""");
         };
 
@@ -119,12 +119,12 @@ public class AdminServiceTests
     }
 
     [Fact]
-    public async Task GetAllSubscriptionsAsync_AuthenticateFails_ProceedsWithoutTokenAndGetsUnauthorized()
+    public async Task GetAllSubscriptionsAsync_TokenRequestFails_ProceedsWithoutTokenAndGetsUnauthorized()
     {
         SetupCachedToken(null);
         _handler.OnRequest = req =>
         {
-            if (req.RequestUri!.AbsolutePath.Contains("Authenticate"))
+            if (IsTokenRequest(req))
                 return new HttpResponseMessage(HttpStatusCode.InternalServerError);
             return new HttpResponseMessage(HttpStatusCode.Unauthorized);
         };
@@ -135,13 +135,13 @@ public class AdminServiceTests
     }
 
     [Fact]
-    public async Task GetAllSubscriptionsAsync_AuthenticateResponseMissingToken_DoesNotSetHeader()
+    public async Task GetAllSubscriptionsAsync_TokenResponseMissingAccessToken_DoesNotSetHeader()
     {
         SetupCachedToken(null);
         _handler.OnRequest = req =>
         {
-            if (req.RequestUri!.AbsolutePath.Contains("Authenticate"))
-                return JsonResponse(HttpStatusCode.OK, """{"value":{}}""");
+            if (IsTokenRequest(req))
+                return JsonResponse(HttpStatusCode.OK, """{"expires_in":300}""");
             return JsonResponse(HttpStatusCode.OK, """{"value":[]}""");
         };
 
@@ -152,12 +152,12 @@ public class AdminServiceTests
     }
 
     [Fact]
-    public async Task GetAllSubscriptionsAsync_AuthenticateThrows_LogsErrorAndContinues()
+    public async Task GetAllSubscriptionsAsync_TokenRequestThrows_LogsErrorAndContinues()
     {
         SetupCachedToken(null);
         _handler.OnRequest = req =>
         {
-            if (req.RequestUri!.AbsolutePath.Contains("Authenticate"))
+            if (IsTokenRequest(req))
                 throw new HttpRequestException("network down");
             return JsonResponse(HttpStatusCode.OK, """{"value":[]}""");
         };
@@ -175,14 +175,14 @@ public class AdminServiceTests
     }
 
     [Fact]
-    public async Task GetAllSubscriptionsAsync_DoubleCheckedCacheHitAfterLock_SkipsHttpAuthenticate()
+    public async Task GetAllSubscriptionsAsync_DoubleCheckedCacheHitAfterLock_SkipsTokenRequest()
     {
         var calls = 0;
         _redisDb.Setup(d => d.StringGetAsync("admin_service:jwt_token", It.IsAny<CommandFlags>()))
             .ReturnsAsync(() => ++calls == 1 ? RedisValue.Null : (RedisValue)"already-refreshed");
         _handler.OnRequest = req =>
         {
-            req.RequestUri!.AbsolutePath.Should().NotContain("Authenticate");
+            IsTokenRequest(req).Should().BeFalse();
             return JsonResponse(HttpStatusCode.OK, """{"value":[]}""");
         };
 
@@ -201,8 +201,8 @@ public class AdminServiceTests
         var getCalls = 0;
         _handler.OnRequest = req =>
         {
-            if (req.RequestUri!.AbsolutePath.Contains("Authenticate"))
-                return AuthenticateResponse("new-token");
+            if (IsTokenRequest(req))
+                return TokenResponse("new-token");
             getCalls++;
             return getCalls == 1
                 ? new HttpResponseMessage(HttpStatusCode.Unauthorized)
@@ -332,8 +332,8 @@ public class AdminServiceTests
         var postCalls = 0;
         _handler.OnRequest = req =>
         {
-            if (req.RequestUri!.AbsolutePath.Contains("Authenticate"))
-                return AuthenticateResponse("new-token");
+            if (IsTokenRequest(req))
+                return TokenResponse("new-token");
             postCalls++;
             return postCalls == 1
                 ? new HttpResponseMessage(HttpStatusCode.Unauthorized)

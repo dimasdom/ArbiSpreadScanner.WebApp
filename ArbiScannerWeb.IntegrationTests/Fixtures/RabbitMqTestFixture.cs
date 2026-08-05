@@ -63,8 +63,7 @@ public sealed class RabbitMqTestFixture : IAsyncLifetime
             },
             configureTestServices: services =>
             {
-                services.RemoveAll<IEmailService>();
-                services.AddScoped<IEmailService, FakeEmailService>();
+                JwtTestSettings.ConfigureTestJwtBearer(services);
 
                 services.RemoveAll<ISubscriptionService>();
                 services.AddScoped<ISubscriptionService, FakeSubscriptionService>();

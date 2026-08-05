@@ -17,3 +17,9 @@ public sealed class AdminPanelCollection : ICollectionFixture<AdminPanelTestFixt
 {
     public const string Name = "AdminPanel integration tests";
 }
+
+[CollectionDefinition(Name)]
+public sealed class KeycloakCollection : ICollectionFixture<KeycloakTestFixture>
+{
+    public const string Name = "Keycloak integration tests";
+}

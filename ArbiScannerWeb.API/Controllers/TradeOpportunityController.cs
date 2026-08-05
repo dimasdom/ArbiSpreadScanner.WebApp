@@ -5,7 +5,6 @@ using ArbiScannerWeb.Infrastructure.Extensions;
 using FluentResults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace ArbiScannerWeb.API.Controllers
 {
@@ -24,14 +23,13 @@ namespace ArbiScannerWeb.API.Controllers
         [HttpGet("GetSpreadsForUser")]
         public async Task<ActionResult<SerializableResult<List<TradeOpportunityDetailsDto>>>> GetSpreadsForUser()
         {
-            var userclaims = User.Claims;
-            var userId = userclaims.FirstOrDefault(x => x.Type == ClaimsIdentity.DefaultNameClaimType);
-            if (userId is null)
+            var userId = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userId))
             {
                 return BadRequest(Result.Fail("User ID claim not found").ToResult<List<TradeOpportunityDetailsDto>>().ToSerializable());
             }
 
-            var result = await _tradeOpportunityService.GetSpreadsForUser(userId.Value);
+            var result = await _tradeOpportunityService.GetSpreadsForUser(userId);
             if (result.IsFailed)
             {
                 return Ok(result.ToSerializable());

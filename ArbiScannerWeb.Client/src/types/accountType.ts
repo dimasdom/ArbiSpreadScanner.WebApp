@@ -48,9 +48,7 @@ export interface AccountModel {
     userSettings: UserSettingsModel;
 }
 
-export interface AccountDTO extends AccountModel {
-    emailConfirmToken: string;
-}
+export type AccountDTO = AccountModel;
 
 
 

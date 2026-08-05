@@ -4,26 +4,24 @@ import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { MemoryRouter } from 'react-router';
-import accountReducer, { clearUserData } from './store/slices/accountSlice';
+import accountReducer from './store/slices/accountSlice';
 import { createEmptyAccountModel } from './types/accountType';
-import { createLocalStorageMock } from './test/localStorageMock';
 
 vi.mock('./i18n/detect', () => ({ PREFERRED_LANG_KEY: 'preferredLang', getPreferredLanguage: () => 'en' }));
 
 const { default: App } = await import('./App');
 
-const navigateMock = vi.fn();
-const logoutTriggerMock = vi.fn();
+const signinRedirectMock = vi.fn();
+const signoutRedirectMock = vi.fn();
+const useAuthMock = vi.fn();
 const useGetUserDataQueryMock = vi.fn();
 const useGetUserActiveSubscriptionsQueryMock = vi.fn();
 
-vi.mock('./i18n/routing', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('./i18n/routing')>();
-    return { ...actual, useLocalizedNavigate: () => navigateMock };
-});
+vi.mock('react-oidc-context', () => ({
+    useAuth: () => useAuthMock(),
+}));
 vi.mock('./store/services/account', () => ({
     useGetUserDataQuery: (...a: unknown[]) => useGetUserDataQueryMock(...a),
-    useLogoutMutation: () => [logoutTriggerMock, {}],
 }));
 vi.mock('./store/services/subscription', () => ({
     useGetUserActiveSubscriptionsQuery: (...a: unknown[]) => useGetUserActiveSubscriptionsQueryMock(...a),
@@ -46,33 +44,22 @@ vi.mock('./pages/Main/MainPage', () => ({ default: () => <div>MainPage</div> }))
 vi.mock('./pages/Spread/SpreadsPage', () => ({ default: () => <div>SpreadsPage</div> }));
 vi.mock('./pages/Spread/SpreadPage', () => ({ default: () => <div>SpreadPage</div> }));
 vi.mock('./pages/Account/AccountPage', () => ({ default: () => <div>AccountPage</div> }));
-vi.mock('./pages/Account/LoginPage', () => ({ default: () => <div>LoginPage</div> }));
-vi.mock('./pages/Account/RegisterPage', () => ({ default: () => <div>RegisterPage</div> }));
-vi.mock('./pages/Account/ConfirmEmailPage', () => ({ default: () => <div>ConfirmEmailPage</div> }));
-vi.mock('./pages/Account/ForgotPasswordPage', () => ({ default: () => <div>ForgotPasswordPage</div> }));
-vi.mock('./pages/Account/ResetPasswordPage', () => ({ default: () => <div>ResetPasswordPage</div> }));
+vi.mock('./pages/Auth/AuthCallbackPage', () => ({ default: () => <div>AuthCallbackPage</div> }));
 vi.mock('./pages/Subscription/SubscriptionPage', () => ({ default: () => <div>SubscriptionPage</div> }));
 vi.mock('./pages/Subscription/Payment/PaymentCryptoPage', () => ({ default: () => <div>PaymentCryptoPage</div> }));
 vi.mock('./pages/Subscription/Payment/PaymentInfoPage', () => ({ default: () => <div>PaymentInfoPage</div> }));
 vi.mock('./pages/Faq/FaqPage', () => ({ default: () => <div>FaqPage</div> }));
 
-function buildStore(
-    preloadedAccount: Partial<ReturnType<typeof createEmptyAccountModel>> & {
-        isLoggedIn?: boolean;
-        sessionChecked?: boolean;
-    } = {},
-) {
+function buildStore(isLoggedIn = false) {
     const store = configureStore({
         reducer: { account: accountReducer, language: (state = { language: 'en' }) => state },
         preloadedState: {
             account: {
                 account: createEmptyAccountModel(),
-                isLoggedIn: preloadedAccount.isLoggedIn ?? false,
+                isLoggedIn,
                 loading: false,
                 error: null,
-                emailConfirmToken: null,
-                needsEmailConfirmation: false,
-                sessionChecked: preloadedAccount.sessionChecked ?? true,
+                sessionChecked: true,
             },
             language: { language: 'en' },
         },
@@ -80,8 +67,8 @@ function buildStore(
     return store;
 }
 
-function renderApp(path: string, isLoggedIn = false, sessionChecked = true) {
-    const store = buildStore({ isLoggedIn, sessionChecked });
+function renderApp(path: string, isLoggedIn = false) {
+    const store = buildStore(isLoggedIn);
     const dispatchSpy = vi.spyOn(store, 'dispatch');
     render(
         <Provider store={store}>
@@ -95,9 +82,14 @@ function renderApp(path: string, isLoggedIn = false, sessionChecked = true) {
 
 describe('App', () => {
     beforeEach(() => {
-        navigateMock.mockClear();
-        logoutTriggerMock.mockClear();
-        vi.spyOn(globalThis, 'localStorage', 'get').mockReturnValue(createLocalStorageMock());
+        signinRedirectMock.mockClear();
+        signoutRedirectMock.mockClear();
+        useAuthMock.mockReturnValue({
+            isLoading: false,
+            isAuthenticated: false,
+            signinRedirect: signinRedirectMock,
+            signoutRedirect: signoutRedirectMock,
+        });
         useGetUserDataQueryMock.mockReturnValue({ data: undefined });
         useGetUserActiveSubscriptionsQueryMock.mockReturnValue({ data: undefined });
     });
@@ -108,10 +100,10 @@ describe('App', () => {
         expect(screen.getByText('MainPage')).toBeInTheDocument();
     });
 
-    it('renders the login page', () => {
-        renderApp('/en/account/login');
+    it('renders the auth callback page', () => {
+        renderApp('/auth/callback');
 
-        expect(screen.getByText('LoginPage')).toBeInTheDocument();
+        expect(screen.getByText('AuthCallbackPage')).toBeInTheDocument();
     });
 
     it('renders the FAQ page', () => {
@@ -127,69 +119,70 @@ describe('App', () => {
     });
 
     it('passes login state and active subscription down to NavBar', () => {
+        useAuthMock.mockReturnValue({
+            isLoading: false,
+            isAuthenticated: true,
+            signinRedirect: signinRedirectMock,
+            signoutRedirect: signoutRedirectMock,
+        });
         useGetUserActiveSubscriptionsQueryMock.mockReturnValue({ data: { isSuccess: true, value: { isActive: true } } });
         renderApp('/en/', true);
 
         expect(screen.getByTestId('navbar-state')).toHaveTextContent('true-true');
     });
 
-    it('clears user data and navigates to login when onLogin fires', async () => {
-        const { dispatchSpy } = renderApp('/en/');
+    it('triggers signinRedirect when onLogin fires', async () => {
+        renderApp('/en/');
 
         await userEvent.click(screen.getByRole('button', { name: 'do-login' }));
 
-        expect(dispatchSpy).toHaveBeenCalledWith(clearUserData());
-        expect(navigateMock).toHaveBeenCalledWith('/account/login');
+        expect(signinRedirectMock).toHaveBeenCalledOnce();
     });
 
-    it('triggers the logout mutation when onLogout fires', async () => {
+    it('triggers signoutRedirect when onLogout fires', async () => {
         renderApp('/en/', true);
 
         await userEvent.click(screen.getByRole('button', { name: 'do-logout' }));
 
-        expect(logoutTriggerMock).toHaveBeenCalledOnce();
+        expect(signoutRedirectMock).toHaveBeenCalledOnce();
     });
 
-    it('marks the session as checked when there is no stored session', () => {
+    it('marks the session as checked once oidc auth state resolves', () => {
         const { dispatchSpy } = renderApp('/en/');
 
         expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'account/markSessionChecked' }));
     });
 
-    it('does not mark the session checked again when a session was already stored', () => {
-        const storage = createLocalStorageMock();
-        storage.setItem('arbiscanner.has_session', 'true');
-        vi.spyOn(globalThis, 'localStorage', 'get').mockReturnValue(storage);
-
+    it('logs out the Redux mirror when oidc reports unauthenticated', () => {
         const { dispatchSpy } = renderApp('/en/');
 
-        expect(dispatchSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'account/markSessionChecked' }));
+        expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'account/logout' }));
     });
 
-    it('shows the auth loading overlay while a returning session is still being checked', () => {
-        const storage = createLocalStorageMock();
-        storage.setItem('arbiscanner.has_session', 'true');
-        vi.spyOn(globalThis, 'localStorage', 'get').mockReturnValue(storage);
+    it('shows the auth loading overlay while oidc auth state is still resolving', () => {
+        useAuthMock.mockReturnValue({
+            isLoading: true,
+            isAuthenticated: false,
+            signinRedirect: signinRedirectMock,
+            signoutRedirect: signoutRedirectMock,
+        });
 
-        renderApp('/en/', false, false);
+        renderApp('/en/');
 
         expect(screen.getByRole('status')).toBeInTheDocument();
     });
 
-    it('hides the auth loading overlay once the session check has completed (e.g. after a 403 -> refresh -> retry cycle)', () => {
-        const storage = createLocalStorageMock();
-        storage.setItem('arbiscanner.has_session', 'true');
-        vi.spyOn(globalThis, 'localStorage', 'get').mockReturnValue(storage);
+    it('hides the auth loading overlay once oidc auth state has resolved', () => {
+        useAuthMock.mockReturnValue({
+            isLoading: false,
+            isAuthenticated: true,
+            signinRedirect: signinRedirectMock,
+            signoutRedirect: signoutRedirectMock,
+        });
 
-        renderApp('/en/', true, true);
+        renderApp('/en/', true);
 
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
         expect(screen.getByTestId('navbar-state')).toHaveTextContent('true-false');
-    });
-
-    it('does not show the auth loading overlay for a fresh visitor with no stored session', () => {
-        renderApp('/en/', false, false);
-
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 });

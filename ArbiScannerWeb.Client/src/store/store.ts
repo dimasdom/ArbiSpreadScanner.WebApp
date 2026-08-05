@@ -1,5 +1,5 @@
-import { configureStore, createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit';
-import accountReducer, { logout, clearUserData } from './slices/accountSlice';
+import { configureStore, createListenerMiddleware } from '@reduxjs/toolkit';
+import accountReducer, { logout } from './slices/accountSlice';
 import languageReducer from './slices/languageSlice';
 import { accountApi } from './services/account';
 import { spreadApi } from './services/spread';
@@ -15,7 +15,7 @@ const rootReducer = {
 
 const sessionListenerMiddleware = createListenerMiddleware();
 sessionListenerMiddleware.startListening({
-    matcher: isAnyOf(logout, clearUserData),
+    actionCreator: logout,
     effect: (_action, listenerApi) => {
         listenerApi.dispatch(subscriptionsAPI.util.resetApiState());
     },

@@ -69,6 +69,7 @@
     "form": {
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "tu@correo.com",
+      "manageInKeycloak": "Cambiar correo o contraseña",
       "spreadSizeLabel": "Umbral de tamaño de diferencial",
       "spreadSizePlaceholder": "0.5",
       "positionSizeLabel": "Tamaño de posición",

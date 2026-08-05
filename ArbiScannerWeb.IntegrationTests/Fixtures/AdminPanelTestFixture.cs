@@ -1,7 +1,4 @@
-using ArbiScannerWeb.Abstractions.Interfaces;
 using ArbiScannerWeb.IntegrationTests.Support;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
 using WireMock.RequestBuilders;
@@ -12,8 +9,8 @@ namespace ArbiScannerWeb.IntegrationTests.Fixtures;
 
 public sealed class AdminPanelTestFixture : IAsyncLifetime
 {
-    public const string AdminUserName = "integration-admin";
-    public const string AdminPassword = "IntegrationTest@123";
+    public const string AdminServiceClientId = "integration-test-admin-service";
+    public const string AdminServiceClientSecret = "IntegrationTest@123";
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder(Images.Postgres)
         .WithDatabase("ArbiScannerBot")
@@ -31,14 +28,18 @@ public sealed class AdminPanelTestFixture : IAsyncLifetime
     {
         await Task.WhenAll(_postgres.StartAsync(), _redis.StartAsync());
 
+        // One WireMock instance stands in for both the real AdminPanel API and the
+        // Keycloak token endpoint AdminService now authenticates against (Client
+        // Credentials grant, see keycloak/realm-export/arbiscanner-admin-realm.json)
+        // - the two are distinguished only by request path.
         AdminPanelApi = WireMockServer.Start();
 
         AdminPanelApi
-            .Given(Request.Create().WithPath("/api/account/Authenticate").UsingPost())
+            .Given(Request.Create().WithPath("/protocol/openid-connect/token").UsingPost())
             .RespondWith(Response.Create()
                 .WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json")
-                .WithBodyAsJson(new { isSuccess = true, value = new { token = "stub-admin-jwt" } }));
+                .WithBodyAsJson(new { access_token = "stub-admin-service-token", expires_in = 300, token_type = "Bearer" }));
 
         Factory = new CustomWebApplicationFactory(
             new Dictionary<string, string?>(JwtTestSettings.ConfigOverrides)
@@ -46,8 +47,9 @@ public sealed class AdminPanelTestFixture : IAsyncLifetime
                 ["ConnectionStrings:SqlServer"] = _postgres.GetConnectionString(),
                 ["Redis:Endpoint"] = _redis.GetConnectionString(),
                 ["AdminApiUrl"] = AdminPanelApi.Url,
-                ["AdminUser:UserName"] = AdminUserName,
-                ["AdminUser:Password"] = AdminPassword,
+                ["Keycloak:AdminService:Authority"] = AdminPanelApi.Url,
+                ["Keycloak:AdminService:ClientId"] = AdminServiceClientId,
+                ["Keycloak:AdminService:ClientSecret"] = AdminServiceClientSecret,
                 ["RabbitMq:Host"] = "127.0.0.1",
                 ["RabbitMq:Port"] = "1",
                 ["RabbitMq:Queue"] = "spread_api_unused",
@@ -58,11 +60,7 @@ public sealed class AdminPanelTestFixture : IAsyncLifetime
                 ["MongoDb:ConnectionString"] = "mongodb://127.0.0.1:1/",
                 ["MongoDb:DatabaseName"] = "unused",
             },
-            configureTestServices: services =>
-            {
-                services.RemoveAll<IEmailService>();
-                services.AddScoped<IEmailService, FakeEmailService>();
-            });
+            configureTestServices: JwtTestSettings.ConfigureTestJwtBearer);
 
         _ = Factory.Services;
     }

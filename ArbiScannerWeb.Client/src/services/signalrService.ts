@@ -5,6 +5,7 @@ import {
 } from '@microsoft/signalr';
 import type { MessageDTO } from '../types/tickerType';
 import { logger } from './loggerService';
+import { getAccessToken } from './oidcUserManager';
 
 
 class SignalRService {
@@ -13,9 +14,12 @@ class SignalRService {
     async connect(hubUrl: string): Promise<void> {
         if (this.connection) return;
 
+        // Browsers can't set an Authorization header on a WebSocket handshake —
+        // accessTokenFactory instead appends the token as an access_token query
+        // param, which the API's JWT bearer handler only honors for /hubs paths.
         this.connection = new HubConnectionBuilder()
             .withUrl(hubUrl, {
-                withCredentials: true 
+                accessTokenFactory: async () => (await getAccessToken()) ?? '',
             })
             .configureLogging(LogLevel.Information)
             .withAutomaticReconnect()

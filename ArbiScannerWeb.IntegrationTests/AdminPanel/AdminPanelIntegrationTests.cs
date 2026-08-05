@@ -46,7 +46,7 @@ public class AdminPanelIntegrationTests(AdminPanelTestFixture fixture)
     [Fact]
     public async Task GetUserActiveSubscriptions_AdminPanelReturnsNotFound_PropagatesFailure()
     {
-        var client = await RegisterConfirmAndLoginAsync();
+        var client = fixture.Factory.CreateAuthenticatedClient();
 
         var response = await client.GetAsync("/api/Subscription/GetUserActiveSubscriptions");
 
@@ -75,34 +75,12 @@ public class AdminPanelIntegrationTests(AdminPanelTestFixture fixture)
                 .WithHeader("Content-Type", "application/json")
                 .WithBodyAsJson(new { isSuccess = true, value = new { id = subscriptionId, type = "RetryTier", price = 1.0m, durationInDays = 1 } }));
 
-        var client = await RegisterConfirmAndLoginAsync();
+        var client = fixture.Factory.CreateAuthenticatedClient();
 
         var response = await client.GetAsync($"/api/Subscription/GetSubscriptionDetails?subscriptionId={subscriptionId}");
 
         var result = await response.Content.ReadFromJsonAsync<ApiResult<SubscriptionModel>>(JsonOptions.CaseInsensitive);
         result!.IsSuccess.Should().BeTrue("AdminService should have retried transparently after the 401");
         result.Value!.Type.Should().Be("RetryTier");
-    }
-
-    private async Task<HttpClient> RegisterConfirmAndLoginAsync()
-    {
-        // CreateSecureClient(): the login cookie is Secure, so the client's CookieContainer
-        // only re-sends it on a base address it considers HTTPS.
-        var client = fixture.Factory.CreateSecureClient();
-        var email = $"integration-{Guid.NewGuid():N}@example.com";
-        const string password = "IntegrationTest@123";
-
-        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDto { Login = email, Password = password });
-        var registerResult = await registerResponse.Content.ReadFromJsonAsync<ApiResult<EmailConfirmationCodes>>(JsonOptions.CaseInsensitive);
-
-        await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDto
-        {
-            EmailConfirmToken = registerResult!.Value!.Id.ToString(),
-            Token = registerResult.Value.Code
-        });
-
-        await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDto { Login = email, Password = password });
-
-        return client;
     }
 }

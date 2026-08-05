@@ -1,67 +1,19 @@
 import { fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
-import { coordinatedRefresh } from '../../services/refreshCoordinator';
-import { logout } from '../slices/accountSlice';
+import { getAccessToken } from '../../services/oidcUserManager';
 
 const apiHost = import.meta.env.VITE_API_URL ?? '';
 export const baseURL = apiHost ? `${apiHost}/api` : '/api';
 
-const rawBaseQuery = fetchBaseQuery({
+// No more cookies or 401-triggered refresh dance — oidc-client-ts's
+// automaticSilentRenew keeps the access token fresh in the background, and
+// every request just attaches whatever token it currently holds.
+export const baseQueryWithReauth = fetchBaseQuery({
     baseUrl: baseURL,
-    credentials: 'include',
-});
-
-const shouldSkipRefresh = (url: string) => {
-    return [
-        '/Account/Login',
-        '/Account/Register',
-        '/Account/ForgotPassword',
-        '/Account/ResetPassword',
-        '/Account/ConfirmEmail',
-        '/Account/ResendEmailConfirmation',
-        '/Account/Refresh',
-    ].some((path) => url.includes(path));
-};
-
-const getRequestUrl = (args: string | FetchArgs) => (typeof args === 'string' ? args : args.url);
-
-export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
-    args,
-    api,
-    extraOptions,
-) => {
-    let result = await rawBaseQuery(args, api, extraOptions);
-    const requestUrl = getRequestUrl(args);
-
-    if (
-        result.error &&
-        (result.error.status === 401 || result.error.status === 403) &&
-        !shouldSkipRefresh(requestUrl)
-    ) {
-        try {
-            await coordinatedRefresh(async () => {
-                const refreshResult = await rawBaseQuery(
-                    { url: '/Account/Refresh', method: 'POST' },
-                    api,
-                    extraOptions,
-                );
-
-                if (refreshResult.error) {
-                    throw refreshResult.error;
-                }
-
-                return '';
-            });
-
-            result = await rawBaseQuery(args, api, extraOptions);
-        } catch {
-            api.dispatch(logout());
+    prepareHeaders: async (headers) => {
+        const token = await getAccessToken();
+        if (token) {
+            headers.set('Authorization', `Bearer ${token}`);
         }
-    }
-
-    if (result.error && (result.error.status === 401 || result.error.status === 403)) {
-        api.dispatch(logout());
-    }
-
-    return result;
-};
+        return headers;
+    },
+});

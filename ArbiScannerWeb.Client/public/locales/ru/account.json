@@ -69,6 +69,7 @@
     "form": {
       "emailLabel": "Электронная почта",
       "emailPlaceholder": "you@email.com",
+      "manageInKeycloak": "Изменить email или пароль",
       "spreadSizeLabel": "Порог размера спреда",
       "spreadSizePlaceholder": "0.5",
       "positionSizeLabel": "Размер позиции",

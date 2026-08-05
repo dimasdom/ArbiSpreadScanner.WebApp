@@ -7,7 +7,6 @@ import type { IRootStore } from '../../store/store';
 import SettingsIcon from '@mui/icons-material/Settings';
 import GuideModal from '../../components/GuideModal';
 import type { GuideStep } from '../../components/GuideModal';
-import type { AccountUpdateDTO } from '../../types/accountType';
 import { useLocalizedNavigate } from '../../i18n/routing';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InfoIcon from '@mui/icons-material/Info';
@@ -15,12 +14,15 @@ import TelegramLinkModal from '../../components/TelegramLinkModal';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import { logger } from '../../services/loggerService';
 import {
-    useChangeEmailRequestMutation,
     useCreateTelegramLinkRequestMutation,
     useGetUserDataQuery,
     useRemoveTelegramLinkMutation,
     useUpdateAccountDetailsMutation,
 } from '../../store/services/account';
+
+// Login email/password now live in Keycloak — deep-link to its hosted Account
+// Console rather than re-implementing an email-change confirmation flow here.
+const keycloakAccountConsoleUrl = `${import.meta.env.VITE_OIDC_AUTHORITY ?? ''}/account`;
 import { useGetUserActiveSubscriptionsQuery } from '../../store/services/subscription';
 
 function buildAccountGuideSteps(t: TFunction<'account'>): GuideStep[] {
@@ -88,19 +90,12 @@ export function AccountPage() {
     const userSettings = useSelector((state: IRootStore) => state.account.account.userSettings);
     const loading = useSelector((state: IRootStore) => state.account.loading);
     const error = useSelector((state: IRootStore) => state.account.error);
-    const [email, setEmail] = React.useState('');
-    const [originalEmail, setOriginalEmail] = React.useState('');
     const [spreadSize, setSpreadSize] = React.useState<number | string>('');
     const [positionSize, setPositionSize] = React.useState<number | ''>('');
     const [futuresSpread, setFuturesSpread] = React.useState(false);
     const [fundingSpread, setFundingSpread] = React.useState(false);
     const [spotSpread, setSpotSpread] = React.useState(false);
     const [exchanges, setExchanges] = React.useState<string[]>([]);
-    const [emailError, setEmailError] = React.useState('');
-    const [emailDialogOpen, setEmailDialogOpen] = React.useState(false);
-    const [emailChangeError, setEmailChangeError] = React.useState('');
-    const [emailChangeLoading, setEmailChangeLoading] = React.useState(false);
-    const [pendingData, setPendingData] = React.useState<AccountUpdateDTO | null>(null);
     const [telegramModalOpen, setTelegramModalOpen] = React.useState(false);
     const [telegramLinkRequestId, setTelegramLinkRequestId] = React.useState('');
     const [telegramActionLoading, setTelegramActionLoading] = React.useState(false);
@@ -109,7 +104,6 @@ export function AccountPage() {
     const navigate = useLocalizedNavigate();
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
     const [updateAccountDetails] = useUpdateAccountDetailsMutation();
-    const [changeEmailRequest] = useChangeEmailRequestMutation();
     const [createTelegramLinkRequest] = useCreateTelegramLinkRequestMutation();
     const [removeTelegramLink] = useRemoveTelegramLinkMutation();
     useGetUserDataQuery(undefined, { skip: !isLoggedIn });
@@ -121,30 +115,17 @@ export function AccountPage() {
 
     useEffect(() => {
         if (!userSettings) return;
-        setEmail(userAccount.email ?? '');
-        setOriginalEmail(userAccount.email ?? '');
         setSpreadSize(userSettings.spreadSize ?? '');
         setPositionSize(userSettings.positionSize ?? '');
         setFuturesSpread(!!userSettings.futuresSpread);
         setFundingSpread(!!userSettings.fundingSpread);
         setSpotSpread(!!userSettings.spotSpread);
         setExchanges((userSettings.exchanges || []).map(e => e.exchange?.name ?? '').filter(Boolean));
-    }, [userSettings, userAccount.email]);
-    const validateEmail = () => {
-        const re = /^[^\s@]+@[^\s@.]+\.[^\s@]+$/;
-        if (!email || !re.test(email)) {
-            setEmailError(t('common:validation.email.invalid'));
-            return false;
-        }
-        setEmailError('');
-        return true;
-    };
+    }, [userSettings]);
 
     const handleSave = () => {
-        if (!validateEmail()) return;
-
         const payload = {
-            email,
+            email: userAccount.email ?? '',
             spreadSize: typeof spreadSize === 'number' ? spreadSize : Number(spreadSize) || 0,
             positionSize: typeof positionSize === 'number' ? positionSize : Number(positionSize) || 0,
             futuresSpread,
@@ -153,46 +134,13 @@ export function AccountPage() {
             haveAccess: userSettings.haveAccess,
             exchanges: exchanges.map(name => ({ id: 0, userAccountId: '', exchangeId: 0, exchange: { id: 0, name } })),
         }
-        // Check if email has changed
-        if (email !== originalEmail) {
-            setPendingData(payload);
-            setEmailDialogOpen(true);
-        } else {
-            void updateAccountDetails(payload).unwrap()
-                .then(() => toast.success(t('accountPage.toasts.saveSuccess')))
-                .catch(() => toast.error(t('accountPage.toasts.saveError')));
-        }
+        void updateAccountDetails(payload).unwrap()
+            .then(() => toast.success(t('accountPage.toasts.saveSuccess')))
+            .catch(() => toast.error(t('accountPage.toasts.saveError')));
     };
 
     const toggleExchange = (ex: string) => {
         setExchanges(prev => prev.includes(ex) ? prev.filter(e => e !== ex) : [...prev, ex]);
-    };
-
-    const handleEmailChangeConfirm = async () => {
-        if (!pendingData) return;
-        setEmailChangeError('');
-        setEmailChangeLoading(true);
-        try {
-            const res = await changeEmailRequest({ email }).unwrap();
-            if (res?.isSuccess) {
-                setEmailDialogOpen(false);
-                setPendingData(null);
-                await updateAccountDetails(pendingData);
-                navigate('/account/confirmemail?emailConfirmToken=' + res.value.id);
-            } else {
-                setEmailChangeError(res?.errors?.[0]?.message || t('accountPage.emailChangeDialog.confirmError'));
-            }
-        } catch (err) {
-            setEmailChangeError(err instanceof Error ? err.message : t('errors.networkError'));
-        } finally {
-            setEmailChangeLoading(false);
-        }
-    };
-
-    const handleEmailChangeCancel = () => {
-        setEmailDialogOpen(false);
-        setPendingData(null);
-        setEmailChangeError('');
     };
 
     const handleLinkTelegram = async () => {
@@ -236,72 +184,6 @@ export function AccountPage() {
     return (
         <>
         <GuideModal storageKey="guide_account_seen" title={t('accountPage.guide.title')} steps={accountGuideSteps} />
-        {emailDialogOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/50 dark:bg-black/50">
-                <button type="button"
-                    className="absolute opacity-0 inset-0 w-full h-full cursor-default"
-                    onClick={handleEmailChangeCancel}
-                    aria-label={t('common:actions.close')}
-                    tabIndex={-1}
-                />
-                <dialog
-                    open
-                    className="relative bg-white dark:bg-gray-900 w-full sm:max-w-md sm:mx-4 sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden m-0 p-0 border-0"
-                >
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-linear-to-r from-indigo-600 to-blue-600 text-white rounded-t-2xl">
-                        <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                            <h2 className="text-base font-bold tracking-wide">{t('accountPage.emailChangeDialog.title')}</h2>
-                        </div>
-                        <button type="button"
-                            onClick={handleEmailChangeCancel}
-                            className="text-white/70 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
-                            aria-label={t('common:actions.close')}
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <div className="px-6 py-8 flex flex-col items-center text-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
-                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed max-w-sm">
-                            <Trans
-                                i18nKey="accountPage.emailChangeDialog.body"
-                                ns="account"
-                                values={{ email }}
-                                components={{ bold: <span className="font-semibold text-gray-900 dark:text-gray-100" /> }}
-                            />
-                        </p>
-                        {emailChangeError && (
-                            <p className="w-full text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2 ring-1 ring-red-100 dark:ring-red-800">{emailChangeError}</p>
-                        )}
-                    </div>
-                    <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-end gap-3">
-                        <button type="button"
-                            onClick={handleEmailChangeCancel}
-                            disabled={emailChangeLoading}
-                            className="px-5 py-2 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-                        >
-                            {t('common:actions.cancel')}
-                        </button>
-                        <button type="button"
-                            onClick={handleEmailChangeConfirm}
-                            disabled={emailChangeLoading}
-                            className="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
-                        >
-                            {emailChangeLoading ? t('accountPage.emailChangeDialog.sending') : t('accountPage.emailChangeDialog.confirm')}
-                        </button>
-                    </div>
-                </dialog>
-            </div>
-        )}
         <TelegramLinkModal
             isOpen={telegramModalOpen}
             linkRequestId={telegramLinkRequestId}
@@ -445,15 +327,19 @@ export function AccountPage() {
                             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('accountPage.form.emailLabel')}</label>
                             <input
                                 type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                onBlur={validateEmail}
-                                className="block w-full rounded-xl border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
-                                placeholder={t('accountPage.form.emailPlaceholder')}
+                                value={userAccount.email ?? ''}
+                                readOnly
+                                disabled
+                                className="block w-full rounded-xl border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800/60 px-4 py-3 text-gray-500 dark:text-gray-400 shadow-sm cursor-not-allowed"
                             />
-                            {emailError && (
-                                <p className="mt-2 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 px-3 py-1 rounded-lg">{emailError}</p>
-                            )}
+                            <a
+                                href={keycloakAccountConsoleUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-2 inline-block text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                            >
+                                {t('accountPage.form.manageInKeycloak')}
+                            </a>
                         </div>
 
                         <div>

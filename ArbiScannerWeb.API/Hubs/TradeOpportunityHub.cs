@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 
 namespace ArbiScannerWeb.API.Hubs
 {
+    [Authorize]
     public class TradeOpportunityHub : Hub
     {
         private readonly ILogger<TradeOpportunityHub> _logger;

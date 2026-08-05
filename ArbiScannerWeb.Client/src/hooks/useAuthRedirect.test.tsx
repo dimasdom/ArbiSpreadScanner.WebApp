@@ -1,60 +1,41 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import type { ReactNode } from 'react';
-import accountReducer from '../store/slices/accountSlice';
-import { createEmptyAccountModel } from '../types/accountType';
 import { useAuthRedirect } from './useAuthRedirect';
 
-const navigateMock = vi.fn();
+const signinRedirectMock = vi.fn();
+const useAuthMock = vi.fn();
 
-vi.mock('react-router', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('react-router')>();
-    return { ...actual, useNavigate: () => navigateMock };
-});
-
-function buildStore(isLoggedIn: boolean) {
-    return configureStore({
-        reducer: { account: accountReducer },
-        preloadedState: {
-            account: {
-                account: createEmptyAccountModel(),
-                isLoggedIn,
-                loading: false,
-                error: null,
-                emailConfirmToken: null,
-                needsEmailConfirmation: false,
-                sessionChecked: true,
-            },
-        },
-    });
-}
-
-function wrapper(store: ReturnType<typeof buildStore>) {
-    return ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>;
-}
+vi.mock('react-oidc-context', () => ({
+    useAuth: () => useAuthMock(),
+}));
 
 describe('useAuthRedirect', () => {
     beforeEach(() => {
-        navigateMock.mockClear();
+        signinRedirectMock.mockClear();
+        useAuthMock.mockReset();
     });
 
-    it('redirects to the default login path when not logged in', () => {
-        renderHook(() => useAuthRedirect(), { wrapper: wrapper(buildStore(false)) });
+    it('redirects to Keycloak login when not authenticated', () => {
+        useAuthMock.mockReturnValue({ isLoading: false, isAuthenticated: false, signinRedirect: signinRedirectMock });
 
-        expect(navigateMock).toHaveBeenCalledWith('/account/login');
+        renderHook(() => useAuthRedirect());
+
+        expect(signinRedirectMock).toHaveBeenCalledOnce();
     });
 
-    it('redirects to a custom path when provided', () => {
-        renderHook(() => useAuthRedirect('/custom/login'), { wrapper: wrapper(buildStore(false)) });
+    it('does not redirect while auth state is still loading', () => {
+        useAuthMock.mockReturnValue({ isLoading: true, isAuthenticated: false, signinRedirect: signinRedirectMock });
 
-        expect(navigateMock).toHaveBeenCalledWith('/custom/login');
+        renderHook(() => useAuthRedirect());
+
+        expect(signinRedirectMock).not.toHaveBeenCalled();
     });
 
-    it('does not redirect when already logged in', () => {
-        renderHook(() => useAuthRedirect(), { wrapper: wrapper(buildStore(true)) });
+    it('does not redirect when already authenticated', () => {
+        useAuthMock.mockReturnValue({ isLoading: false, isAuthenticated: true, signinRedirect: signinRedirectMock });
 
-        expect(navigateMock).not.toHaveBeenCalled();
+        renderHook(() => useAuthRedirect());
+
+        expect(signinRedirectMock).not.toHaveBeenCalled();
     });
 });

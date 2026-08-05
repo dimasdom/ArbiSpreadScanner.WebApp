@@ -69,6 +69,7 @@
     "form": {
       "emailLabel": "Adresse e-mail",
       "emailPlaceholder": "votre@email.com",
+      "manageInKeycloak": "Changer l'e-mail ou le mot de passe",
       "spreadSizeLabel": "Seuil de taille d'écart",
       "spreadSizePlaceholder": "0.5",
       "positionSizeLabel": "Taille de position",

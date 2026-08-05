@@ -54,10 +54,7 @@ public class RabbitMqIntegrationTests(RabbitMqTestFixture fixture)
         var message = BuildSpread(MarketPositionAction.Open);
         await PublishAsync(message);
 
-        // CreateSecureClient(): the login cookie is Secure, so the client's CookieContainer
-        // only re-sends it on a base address it considers HTTPS.
-        var client = fixture.Factory.CreateSecureClient();
-        var authedClient = await RegisterConfirmAndLoginAsync(client);
+        var authedClient = fixture.Factory.CreateAuthenticatedClient();
 
         var deadline = DateTime.UtcNow.AddSeconds(20);
         ApiResult<TradeOpportunityDetailsDto>? result = null;
@@ -77,24 +74,6 @@ public class RabbitMqIntegrationTests(RabbitMqTestFixture fixture)
         result.Value.PositionModel.Symbol.Should().Be(message.Symbol);
     }
 
-    private async Task<HttpClient> RegisterConfirmAndLoginAsync(HttpClient client)
-    {
-        var email = $"integration-{Guid.NewGuid():N}@example.com";
-        const string password = "IntegrationTest@123";
-
-        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDto { Login = email, Password = password });
-        var registerResult = await registerResponse.Content.ReadFromJsonAsync<ApiResult<EmailConfirmationCodes>>(JsonOptions.CaseInsensitive);
-
-        await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDto
-        {
-            EmailConfirmToken = registerResult!.Value!.Id.ToString(),
-            Token = registerResult.Value.Code
-        });
-
-        await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDto { Login = email, Password = password });
-
-        return client;
-    }
 
     private async Task PublishAsync(TradeOpportunityModel message)
     {

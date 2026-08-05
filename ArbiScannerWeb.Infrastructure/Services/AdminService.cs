@@ -21,11 +21,11 @@ namespace ArbiScannerWeb.Infrastructure.Services
     public class AdminService : IAdminService
     {
         private readonly HttpClient _httpClient;
+        private readonly HttpClient _tokenHttpClient;
         private readonly IConfiguration _configuration;
         private readonly IDatabase _redis;
         private readonly string _adminApiUrl;
         private const string TokenCacheKey = "admin_service:jwt_token";
-        private const string AccessTokenCookieName = "adminpanel.access_token";
         private readonly SemaphoreSlim _authLock = new SemaphoreSlim(1, 1);
         private readonly ILogger<AdminService> _logger;
 
@@ -40,6 +40,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             _configuration = configuration;
             _redis = redis.GetDatabase();
             _httpClient = httpClientFactory.CreateClient("AdminApi");
+            _tokenHttpClient = httpClientFactory.CreateClient("KeycloakAdminService");
             _logger = logger;
         }
 
@@ -70,51 +71,49 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     return;
                 }
 
-                var adminUser = _configuration.GetSection("AdminUser");
-                var loginRequest = new { userName = adminUser["UserName"], password = adminUser["Password"] };
-                var content = new StringContent(JsonSerializer.Serialize(loginRequest), Encoding.UTF8, "application/json");
+                // OAuth2 Client Credentials grant against the arbiscanner-admin realm's
+                // arbiscanner-admin-service confidential client — its service account is
+                // assigned only the Manager realm role (see keycloak/configure-admin-users.sh),
+                // matching this service's old Manager-username/password scope exactly.
+                var keycloakOptions = _configuration.GetSection("Keycloak:AdminService");
+                var clientId = keycloakOptions["ClientId"];
+                var clientSecret = keycloakOptions["ClientSecret"];
 
-                var response = await _httpClient.PostAsync($"{_adminApiUrl}/api/account/Authenticate", content);
+                var form = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["grant_type"] = "client_credentials",
+                    ["client_id"] = clientId ?? string.Empty,
+                    ["client_secret"] = clientSecret ?? string.Empty,
+                });
+
+                var response = await _tokenHttpClient.PostAsync("protocol/openid-connect/token", form);
                 if (!response.IsSuccessStatusCode) return;
 
-                // AdminPanel's Authenticate response blanks the token out of the JSON body and
-                // returns it only as an HttpOnly cookie (see AccountController.AppendAuthCookies).
-                // This client has no cookie jar, so pull the JWT out of Set-Cookie directly.
-                var token = ExtractCookieValue(response, AccessTokenCookieName);
+                var body = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(body);
+                var root = doc.RootElement;
+                var token = root.TryGetProperty("access_token", out var tokenElement) ? tokenElement.GetString() : null;
+
                 if (!string.IsNullOrEmpty(token))
                 {
-                    await _redis.StringSetAsync(TokenCacheKey, token, TimeSpan.FromHours(23));
+                    // Cache slightly under the token's real lifetime so it never gets used
+                    // right up against expiry by a request that's already in flight.
+                    var expiresIn = root.TryGetProperty("expires_in", out var expiresInElement) ? expiresInElement.GetInt32() : 300;
+                    var ttl = TimeSpan.FromSeconds(Math.Max(expiresIn - 30, 30));
+
+                    await _redis.StringSetAsync(TokenCacheKey, token, ttl);
                     _httpClient.DefaultRequestHeaders.Authorization =
                         new AuthenticationHeaderValue("Bearer", token);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to refresh admin token");
+                _logger.LogError(ex, "Failed to obtain admin service token from Keycloak");
             }
             finally
             {
                 _authLock.Release();
             }
-        }
-
-        private static string? ExtractCookieValue(HttpResponseMessage response, string cookieName)
-        {
-            if (!response.Headers.TryGetValues("Set-Cookie", out var cookieHeaders))
-                return null;
-
-            var namePrefix = $"{cookieName}=";
-            foreach (var header in cookieHeaders)
-            {
-                if (!header.StartsWith(namePrefix, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var valueAndAttributes = header[namePrefix.Length..];
-                var semicolonIndex = valueAndAttributes.IndexOf(';');
-                return semicolonIndex >= 0 ? valueAndAttributes[..semicolonIndex] : valueAndAttributes;
-            }
-
-            return null;
         }
 
         private async Task<Result<T>> GetResultAsync<T>(string url)

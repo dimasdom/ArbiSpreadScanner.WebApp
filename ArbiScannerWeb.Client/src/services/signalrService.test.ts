@@ -17,6 +17,7 @@ function createMockConnection() {
 }
 
 let mockConnection = createMockConnection();
+const withUrlMock = vi.fn().mockReturnThis();
 
 vi.mock('@microsoft/signalr', () => ({
     // A regular `function` (not an arrow function) is required here: the
@@ -24,7 +25,7 @@ vi.mock('@microsoft/signalr', () => ({
     // constructors — using one throws "is not a constructor" at runtime.
     HubConnectionBuilder: vi.fn().mockImplementation(function HubConnectionBuilderMock() {
         return {
-            withUrl: vi.fn().mockReturnThis(),
+            withUrl: withUrlMock,
             configureLogging: vi.fn().mockReturnThis(),
             withAutomaticReconnect: vi.fn().mockReturnThis(),
             build: vi.fn(() => mockConnection),
@@ -37,10 +38,15 @@ vi.mock('./loggerService', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
+vi.mock('./oidcUserManager', () => ({
+    getAccessToken: vi.fn().mockResolvedValue('the-token'),
+}));
+
 describe('signalRService', () => {
     beforeEach(() => {
         mockConnection = createMockConnection();
         vi.mocked(HubConnectionBuilder).mockClear();
+        withUrlMock.mockClear();
     });
 
     afterEach(async () => {
@@ -52,6 +58,16 @@ describe('signalRService', () => {
 
         expect(HubConnectionBuilder).toHaveBeenCalledTimes(1);
         expect(mockConnection.start).toHaveBeenCalledTimes(1);
+    });
+
+    it('connect() authenticates the hub via accessTokenFactory, not cookies', async () => {
+        await signalRService.connect('https://hub.test/ticker');
+
+        expect(withUrlMock).toHaveBeenCalledWith('https://hub.test/ticker', expect.objectContaining({
+            accessTokenFactory: expect.any(Function),
+        }));
+        const [, options] = withUrlMock.mock.calls[0];
+        await expect(options.accessTokenFactory()).resolves.toBe('the-token');
     });
 
     it('connect() registers reconnect and close handlers', async () => {

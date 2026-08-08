@@ -94,6 +94,16 @@ try
         client.BaseAddress = new Uri(authority.TrimEnd('/') + "/");
         client.Timeout = TimeSpan.FromSeconds(30);
     });
+    // Token endpoint for McpTokenService's Standard Token Exchange grant (arbiscanner-web
+    // realm, arbiscanner-mcp client) — see keycloak/README.md step 9.
+    builder.Services.AddHttpClient("KeycloakMcpExchange", (sp, client) =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var authority = config["Keycloak:McpExchange:Authority"]
+            ?? throw new InvalidOperationException("Keycloak:McpExchange:Authority configuration is required");
+        client.BaseAddress = new Uri(authority.TrimEnd('/') + "/");
+        client.Timeout = TimeSpan.FromSeconds(30);
+    });
     var observabilityEnabled = builder.Configuration.GetValue("Observability:Enabled", true);
     if (observabilityEnabled)
     {

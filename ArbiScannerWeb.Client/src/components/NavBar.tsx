@@ -20,12 +20,14 @@ const navLinksLoggedInNotActive = [
     { key: 'nav.main', to: '/' },
     { key: 'nav.account', to: '/account' },
     { key: 'nav.subscriptions', to: '/subscriptions' },
+    { key: 'nav.mcpToken', to: '/mcp-token' },
     { key: 'nav.faq', to: '/faq' }
 ];
 const navLinksLoggedInActive = [
     { key: 'nav.main', to: '/' },
     { key: 'nav.spreads', to: '/spreads' },
     { key: 'nav.account', to: '/account' },
+    { key: 'nav.mcpToken', to: '/mcp-token' },
     { key: 'nav.faq', to: '/faq' }
 ];
 const HamburgerIcon = () => (

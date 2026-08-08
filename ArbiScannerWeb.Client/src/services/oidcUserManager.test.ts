@@ -1,10 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const getUserMock = vi.fn();
+const removeUserMock = vi.fn();
+const signinRedirectMock = vi.fn();
+const addSilentRenewErrorMock = vi.fn();
+const addAccessTokenExpiredMock = vi.fn();
 
 vi.mock('oidc-client-ts', () => ({
     UserManager: vi.fn().mockImplementation(function UserManagerMock() {
-        return { getUser: getUserMock, settings: {} };
+        return {
+            getUser: getUserMock,
+            removeUser: removeUserMock,
+            signinRedirect: signinRedirectMock,
+            settings: {},
+            events: {
+                addSilentRenewError: addSilentRenewErrorMock,
+                addAccessTokenExpired: addAccessTokenExpiredMock,
+            },
+        };
     }),
     WebStorageStateStore: vi.fn(),
 }));

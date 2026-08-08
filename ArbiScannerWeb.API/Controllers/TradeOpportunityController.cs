@@ -38,6 +38,19 @@ namespace ArbiScannerWeb.API.Controllers
             return Ok(result.ToSerializable());
         }
 
+        [HttpGet("GetRecommendedSpreads")]
+        public async Task<ActionResult<SerializableResult<List<RecommendedSpreadDto>>>> GetRecommendedSpreads()
+        {
+            var userId = User.Identity?.Name;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest(Result.Fail("User ID claim not found").ToResult<List<RecommendedSpreadDto>>().ToSerializable());
+            }
+
+            var result = await _tradeOpportunityService.GetRecommendedSpreads(userId);
+            return Ok(result.ToSerializable());
+        }
+
         [HttpGet("GetSpreadInfo/{id}")]
         public async Task<ActionResult<SerializableResult<TradeOpportunityDetailsDto>>> GetSpreadInfo(string id)
         {

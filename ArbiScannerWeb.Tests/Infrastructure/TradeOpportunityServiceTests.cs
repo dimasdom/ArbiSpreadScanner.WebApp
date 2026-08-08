@@ -301,6 +301,43 @@ public class TradeOpportunityServiceTests
         _ctxFactory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => CreateSharedContext(dbName));
 
+    /// <summary>A candidate that passes GetCurrentSpreadsForUser's own volume-validity check
+    /// (VolumeAsk/VolumeBid &gt; PositionSize*3) - GetRecommendedSpreads tests need this since
+    /// they exercise that filter too, on top of the new ranking logic.</summary>
+    private static TradeOpportunityModel MakeEligibleModel(Guid? guid = null)
+    {
+        var model = MakeModel(guid);
+        model.ExchangeRateA.VolumeAsk = 1000;
+        model.ExchangeRateA.VolumeBid = 1000;
+        model.ExchangeRateB.VolumeAsk = 1000;
+        model.ExchangeRateB.VolumeBid = 1000;
+        return model;
+    }
+
+    /// <summary>Seeds a UserSettings/Account pair with both "binance" and "bybit" linked
+    /// (matching MakeModel's ExchangeRateA/B exchange names) so GetCurrentSpreadsForUser's
+    /// exchange-allowlist filter doesn't reject every candidate.</summary>
+    private static async Task SeedEligibleUserAsync(
+        string dbName, int userSettingsId, string accountId, Action<UserSettingsModel> configure)
+    {
+        using var seed = CreateSharedContext(dbName);
+        var userSettings = new UserSettingsModel { Id = userSettingsId, AccountId = accountId, PositionSize = 10 };
+        configure(userSettings);
+        userSettings.Exchanges.Add(new UserExchangeModel
+        {
+            UserAccountId = accountId,
+            Exchange = new ExchangeModel { Id = userSettingsId * 10 + 1, Name = "binance" },
+        });
+        userSettings.Exchanges.Add(new UserExchangeModel
+        {
+            UserAccountId = accountId,
+            Exchange = new ExchangeModel { Id = userSettingsId * 10 + 2, Name = "bybit" },
+        });
+        seed.UsersSettings.Add(userSettings);
+        seed.Users.Add(new AccountModel { Id = accountId, UserSettingsId = userSettingsId, UserSettings = null! });
+        await seed.SaveChangesAsync();
+    }
+
     [Fact]
     public async Task GetCurrentFuturesSpreads_ChatIdSet_UserSettingsNotFound_ReturnsFail()
     {
@@ -406,5 +443,321 @@ public class TradeOpportunityServiceTests
         var result = await _sut.GetSpreadsForUser("acc2");
 
         result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetRecommendedSpreads_NoActiveSubscription_ReturnsFail()
+    {
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(false);
+
+        var result = await _sut.GetRecommendedSpreads("u1");
+
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetRecommendedSpreads_UserNotFound_ReturnsFail()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+
+        var result = await _sut.GetRecommendedSpreads("missing");
+
+        result.IsFailed.Should().BeTrue();
+        result.Errors[0].Message.Should().Contain("User not found");
+    }
+
+    [Fact]
+    public async Task GetRecommendedSpreads_NoSpreadTypesEnabled_ReturnsEmptyList()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        using (var seed = CreateSharedContext(dbName))
+        {
+            seed.UsersSettings.Add(new UserSettingsModel { Id = 3, AccountId = "acc3" });
+            seed.Users.Add(new AccountModel { Id = "acc3", UserSettingsId = 3, UserSettings = null! });
+            await seed.SaveChangesAsync();
+        }
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+
+        var result = await _sut.GetRecommendedSpreads("acc3");
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetRecommendedSpreads_FiltersBelowOnePercentAndPicksTopTwoByLowestCost()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        await SeedEligibleUserAsync(dbName, 10, "acc10", s => s.FuturesSpread = true);
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+
+        var belowThreshold = MakeEligibleModel();
+        belowThreshold.Spread = 0.5; // < 1%, must be excluded
+
+        var cheap = MakeEligibleModel();
+        cheap.Spread = 2.0;
+        cheap.ExchangeLong.SummarySlipage = 0.1;
+
+        var expensive = MakeEligibleModel();
+        expensive.Spread = 3.0;
+        expensive.ExchangeLong.SummarySlipage = 0.5;
+
+        var mostExpensive = MakeEligibleModel();
+        mostExpensive.Spread = 5.0;
+        mostExpensive.ExchangeLong.SummarySlipage = 1.0;
+
+        _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Futures))
+            .ReturnsAsync(new List<TradeOpportunityModel> { belowThreshold, cheap, expensive, mostExpensive });
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetRecommendedSpreads("acc10");
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().HaveCount(2);
+        result.Value.Select(r => r.Details.PositionModel.Guid)
+            .Should().Equal(cheap.Guid, expensive.Guid);
+        result.Value.Should().OnlyContain(r => r.Category == SpreadType.Futures);
+    }
+
+    [Fact]
+    public async Task GetRecommendedSpreads_TieBreaksByHigherAbsoluteSpread()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        await SeedEligibleUserAsync(dbName, 11, "acc11", s => s.FuturesSpread = true);
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+
+        // All three have identical cost (zero slippage/funding) - only Spread differs.
+        var low = MakeEligibleModel();
+        low.Spread = 1.5;
+        var mid = MakeEligibleModel();
+        mid.Spread = 3.0;
+        var high = MakeEligibleModel();
+        high.Spread = 5.0;
+
+        _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Futures))
+            .ReturnsAsync(new List<TradeOpportunityModel> { low, mid, high });
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetRecommendedSpreads("acc11");
+
+        result.Value.Select(r => r.Details.PositionModel.Guid).Should().Equal(high.Guid, mid.Guid);
+    }
+
+    [Fact]
+    public async Task GetRecommendedSpreads_FundingCategory_IgnoresFundingRateInRanking()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        await SeedEligibleUserAsync(dbName, 12, "acc12", s => s.FundingSpread = true);
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+
+        var lowerSpreadHugeFunding = MakeEligibleModel();
+        lowerSpreadHugeFunding.Type = SpreadType.Funding;
+        lowerSpreadHugeFunding.Spread = 2.0;
+        lowerSpreadHugeFunding.ExchangeLong.FundingRateValue = 0.5; // would dominate cost if not ignored for Funding type
+
+        var higherSpreadNoFunding = MakeEligibleModel();
+        higherSpreadNoFunding.Type = SpreadType.Funding;
+        higherSpreadNoFunding.Spread = 4.0;
+
+        _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Funding))
+            .ReturnsAsync(new List<TradeOpportunityModel> { lowerSpreadHugeFunding, higherSpreadNoFunding });
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetRecommendedSpreads("acc12");
+
+        // Both have zero cost (funding ignored for Funding type, no slippage) - tie-break by
+        // spread should still return both, but the huge FundingRateValue must not have pushed
+        // lowerSpreadHugeFunding out of the ranking.
+        result.Value.Should().HaveCount(2);
+        result.Value.Select(r => r.Details.PositionModel.Guid)
+            .Should().Contain(lowerSpreadHugeFunding.Guid);
+    }
+
+    [Fact]
+    public async Task GetRecommendedSpreads_SpotCategory_OnlyCountsShortLegFundingRate()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        await SeedEligibleUserAsync(dbName, 13, "acc13", s => s.SpotSpread = true);
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+
+        var longFundingIgnored = MakeEligibleModel();
+        longFundingIgnored.Type = SpreadType.Spot;
+        longFundingIgnored.Spread = 2.0;
+        longFundingIgnored.ExchangeLong.FundingRateValue = 0.5; // spot leg - must be ignored
+
+        var shortFundingCounted = MakeEligibleModel();
+        shortFundingCounted.Type = SpreadType.Spot;
+        shortFundingCounted.Spread = 2.0;
+        shortFundingCounted.ExchangeShort.FundingRateValue = 0.01; // small but non-zero cost
+
+        _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Spot))
+            .ReturnsAsync(new List<TradeOpportunityModel> { longFundingIgnored, shortFundingCounted });
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetRecommendedSpreads("acc13");
+
+        // longFundingIgnored has zero effective cost (its funding is on the long/spot leg,
+        // which never counts) so it ranks ahead of shortFundingCounted despite equal spread.
+        result.Value.Select(r => r.Details.PositionModel.Guid).Should()
+            .Equal(longFundingIgnored.Guid, shortFundingCounted.Guid);
+    }
+
+    [Fact]
+    public async Task GetSpreadInfo_AboveMinSpreadAndWithinCostThreshold_AnalysisRecommendedTrue()
+    {
+        var guid = Guid.NewGuid();
+        var model = MakeModel(guid);
+        model.Spread = 5.0;
+        model.SummaryTarrif = 0.05;
+        var ticker = new TradeOpportunityTickerModel(model);
+
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
+        _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(ticker);
+        _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49))
+            .ReturnsAsync(new List<TradeOpportunityTickerModel>());
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetSpreadInfo(guid.ToString());
+
+        result.Value.Analysis.Should().NotBeNull();
+        result.Value.Analysis!.Recommended.Should().BeTrue();
+        result.Value.Analysis.Reasons.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetSpreadInfo_BelowMinSpread_AnalysisRecommendedFalse()
+    {
+        var guid = Guid.NewGuid();
+        var model = MakeModel(guid);
+        model.Spread = 0.4;
+        var ticker = new TradeOpportunityTickerModel(model);
+
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
+        _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(ticker);
+        _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49))
+            .ReturnsAsync(new List<TradeOpportunityTickerModel>());
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetSpreadInfo(guid.ToString());
+
+        result.Value.Analysis!.Recommended.Should().BeFalse();
+        result.Value.Analysis.Reasons[0].Should().Contain("below the 1% minimum");
+    }
+
+    [Fact]
+    public async Task GetSpreadInfo_CostExceedsTenPercentOfSpread_AnalysisRecommendedFalse()
+    {
+        var guid = Guid.NewGuid();
+        var model = MakeModel(guid);
+        model.Spread = 2.0;
+        model.SummaryTarrif = 0.5; // 25% of spread, well above the 10% limit
+        var ticker = new TradeOpportunityTickerModel(model);
+
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
+        _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(ticker);
+        _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49))
+            .ReturnsAsync(new List<TradeOpportunityTickerModel>());
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetSpreadInfo(guid.ToString());
+
+        result.Value.Analysis!.Recommended.Should().BeFalse();
+        result.Value.Analysis.Reasons[1].Should().Contain("above the 10% limit");
+    }
+
+    [Fact]
+    public async Task GetSpreadInfo_FundingTypeWithFastFallingTickerHistory_SetsTrendWarning()
+    {
+        var guid = Guid.NewGuid();
+        var model = MakeModel(guid);
+        model.Type = SpreadType.Funding;
+        model.Spread = 2.0;
+        var latest = new TradeOpportunityTickerModel(model) { Spread = 1.0 };
+        var older = new List<TradeOpportunityTickerModel>
+        {
+            new(model) { Spread = 1.4 },
+            new(model) { Spread = 2.0 }, // oldest: 1.0 is a 50% relative decline from 2.0
+        };
+
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
+        _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(latest);
+        _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49)).ReturnsAsync(older);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetSpreadInfo(guid.ToString());
+
+        result.Value.Analysis!.TrendWarning.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetSpreadInfo_NonFundingTypeWithFastFallingTickerHistory_NoTrendWarning()
+    {
+        var guid = Guid.NewGuid();
+        var model = MakeModel(guid);
+        model.Type = SpreadType.Futures;
+        model.Spread = 2.0;
+        var latest = new TradeOpportunityTickerModel(model) { Spread = 1.0 };
+        var older = new List<TradeOpportunityTickerModel>
+        {
+            new(model) { Spread = 1.4 },
+            new(model) { Spread = 2.0 },
+        };
+
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
+        _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(latest);
+        _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49)).ReturnsAsync(older);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetSpreadInfo(guid.ToString());
+
+        result.Value.Analysis!.TrendWarning.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetSpreadInfo_FewerThanThreeTickers_NoTrendWarning()
+    {
+        var guid = Guid.NewGuid();
+        var model = MakeModel(guid);
+        model.Type = SpreadType.Funding;
+        model.Spread = 2.0;
+        var latest = new TradeOpportunityTickerModel(model) { Spread = 0.1 };
+
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
+        _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(latest);
+        _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49))
+            .ReturnsAsync(new List<TradeOpportunityTickerModel> { new(model) { Spread = 2.0 } });
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetSpreadInfo(guid.ToString());
+
+        result.Value.Analysis!.TrendWarning.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetSpreadsForUser_LeavesAnalysisNull()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        SetupContextFactory(dbName);
+        await SeedEligibleUserAsync(dbName, 20, "acc20", s => s.FuturesSpread = true);
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Futures)).ReturnsAsync(new List<TradeOpportunityModel> { MakeEligibleModel() });
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+
+        var result = await _sut.GetSpreadsForUser("acc20");
+
+        result.Value.Should().OnlyContain(dto => dto.Analysis == null);
     }
 }

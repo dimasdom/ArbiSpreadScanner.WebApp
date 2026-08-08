@@ -89,7 +89,8 @@ namespace ArbiScannerWeb.Infrastructure
             .AddSingleton<IAdminService, AdminService>()
             .AddScoped<IUserSettingsService, UserSettingsService>()
             .AddScoped<ISubscriptionService, SubscriptionService>()
-            .AddScoped<IExchangeLinkRepository, ExchangeLinkRepository>();
+            .AddScoped<IExchangeLinkRepository, ExchangeLinkRepository>()
+            .AddScoped<IMcpTokenService, McpTokenService>();
 
         public static void AddJwtOptions(this IServiceCollection services, IConfiguration configuration) =>
             services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));

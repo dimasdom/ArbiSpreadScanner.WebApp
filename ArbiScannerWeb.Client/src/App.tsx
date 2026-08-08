@@ -9,6 +9,7 @@ import { useAuth } from 'react-oidc-context';
 import SpreadsPage from './pages/Spread/SpreadsPage';
 import SpreadPage from './pages/Spread/SpreadPage';
 import AccountPage from './pages/Account/AccountPage';
+import McpTokenPage from './pages/McpToken/McpTokenPage';
 import AuthCallbackPage from './pages/Auth/AuthCallbackPage';
 import { useSelector } from 'react-redux';
 import { Suspense, useEffect } from 'react';
@@ -22,6 +23,7 @@ import FaqPage from './pages/Faq/FaqPage';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import CookieConsentModal from './components/CookieConsentModal';
+import ChatWidget from './components/ChatWidget';
 import { LangGuard, RootRedirect } from './components/LangGuard';
 import { useAppDispatch } from './hooks';
 import { stripLangPrefix } from './i18n/routing';
@@ -82,6 +84,9 @@ function App() {
                                 <Route path="account">
                                     <Route index element={<ProtectedRoute><PageWrapper><AccountPage /></PageWrapper></ProtectedRoute>} />
                                 </Route>
+                                <Route path="mcp-token">
+                                    <Route index element={<ProtectedRoute><PageWrapper><McpTokenPage /></PageWrapper></ProtectedRoute>} />
+                                </Route>
                                 <Route index element={<PageWrapper><MainPage /></PageWrapper>} />
                                 <Route path="spreads" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadsPage /></PageWrapper></ProtectedRoute>} />
                                 <Route path="spread" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadPage /></PageWrapper></ProtectedRoute>} />
@@ -97,6 +102,7 @@ function App() {
             </main>
             <Footer/>
             <CookieConsentModal />
+            <ChatWidget />
             <Toaster position="bottom-right" />
         </div>
     )

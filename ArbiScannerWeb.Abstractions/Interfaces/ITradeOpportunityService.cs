@@ -13,6 +13,7 @@ namespace ArbiScannerWeb.Abstractions.Interfaces
     {
         public Task<Result<List<TradeOpportunityModel>>> GetAllSpreads();
         public Task<Result<List<TradeOpportunityDetailsDto>>> GetSpreadsForUser(string userId);
+        public Task<Result<List<RecommendedSpreadDto>>> GetRecommendedSpreads(string userId);
         public Task<Result> AddSpread(TradeOpportunityModel model);
         public Task<Result> UpdateSpread(TradeOpportunityModel model);
         public Task<Result> CloseSpread(TradeOpportunityModel model);

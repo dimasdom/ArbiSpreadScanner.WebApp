@@ -5,6 +5,7 @@ import { useLocalizedNavigate } from '../../../i18n/routing';
 import type { IRootStore } from '../../../store/store';
 import { useGetSpreadInfoQuery } from '../../../store/services/spread';
 import { signalRService } from '../../../services/signalrService';
+import { useChatContext } from '../../../contexts/ChatContext';
 import { logger } from '../../../services/loggerService';
 import type { TradeOpportunityDetailsDTO } from '../../../types/tradeOpportunityModel';
 import type { MessageDTO, PossiblePositionTickerModel } from '../../../types/tickerType';
@@ -22,8 +23,16 @@ export function useSpreadPage() {
     const navigate = useLocalizedNavigate();
     const [searchParams] = useSearchParams();
     const positionSize = useSelector((state: IRootStore) => state.account.account.userSettings?.positionSize ?? 0);
+    const { setCurrentSpreadId } = useChatContext();
 
     const spreadId = searchParams.get('id');
+
+    // Lets the chat widget offer to analyze "this" spread while the user is on
+    // this page, without them needing to type an id.
+    useEffect(() => {
+        setCurrentSpreadId(spreadId);
+        return () => setCurrentSpreadId(null);
+    }, [spreadId, setCurrentSpreadId]);
     const { data, isLoading: isSpreadLoading, isError } = useGetSpreadInfoQuery(spreadId ?? '', {
         skip: !spreadId,
     });

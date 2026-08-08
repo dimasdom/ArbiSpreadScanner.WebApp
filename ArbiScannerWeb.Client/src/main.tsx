@@ -12,6 +12,7 @@ import { logger } from './services/loggerService.ts'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import { ThemeProvider } from './contexts/ThemeContext.tsx'
 import MuiBridge from './contexts/MuiBridge.tsx'
+import { ChatContextProvider } from './contexts/ChatContext.tsx'
 import FullPageLoader from './components/FullPageLoader.tsx'
 
 window.onerror = (message, source, lineno, colno, error) => {
@@ -46,7 +47,9 @@ createRoot(document.getElementById('root')!).render(
                         <MuiBridge>
                             <ErrorBoundary>
                                 <Suspense fallback={<FullPageLoader />}>
-                                    <App />
+                                    <ChatContextProvider>
+                                        <App />
+                                    </ChatContextProvider>
                                 </Suspense>
                             </ErrorBoundary>
                         </MuiBridge>

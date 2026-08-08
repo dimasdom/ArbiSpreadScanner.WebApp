@@ -37,6 +37,7 @@ vi.mock('./components/NavBar', () => ({
 }));
 vi.mock('./components/Footer', () => ({ default: () => <div data-testid="footer" /> }));
 vi.mock('./components/CookieConsentModal', () => ({ default: () => <div data-testid="cookie-modal" /> }));
+vi.mock('./components/ChatWidget', () => ({ default: () => <div data-testid="chat-widget" /> }));
 vi.mock('./components/ProtectedRoute', () => ({
     default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));

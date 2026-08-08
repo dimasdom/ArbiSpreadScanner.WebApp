@@ -36,6 +36,28 @@ public class TradeOpportunityControllerTests(WebApiTestFixture fixture)
     }
 
     [Fact]
+    public async Task GetRecommendedSpreads_WithoutAuth_ReturnsUnauthorized()
+    {
+        var client = fixture.Factory.CreateClient();
+
+        var response = await client.GetAsync("/api/TradeOpportunity/GetRecommendedSpreads");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetRecommendedSpreads_NoSpreadTypesEnabled_ReturnsEmptyList()
+    {
+        var client = fixture.Factory.CreateAuthenticatedClient();
+
+        var response = await client.GetAsync("/api/TradeOpportunity/GetRecommendedSpreads");
+
+        var result = await response.Content.ReadFromJsonAsync<ApiResult<List<RecommendedSpreadDto>>>(JsonOptions.CaseInsensitive);
+        result!.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetSpreadInfo_ExistingSpread_ReturnsDetails()
     {
         var client = fixture.Factory.CreateAuthenticatedClient();
@@ -53,6 +75,7 @@ public class TradeOpportunityControllerTests(WebApiTestFixture fixture)
         result!.IsSuccess.Should().BeTrue();
         result.Value!.PositionModel.Guid.Should().Be(spread.Guid);
         result.Value.PositionModel.Symbol.Should().Be(spread.Symbol);
+        result.Value.Analysis.Should().NotBeNull();
     }
 
     [Fact]

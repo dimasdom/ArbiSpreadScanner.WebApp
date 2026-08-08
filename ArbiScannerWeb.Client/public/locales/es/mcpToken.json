@@ -1,0 +1,31 @@
+{
+  "header": {
+    "title": "Acceso MCP",
+    "subtitle": "Genera un token personal para conectar tu propio cliente MCP (por ejemplo, Claude Desktop) con los datos de spreads de tu cuenta de ArbiScanner."
+  },
+  "generate": {
+    "button": "Generar token",
+    "regenerateButton": "Generar nuevo token",
+    "generating": "Generando…"
+  },
+  "token": {
+    "label": "Tu token MCP",
+    "placeholder": "Haz clic en \"Generar token\" para crear uno",
+    "copyButton": "Copiar",
+    "copiedButton": "¡Copiado!",
+    "warning": "Este token funciona como una contraseña para los datos de spreads de tu cuenta — cualquiera que lo tenga puede leer tus spreads abiertos a través del servidor MCP. No caduca en una fecha fija, y generar uno nuevo no invalida el anterior, así que guárdalo en un lugar donde puedas encontrarlo y eliminarlo si es necesario."
+  },
+  "instructions": {
+    "title": "Cómo usarlo",
+    "step1": "Copia el token de arriba.",
+    "step2": "En la configuración de tu cliente MCP, añade un nuevo servidor MCP remoto que apunte a:",
+    "step3": "Configura su encabezado Authorization como:",
+    "step4": "Una vez conectado, pregúntale a tu asistente cosas como \"¿qué spreads de arbitraje están abiertos ahora?\" o \"dame los detalles del spread <id>\" — llamará a las herramientas de ArbiScanner en tu nombre, limitadas a tu propia cuenta."
+  },
+  "toasts": {
+    "generateSuccess": "Token generado",
+    "generateError": "No se pudo generar el token. Inténtalo de nuevo.",
+    "copySuccess": "Copiado al portapapeles",
+    "copyError": "No se pudo copiar — cópialo manualmente."
+  }
+}

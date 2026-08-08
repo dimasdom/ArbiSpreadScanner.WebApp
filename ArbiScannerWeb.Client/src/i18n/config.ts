@@ -12,7 +12,7 @@ import { PREFERRED_LANG_KEY, getPreferredLanguage } from './detect';
 // Only `common` (needed by NavBar/Footer on every page) is preloaded;
 // every other namespace is fetched on demand the first time a
 // component calls useTranslation('<namespace>').
-export const NAMESPACES = ['common', 'main', 'account', 'spreads', 'subscription', 'faq'] as const;
+export const NAMESPACES = ['common', 'main', 'account', 'spreads', 'subscription', 'faq', 'mcpToken', 'chat'] as const;
 
 void i18n
     .use(HttpBackend)

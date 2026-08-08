@@ -33,6 +33,15 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
     private const string TestClientId = "integration-test-harness";
     private const string TestClientSecret = "integration-test-harness-secret";
 
+    // arbiscanner-mcp ships in the real realm export (confidential,
+    // standard.token.exchange.enabled=true, audience mappers for both itself
+    // and arbiscanner-web-spa — see keycloak/realm-export/arbiscanner-web-realm.json)
+    // but without a secret, on purpose ("no secrets in git" — Keycloak generates
+    // one on import). Overwritten to a known value here so McpTokenService's
+    // Standard Token Exchange call can actually authenticate as this client.
+    private const string McpClientId = "arbiscanner-mcp";
+    private const string McpClientSecret = "integration-test-mcp-secret";
+
     private readonly string _importedRealmFile = BuildImportableRealmFile();
 
     private KeycloakContainer? _keycloak;
@@ -70,6 +79,8 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
         Authority = $"{_keycloak.GetBaseAddress().TrimEnd('/')}/realms/{RealmName}";
 
         await RegisterServiceAccountClientAsync();
+        await SetMcpClientSecretAsync();
+        await AddMcpAudienceMapperToServiceAccountClientAsync();
 
         Factory = new CustomWebApplicationFactory(
             new Dictionary<string, string?>
@@ -81,6 +92,12 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
                 // Authority/JWKS/issuer/signature validation against a live IdP, not
                 // audience enforcement (which forged-JWT tests already cover cheaply).
                 ["Jwt:Audience"] = string.Empty,
+                // McpTokenService's Standard Token Exchange grant — the same
+                // arbiscanner-mcp client already imported from the real realm export,
+                // secret overwritten above so this fixture can authenticate as it.
+                ["Keycloak:McpExchange:Authority"] = Authority,
+                ["Keycloak:McpExchange:ClientId"] = McpClientId,
+                ["Keycloak:McpExchange:ClientSecret"] = McpClientSecret,
                 ["ConnectionStrings:SqlServer"] = _postgres.GetConnectionString(),
                 ["Redis:Endpoint"] = _redis.GetConnectionString(),
                 ["MongoDb:ConnectionString"] = _mongo.GetConnectionString(),
@@ -134,6 +151,7 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
         return payload.GetProperty("access_token").GetString()!;
     }
 
+
     // Runs kcadm.sh *inside* the container rather than hitting the host-mapped
     // port from here: Keycloak's default sslRequired=external policy on the
     // built-in master realm (which the realm-export patch below can't reach,
@@ -162,7 +180,47 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
             "-s", "protocol=openid-connect");
     }
 
-    private async Task ExecOrThrow(params string[] command)
+    // arbiscanner-mcp ships without a secret (Keycloak generates a random one on
+    // import) — overwritten to a known value so this fixture's HttpClient calls
+    // can authenticate as it. Reuses the admin session RegisterServiceAccountClientAsync
+    // already logged in above (kcadm persists credentials in the container's
+    // filesystem across separate `docker exec` calls).
+    private async Task SetMcpClientSecretAsync()
+    {
+        var internalId = await GetClientInternalIdAsync(McpClientId);
+        await ExecOrThrow("kcadm.sh", "update", $"clients/{internalId}", "-r", RealmName, "-s", $"secret={McpClientSecret}");
+    }
+
+    // Standard Token Exchange requires the requesting client (arbiscanner-mcp,
+    // which McpTokenService authenticates as) to already appear in the subject
+    // token's own audience — see keycloak/README.md step 9. The throwaway
+    // integration-test-harness client's tokens don't carry that audience by
+    // default, so this adds the same oidc-audience-mapper the production
+    // arbiscanner-web-spa client ships with.
+    private async Task AddMcpAudienceMapperToServiceAccountClientAsync()
+    {
+        var internalId = await GetClientInternalIdAsync(TestClientId);
+        await ExecOrThrow(
+            "kcadm.sh", "create", $"clients/{internalId}/protocol-mappers/models",
+            "-r", RealmName,
+            "-s", "name=audience-arbiscanner-mcp",
+            "-s", "protocol=openid-connect",
+            "-s", "protocolMapper=oidc-audience-mapper",
+            "-s", "config.\"included.client.audience\"=arbiscanner-mcp",
+            "-s", "config.\"id.token.claim\"=false",
+            "-s", "config.\"access.token.claim\"=true");
+    }
+
+    private async Task<string> GetClientInternalIdAsync(string clientId)
+    {
+        var result = await ExecCapture("kcadm.sh", "get", "clients", "-r", RealmName, "-q", $"clientId={clientId}", "--fields", "id");
+        using var doc = JsonDocument.Parse(result.Stdout);
+        return doc.RootElement[0].GetProperty("id").GetString()!;
+    }
+
+    private async Task ExecOrThrow(params string[] command) => await ExecCapture(command);
+
+    private async Task<(long? ExitCode, string Stdout, string Stderr)> ExecCapture(params string[] command)
     {
         var fullCommand = new List<string> { "/opt/keycloak/bin/" + command[0] };
         fullCommand.AddRange(command.Skip(1));
@@ -173,6 +231,8 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
             throw new InvalidOperationException(
                 $"'{string.Join(' ', fullCommand)}' failed (exit {result.ExitCode}):\n{result.Stdout}\n{result.Stderr}");
         }
+
+        return (result.ExitCode, result.Stdout, result.Stderr);
     }
 
     public async Task DisposeAsync()

@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import accountReducer from '../../../store/slices/accountSlice';
 import { createEmptyAccountModel } from '../../../types/accountType';
 import type { MessageDTO } from '../../../types/tickerType';
+import { ChatContextProvider } from '../../../contexts/ChatContext';
 
 const rawBaseQueryMock = vi.fn();
 const navigateMock = vi.fn();
@@ -66,7 +67,11 @@ async function buildWrapper() {
             },
         },
     });
-    return ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>;
+    return ({ children }: { children: ReactNode }) => (
+        <Provider store={store}>
+            <ChatContextProvider>{children}</ChatContextProvider>
+        </Provider>
+    );
 }
 
 describe('useSpreadPage', () => {

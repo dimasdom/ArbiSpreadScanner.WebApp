@@ -19,5 +19,9 @@ namespace ArbiScannerWeb.Domain.Models.DTOs
 
         /// <summary>URL for the long exchange based on spread type.</summary>
         public string? LongExchangeUrl { get; set; }
+
+        /// <summary>Only populated by GetSpreadInfo (needs ticker history) - null for the
+        /// list endpoints (GetSpreadsForUser, GetRecommendedSpreads).</summary>
+        public SpreadAnalysisDto? Analysis { get; set; }
     }
 }

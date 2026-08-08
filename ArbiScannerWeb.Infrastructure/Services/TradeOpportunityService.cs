@@ -16,6 +16,15 @@ namespace ArbiScannerWeb.Infrastructure.Services
 {
     public class TradeOpportunityService : ITradeOpportunityService
     {
+        /// <summary>Recommendation/analysis thresholds, shared between GetRecommendedSpreads'
+        /// ranking and GetSpreadInfo's Analysis - keeping them as one set of constants avoids
+        /// the two features silently drifting to different "what counts as a good spread"
+        /// definitions.</summary>
+        private const double MinRecommendedSpreadPercent = 1.0;
+        private const double MaxCostRatio = 0.10;
+        private const double FallingTrendRelativeThreshold = 0.20;
+
+
         private readonly ISubscriptionService _subscriptionService;
         private readonly IRealtimeNotifier _realtimeNotifier;
         private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
@@ -114,6 +123,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
                     var dto = new TradeOpportunityDetailsDto { PositionModel = spread, Tickers = tickers, GroupName = GetGroupNameBasedOnPosition(spread) };
                     await EnrichWithExchangeLinksAsync(dto);
+                    dto.Analysis = BuildAnalysis(spread, tickers);
                     return Result.Ok(dto);
                 }
             }
@@ -133,30 +143,11 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
             try
             {
-                long userSettingsId;
-                bool futuresSpread, fundingSpread, spotSpread;
+                var settingsResult = await GetUserSpreadTypesAsync(userId);
+                if (settingsResult.IsFailed)
+                    return settingsResult.ToResult<List<TradeOpportunityDetailsDto>>();
 
-                await using (var context = await _dbContextFactory.CreateDbContextAsync())
-                {
-                    var user = await context.Users.FindAsync(userId);
-                    if (user == null)
-                        return Result.Fail<List<TradeOpportunityDetailsDto>>(TypedErrors.NotFound("User not found"));
-
-                    var userSettings = await context.UsersSettings.FirstOrDefaultAsync(x => x.Id == user.UserSettingsId);
-                    if (userSettings == null)
-                        return Result.Fail<List<TradeOpportunityDetailsDto>>(TypedErrors.NotFound("Telegram user not found"));
-
-                    userSettingsId = user.UserSettingsId;
-                    futuresSpread = userSettings.FuturesSpread;
-                    fundingSpread = userSettings.FundingSpread;
-                    spotSpread = userSettings.SpotSpread;
-                }
-
-                var spreadTypes = new List<SpreadType>();
-                if (futuresSpread) spreadTypes.Add(SpreadType.Futures);
-                if (fundingSpread) spreadTypes.Add(SpreadType.Funding);
-                if (spotSpread) spreadTypes.Add(SpreadType.Spot);
-
+                var (userSettingsId, spreadTypes) = settingsResult.Value;
                 if (spreadTypes.Count == 0)
                     return Result.Ok(new List<TradeOpportunityDetailsDto>());
 
@@ -192,6 +183,162 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 _logger.LogError(ex, "Failed to get spreads for user {UserId}", userId);
                 return Result.Fail(ex.Message);
             }
+        }
+
+        public async Task<Result<List<RecommendedSpreadDto>>> GetRecommendedSpreads(string userId)
+        {
+            if (!await _subscriptionService.CheckIfUserHasActiveSubscriptionAsync())
+            {
+                return Result.Fail<List<RecommendedSpreadDto>>(TypedErrors.Forbidden("No active subscription"));
+            }
+            try
+            {
+                var settingsResult = await GetUserSpreadTypesAsync(userId);
+                if (settingsResult.IsFailed)
+                    return settingsResult.ToResult<List<RecommendedSpreadDto>>();
+
+                var (userSettingsId, spreadTypes) = settingsResult.Value;
+                if (spreadTypes.Count == 0)
+                    return Result.Ok(new List<RecommendedSpreadDto>());
+
+                var allLinks = await _exchangeLinkRepo.GetAllAsync();
+                var recommended = new List<RecommendedSpreadDto>();
+
+                foreach (var type in spreadTypes)
+                {
+                    var candidatesResult = await GetCurrentSpreadsForUser(userSettingsId, type);
+                    if (candidatesResult.IsFailed)
+                        continue;
+
+                    var best = candidatesResult.Value
+                        .Where(x => Math.Abs(x.Spread) >= MinRecommendedSpreadPercent)
+                        .OrderBy(GetRecommendationCostScore)
+                        .ThenByDescending(x => Math.Abs(x.Spread))
+                        .Take(2);
+
+                    foreach (var model in best)
+                    {
+                        var dto = new TradeOpportunityDetailsDto
+                        {
+                            PositionModel = model,
+                            Tickers = new List<TradeOpportunityTickerModel>(),
+                            GroupName = GetGroupNameBasedOnPosition(model)
+                        };
+                        PopulateExchangeLinks(dto, allLinks);
+                        recommended.Add(new RecommendedSpreadDto { Details = dto, Category = type });
+                    }
+                }
+
+                return Result.Ok(recommended);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get recommended spreads for user {UserId}", userId);
+                return Result.Fail(ex.Message);
+            }
+        }
+
+        private async Task<Result<(int UserSettingsId, List<SpreadType> SpreadTypes)>> GetUserSpreadTypesAsync(string userId)
+        {
+            await using var context = await _dbContextFactory.CreateDbContextAsync();
+            var user = await context.Users.FindAsync(userId);
+            if (user == null)
+                return Result.Fail<(int, List<SpreadType>)>(TypedErrors.NotFound("User not found"));
+
+            var userSettings = await context.UsersSettings.FirstOrDefaultAsync(x => x.Id == user.UserSettingsId);
+            if (userSettings == null)
+                return Result.Fail<(int, List<SpreadType>)>(TypedErrors.NotFound("Telegram user not found"));
+
+            var spreadTypes = new List<SpreadType>();
+            if (userSettings.FuturesSpread) spreadTypes.Add(SpreadType.Futures);
+            if (userSettings.FundingSpread) spreadTypes.Add(SpreadType.Funding);
+            if (userSettings.SpotSpread) spreadTypes.Add(SpreadType.Spot);
+
+            return Result.Ok((user.UserSettingsId, spreadTypes));
+        }
+
+        /// <summary>Ranking score for GetRecommendedSpreads, ascending (lower = better): total
+        /// slippage plus a funding-cost penalty. Funding-type spreads get no funding penalty -
+        /// funding income is that category's entire point, not a cost to minimize.</summary>
+        private static double GetRecommendationCostScore(TradeOpportunityModel model)
+        {
+            var fundingCost = model.Type == SpreadType.Funding ? 0 : GetCombinedFundingExposure(model);
+            return GetTotalSlippage(model) + fundingCost;
+        }
+
+        private static double GetTotalSlippage(TradeOpportunityModel model) =>
+            model.ExchangeLong.SummarySlipage + model.ExchangeShort.SummarySlipage;
+
+        /// <summary>Combined absolute funding-rate exposure across both legs, except for Spot
+        /// spreads where only the short (futures/perp) leg has funding by definition - the
+        /// long/spot leg never does.</summary>
+        private static double GetCombinedFundingExposure(TradeOpportunityModel model) => model.Type == SpreadType.Spot
+            ? FundingRatePercent(model.ExchangeShort.FundingRateValue)
+            : FundingRatePercent(model.ExchangeLong.FundingRateValue) + FundingRatePercent(model.ExchangeShort.FundingRateValue);
+
+        /// <summary>FundingRateValue is the raw exchange funding-rate fraction (e.g. 0.0001 -
+        /// see ExchangeService.BuildMainExchangeRate), roughly 1000x smaller than
+        /// Spread/SummarySlipage/SummaryTarrif, which are all percentage-point scale (computed
+        /// with "* 100" - see FuturesPositionCalculatorService.CalculateSpreadFor/CalculateSlippage).
+        /// Scale it up here so funding cost isn't numerically negligible against those.</summary>
+        private static double FundingRatePercent(double? value) => Math.Abs(value ?? 0) * 100;
+
+        /// <summary>Builds GetSpreadInfo's Analysis block: a Recommended verdict against the
+        /// same &gt;=1%-spread rule GetRecommendedSpreads uses, plus a 10%-of-spread combined
+        /// cost check that - unlike GetRecommendedSpreads' ranking - always counts funding
+        /// cost for every type (including Funding), since here it's evaluating the specific
+        /// spread the user is already looking at, not choosing between candidates.</summary>
+        private static SpreadAnalysisDto BuildAnalysis(TradeOpportunityModel model, List<TradeOpportunityTickerModel> tickers)
+        {
+            var absSpread = Math.Abs(model.Spread);
+            var meetsMinSpread = absSpread >= MinRecommendedSpreadPercent;
+
+            var fundingCost = GetCombinedFundingExposureForAnalysis(model);
+            var costTotal = GetTotalSlippage(model) + model.SummaryTarrif + fundingCost;
+            var costRatio = absSpread > 0 ? costTotal / absSpread : double.PositiveInfinity;
+            var withinCostThreshold = costRatio <= MaxCostRatio;
+
+            var reasons = new List<string>
+            {
+                meetsMinSpread
+                    ? $"Spread is {absSpread:0.##}%, at or above the {MinRecommendedSpreadPercent:0.#}% minimum."
+                    : $"Spread is {absSpread:0.##}%, below the {MinRecommendedSpreadPercent:0.#}% minimum.",
+                withinCostThreshold
+                    ? $"Combined funding, fee and slippage cost is {costRatio:P0} of the spread, within the {MaxCostRatio:P0} limit."
+                    : $"Combined funding, fee and slippage cost is {costRatio:P0} of the spread, above the {MaxCostRatio:P0} limit.",
+            };
+
+            return new SpreadAnalysisDto
+            {
+                Recommended = meetsMinSpread && withinCostThreshold,
+                Reasons = reasons,
+                TrendWarning = model.Type == SpreadType.Funding ? BuildTrendWarning(tickers) : null,
+            };
+        }
+
+        /// <summary>Unlike GetRecommendationCostScore's funding term, this never zeroes out
+        /// Funding-type spreads - the user asked specifically for "funding, fee and slippage"
+        /// to all count toward the 10% check regardless of type, only carving out Spot's
+        /// single (short) leg.</summary>
+        private static double GetCombinedFundingExposureForAnalysis(TradeOpportunityModel model) => model.Type == SpreadType.Spot
+            ? FundingRatePercent(model.ExchangeShort.FundingRateValue)
+            : FundingRatePercent(model.ExchangeLong.FundingRateValue) + FundingRatePercent(model.ExchangeShort.FundingRateValue);
+
+        /// <summary>Tickers arrive newest-first (latest ticker prepended, then the remaining
+        /// window in descending DateTime order - see GetSpreadInfo/GetRemainingWithoutOrderBookAsync),
+        /// so tickers[0] is newest and tickers[^1] is the oldest point in the window.</summary>
+        private static string? BuildTrendWarning(List<TradeOpportunityTickerModel> tickers)
+        {
+            if (tickers.Count < 3) return null;
+
+            var newest = tickers[0].Spread;
+            var oldest = tickers[^1].Spread;
+            if (oldest == 0) return null;
+
+            var relativeChange = (newest - oldest) / Math.Abs(oldest);
+            return relativeChange <= -FallingTrendRelativeThreshold
+                ? "Spread has been falling - by the time funding pays out, fees and slippage may exceed what you collect."
+                : null;
         }
 
         public async Task<Result> UpdateSpread(TradeOpportunityModel model)

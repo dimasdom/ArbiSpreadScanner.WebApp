@@ -1,0 +1,18 @@
+{
+  "widget": {
+    "title": "ArbiScanner AI",
+    "greeting": "I am ArbiScanner AI helper. I can get your available spreads or details about a specific one, and answer questions about how ArbiScanner works.",
+    "openAriaLabel": "Open AI assistant",
+    "closeAriaLabel": "Close",
+    "inputPlaceholder": "Ask about your spreads...",
+    "send": "Send",
+    "spreadContextSuggestion": "Analyze this spread",
+    "spreadContextPrompt": "Can you analyze this spread for me?",
+    "genericError": "Something went wrong. Please try again.",
+    "viewSpread": "View",
+    "viewOnSpreadsPage": "View {{count}} more on the spreads page",
+    "noRecommendations": "No recommended spreads right now - check back later.",
+    "recommended": "Recommended",
+    "notRecommended": "Not recommended"
+  }
+}

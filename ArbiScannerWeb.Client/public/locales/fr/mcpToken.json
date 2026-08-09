@@ -1,0 +1,31 @@
+{
+  "header": {
+    "title": "Accès MCP",
+    "subtitle": "Générez un jeton personnel pour connecter votre propre client MCP (par ex. Claude Desktop) aux données de spreads de votre compte ArbiScanner."
+  },
+  "generate": {
+    "button": "Générer un jeton",
+    "regenerateButton": "Générer un nouveau jeton",
+    "generating": "Génération en cours…"
+  },
+  "token": {
+    "label": "Votre jeton MCP",
+    "placeholder": "Cliquez sur \"Générer un jeton\" pour en créer un",
+    "copyButton": "Copier",
+    "copiedButton": "Copié !",
+    "warning": "Ce jeton agit comme un mot de passe pour les données de spreads de votre compte — toute personne qui le possède peut lire vos spreads ouverts via le serveur MCP. Il n'expire pas selon un calendrier fixe, et en générer un nouveau n'invalide pas l'ancien ; conservez-le donc quelque part où vous pourrez le retrouver et le supprimer si nécessaire."
+  },
+  "instructions": {
+    "title": "Comment l'utiliser",
+    "step1": "Copiez le jeton ci-dessus.",
+    "step2": "Dans les paramètres de votre client MCP, ajoutez un nouveau serveur MCP distant pointant vers :",
+    "step3": "Définissez son en-tête Authorization sur :",
+    "step4": "Une fois connecté, demandez à votre assistant des choses comme \"quels spreads d'arbitrage sont actuellement ouverts ?\" ou \"donne-moi les détails du spread <id>\" — il appellera les outils d'ArbiScanner en votre nom, limités à votre propre compte."
+  },
+  "toasts": {
+    "generateSuccess": "Jeton généré",
+    "generateError": "Impossible de générer un jeton. Veuillez réessayer.",
+    "copySuccess": "Copié dans le presse-papiers",
+    "copyError": "Impossible de copier — veuillez copier manuellement."
+  }
+}

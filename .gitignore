@@ -198,3 +198,7 @@ healthchecksdb
 # Local secrets - see appsettings*.template.json for the expected shape
 appsettings.json
 appsettings.Development.json
+
+# CI-staged copy of the monorepo's keycloak/ dir (see .github/workflows/ci.yml)
+/keycloak/
+/monorepo-keycloak/

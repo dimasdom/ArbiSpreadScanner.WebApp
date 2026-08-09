@@ -1,23 +1,28 @@
 ﻿using ArbiScannerWeb.Domain.Models;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArbiScannerWeb.Infrastructure.DbContext
 {
-    public class AppDbContext : IdentityDbContext<AccountModel>
+    public class AppDbContext : Microsoft.EntityFrameworkCore.DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
+
+        // Not an IdentityDbContext<T> — auth is delegated to Keycloak. Rows here
+        // are JIT-provisioned from validated token claims. The Users DbSet name
+        // and AccountModel's shape must stay stable: ArbiScannerAdminPannel's
+        // WebAppUserRepository reads this type directly from the sibling submodule.
+        public DbSet<AccountModel> Users { get; set; }
         public DbSet<UserSettingsModel> UsersSettings { get; set; }
-        public DbSet<RefreshTokenModel> RefreshTokens { get; set; }
-        public DbSet<EmailConfirmationCodes> EmailConfirmationCodes { get; set; }
-        public DbSet<ForgetPasswordRequest> ForgetPasswordRequests { get; set; }
         public DbSet<TelegramLinkRequest> TelegramLinkRequests { get; set; }
         public DbSet<ExchangeModel> Exchanges { get; set; }
         public DbSet<UserExchangeModel> UserExchanges { get; set; }
         public DbSet<ExchangeLinkModel> ExchangeLinks { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.Entity<AccountModel>()
+                .ToTable("Users");
+
             builder.Entity<UserSettingsModel>()
                .ToTable("UserSettings");
 
@@ -45,24 +50,6 @@ namespace ArbiScannerWeb.Infrastructure.DbContext
                 .HasOne(a => a.UserSettings)
                 .WithOne()
                 .HasForeignKey<AccountModel>(a => a.UserSettingsId);
-
-            builder.Entity<RefreshTokenModel>()
-                .ToTable("RefreshTokens");
-
-            builder.Entity<RefreshTokenModel>()
-                .HasKey(rt => rt.Id);
-
-            builder.Entity<RefreshTokenModel>()
-                .HasOne(rt => rt.User)
-                .WithMany(u => u.RefreshTokens)
-                .HasForeignKey(rt => rt.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<RefreshTokenModel>()
-                .HasOne(rt => rt.ReplacedByToken)
-                .WithMany()
-                .HasForeignKey(rt => rt.ReplacedByTokenId)
-                .OnDelete(DeleteBehavior.SetNull);
 
             base.OnModelCreating(builder);
         }

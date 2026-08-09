@@ -18,6 +18,8 @@ namespace ArbiScannerWeb.Infrastructure.Extensions
 
         public static Error Conflict(string message) => Build(message, HttpStatusCode.Conflict, ErrorCodes.Conflict);
 
+        public static Error InternalError(string message) => Build(message, HttpStatusCode.InternalServerError, ErrorCodes.InternalError);
+
         private static Error Build(string message, HttpStatusCode statusCode, string errorCode)
         {
             return new Error(message)

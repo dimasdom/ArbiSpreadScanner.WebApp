@@ -1,21 +1,26 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ArbiScannerWeb.Domain.Models
 {
-    public class AccountModel : IdentityUser
+    // Not backed by ASP.NET Core Identity — auth is delegated to Keycloak, and
+    // this row is JIT-provisioned on first authenticated request (see
+    // ArbiScannerWeb.Infrastructure/Services/JitUserProvisioningService.cs).
+    //
+    // Class name, the Users DbSet, and Id/UserName/NormalizedUserName/Email/
+    // NormalizedEmail must NOT change: ArbiScannerAdminPannel's
+    // WebAppUserRepository reads this type directly by name/shape from the
+    // sibling submodule.
+    public class AccountModel
     {
+        public string Id { get; set; } = string.Empty;
+        public string? UserName { get; set; }
+        public string? NormalizedUserName { get; set; }
+        public string? Email { get; set; }
+        public string? NormalizedEmail { get; set; }
+        public bool EmailConfirmed { get; set; } = true;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
         public int UserSettingsId { get; set; }
         public UserSettingsModel UserSettings { get; set; } = new();
-        
-        /// <summary>
-        /// Navigation property for all refresh tokens issued to this user.
-        /// </summary>
-        public virtual ICollection<RefreshTokenModel> RefreshTokens { get; set; } = new List<RefreshTokenModel>();
     }
 }

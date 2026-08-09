@@ -41,12 +41,25 @@ export interface TradeOpportunityModel {
     dateTime: string;
 }
 
+export interface SpreadAnalysisDTO {
+    recommended: boolean,
+    reasons: string[],
+    trendWarning?: string | null,
+}
+
 export interface TradeOpportunityDetailsDTO {
     positionModel: TradeOpportunityModel,
     tickers: PossiblePositionTickerModel[],
     groupName: string,
     shortExchangeUrl?: string | null,
     longExchangeUrl?: string | null,
+    /** Only populated for a single-spread lookup (get_spread_by_id) - null for list results. */
+    analysis?: SpreadAnalysisDTO | null,
+}
+
+export interface RecommendedSpreadDTO {
+    details: TradeOpportunityDetailsDTO,
+    category: SpreadType,
 }
 
 export const isSpreadType = (value: unknown): value is SpreadType => {

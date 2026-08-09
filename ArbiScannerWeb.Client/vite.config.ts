@@ -45,6 +45,10 @@ function getDevServerTarget(): string {
 }
 
 const target = getDevServerTarget();
+// ArbiScanner.AiAssistant runs as its own local process (see
+// ArbiScanner.AiAssistant.Api/Properties/launchSettings.json), not part of this
+// dev-cert/port dance, so it gets its own target rather than reusing `target`.
+const aiAssistantTarget = env.AI_ASSISTANT_URL ?? 'http://localhost:5272';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -62,6 +66,11 @@ export default defineConfig({
             },
             '^/hubs': {
                 target,
+                secure: false,
+                ws: true
+            },
+            '^/ai-hub': {
+                target: aiAssistantTarget,
                 secure: false,
                 ws: true
             }

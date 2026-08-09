@@ -69,6 +69,7 @@
     "form": {
       "emailLabel": "E-Mail-Adresse",
       "emailPlaceholder": "deine@email.com",
+      "manageInKeycloak": "E-Mail oder Passwort ändern",
       "spreadSizeLabel": "Spread-Größenschwelle",
       "spreadSizePlaceholder": "0.5",
       "positionSizeLabel": "Positionsgröße",

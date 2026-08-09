@@ -20,6 +20,26 @@ jobs:
         with:
           fetch-depth: 0
 
+      # KeycloakTestFixture (ArbiScannerWeb.IntegrationTests) imports the real
+      # production realm export, which lives in the monorepo's keycloak/ dir, not
+      # in this submodule's own repo - sparse-checkout it into the same
+      # keycloak/realm-export/ layout FindRealmExportFile() expects to find by
+      # walking up from the test assembly's output directory.
+      # NOTE: ref intentionally pinned to feature/ai-assistant-mcp-server - keycloak/realm-export/
+      # hasn't reached the monorepo's master yet. Switch to master (or drop `ref` to
+      # track the default branch) once that branch merges.
+      - name: Checkout Keycloak realm export from monorepo
+        uses: actions/checkout@v7
+        with:
+          repository: dimasdom/SpreadScanner
+          ref: feature/ai-assistant-mcp-server
+          sparse-checkout: |
+            keycloak/realm-export
+          path: monorepo-keycloak
+
+      - name: Stage Keycloak realm export
+        run: cp -r monorepo-keycloak/keycloak ./keycloak
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:

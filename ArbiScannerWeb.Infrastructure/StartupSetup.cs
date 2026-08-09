@@ -6,26 +6,23 @@ using ArbiScannerWeb.Infrastructure.Repositories;
 using ArbiScannerWeb.Infrastructure.Services;
 using ArbiScannerWeb.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ArbiScannerWeb.Infrastructure
 {
     public static class StartupSetup
     {
-        private const string AccessTokenCookieName = "arbiscanner.access_token";
         private static readonly object MongoClassMapLock = new();
 
         public static void AddDbContext(this IServiceCollection services, IConfiguration configuration)
@@ -84,35 +81,24 @@ namespace ArbiScannerWeb.Infrastructure
         }
 
         public static void AddServices(this IServiceCollection services) =>
-            services.AddScoped<AccountServiceContext>()
-            .AddScoped<IAccountService, AccountService>()
-            .AddScoped<IAccountRepository, AccountRepository>()
+            services.AddScoped<IAccountService, AccountService>()
+            .AddScoped<IJitUserProvisioningService, JitUserProvisioningService>()
             .AddScoped<ITradeOpportunityService, ArbiScannerWeb.Infrastructure.Services.TradeOpportunityService>()
             .AddSingleton<ITradeOpportunityRepository, TradeOpportunityRepositoryMongo>()
             .AddSingleton<ITradeOpportunityTickerRepository, TradeOpportunityTickerRepositoryMongo>()
-            .AddScoped<IEmailService,EmailService>()
             .AddSingleton<IAdminService, AdminService>()
             .AddScoped<IUserSettingsService, UserSettingsService>()
             .AddScoped<ISubscriptionService, SubscriptionService>()
-            .AddScoped<IExchangeLinkRepository, ExchangeLinkRepository>();
+            .AddScoped<IExchangeLinkRepository, ExchangeLinkRepository>()
+            .AddScoped<IMcpTokenService, McpTokenService>();
 
-        public static void AddIdentity(this IServiceCollection services) =>
-            services.AddIdentityCore<AccountModel>(config =>
-            {
-                config.Password.RequireNonAlphanumeric = true;
-                config.Password.RequiredLength = 12;
-                config.Password.RequireUppercase = true;
-                config.SignIn.RequireConfirmedPhoneNumber = false;
-                config.SignIn.RequireConfirmedEmail = true;
-            })
-            .AddEntityFrameworkStores<AppDbContext>()
-            .AddSignInManager<SignInManager<AccountModel>>()
-            .AddUserManager<UserManager<AccountModel>>()
-            .AddDefaultTokenProviders();
         public static void AddJwtOptions(this IServiceCollection services, IConfiguration configuration) =>
             services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
 
-        public static void AddAuthenticationJwt(this IServiceCollection services, IConfiguration configuration)
+        // Pure resource-server config: no local Identity store or signing key —
+        // Keycloak (arbiscanner-web realm) issues tokens, this just validates them
+        // against its published JWKS via Authority-based discovery.
+        public static void AddAuthenticationJwt(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
         {
             services.AddAuthentication(options =>
             {
@@ -124,23 +110,33 @@ namespace ArbiScannerWeb.Infrastructure
                 var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
                     ?? throw new InvalidOperationException("JWT options not configured");
 
-                options.RequireHttpsMetadata = false;
+                options.Authority = jwtOptions.Authority;
+                options.Audience = jwtOptions.Audience;
+                // Only relaxed for local dev against a plain-HTTP Keycloak container
+                // (see docker-compose.local.yml) — every real deployment keeps this true.
+                options.RequireHttpsMetadata = !environment.IsDevelopment();
+                // Without this, ASP.NET remaps short JWT claim names (e.g. "sub") to
+                // long legacy URIs before TokenValidationParameters ever sees them, so
+                // NameClaimType = "sub" below would silently never match anything.
+                options.MapInboundClaims = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtOptions.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtOptions.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtOptions.SigningKey)),
-                    ValidateIssuerSigningKey = true,
+                    // Keycloak's user id (sub) is what every User.Identity?.Name call
+                    // site in this codebase expects.
+                    NameClaimType = "sub",
                 };
                 options.Events = new JwtBearerEvents
                 {
+                    // Browsers can't set an Authorization header on a WebSocket
+                    // handshake — the SignalR client instead appends the token as an
+                    // access_token query param (see signalrService.ts's
+                    // accessTokenFactory), which only the hub's own paths should honor.
                     OnMessageReceived = context =>
                     {
-                        if (string.IsNullOrWhiteSpace(context.Token) && context.Request.Cookies.TryGetValue(AccessTokenCookieName, out var token))
+                        var accessToken = context.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
                         {
-                            context.Token = token;
+                            context.Token = accessToken;
                         }
 
                         return Task.CompletedTask;

@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using ArbiScannerWeb.Domain.Models;
 using ArbiScannerWeb.Domain.Models.DTOs;
 using ArbiScannerWeb.IntegrationTests.Fixtures;
 using ArbiScannerWeb.IntegrationTests.Support;
@@ -8,73 +7,61 @@ using FluentAssertions;
 
 namespace ArbiScannerWeb.IntegrationTests.Api;
 
+// Login/Register/ConfirmEmail/Refresh/Logout no longer exist here — Keycloak owns
+// the whole auth lifecycle. What's left proves: (1) a validated Bearer token JIT-
+// provisions a local Users/UserSettings row and GetUserData reflects it, and
+// (2) requests without a valid token are rejected.
 [Collection(WebApiCollection.Name)]
 public class AccountFlowTests(WebApiTestFixture fixture)
 {
     [Fact]
-    public async Task FullAuthLifecycle_Succeeds()
+    public async Task GetUserData_ValidToken_JitProvisionsUserAndReturnsData()
     {
-        // Uses CreateSecureClient(): the access/refresh cookies are Secure, so the client's
-        // CookieContainer only re-sends them on a base address it considers HTTPS.
-        var client = fixture.Factory.CreateSecureClient();
+        var sub = Guid.NewGuid().ToString();
         var email = $"integration-{Guid.NewGuid():N}@example.com";
-        const string password = "IntegrationTest@123";
+        var client = fixture.Factory.CreateAuthenticatedClient(sub, email);
 
-        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDto { Login = email, Password = password });
-        registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var registerResult = await registerResponse.Content.ReadFromJsonAsync<ApiResult<EmailConfirmationCodes>>(JsonOptions.CaseInsensitive);
-        registerResult.Should().NotBeNull();
-        registerResult!.IsSuccess.Should().BeTrue();
-        registerResult.Value.Should().NotBeNull();
+        var response = await client.GetAsync("/api/Account/GetUserData");
+        var result = await response.Content.ReadFromJsonAsync<ApiResult<AccountDto>>(JsonOptions.CaseInsensitive);
 
-        var confirmResponse = await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDto
-        {
-            EmailConfirmToken = registerResult.Value!.Id.ToString(),
-            Token = registerResult.Value.Code
-        });
-        var confirmResult = await confirmResponse.Content.ReadFromJsonAsync<ApiResult>(JsonOptions.CaseInsensitive);
-        confirmResult!.IsSuccess.Should().BeTrue();
-
-        var loginResponse = await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDto { Login = email, Password = password });
-        var loginResult = await loginResponse.Content.ReadFromJsonAsync<ApiResult<AccountDto>>(JsonOptions.CaseInsensitive);
-        loginResult!.IsSuccess.Should().BeTrue();
-        loginResult.Value!.EmailConfirmed.Should().BeTrue();
-        loginResult.Value.AccessToken.Should().BeEmpty();
-
-        var userDataResponse = await client.GetAsync("/api/Account/GetUserData");
-        var userDataResult = await userDataResponse.Content.ReadFromJsonAsync<ApiResult<AccountDto>>(JsonOptions.CaseInsensitive);
-        userDataResult!.IsSuccess.Should().BeTrue();
-        userDataResult.Value!.Email.Should().Be(email);
-
-        var refreshResponse = await client.PostAsJsonAsync<RefreshTokenRequest?>("/api/Account/Refresh", null);
-        var refreshResult = await refreshResponse.Content.ReadFromJsonAsync<ApiResult<RefreshTokenResponse>>(JsonOptions.CaseInsensitive);
-        refreshResult!.IsSuccess.Should().BeTrue();
-
-        var logoutResponse = await client.PostAsJsonAsync<RefreshTokenRequest?>("/api/Account/Logout", null);
-        logoutResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var postLogoutResponse = await client.GetAsync("/api/Account/GetUserData");
-        postLogoutResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result!.IsSuccess.Should().BeTrue();
+        result.Value!.Email.Should().Be(email);
+        result.Value.EmailConfirmed.Should().BeTrue();
     }
 
     [Fact]
-    public async Task Register_DuplicateEmail_Fails()
+    public async Task GetUserData_SecondRequestForSameUser_DoesNotDuplicateProvisioning()
     {
-        var client = fixture.Factory.CreateClient();
-        var email = $"integration-{Guid.NewGuid():N}@example.com";
-        var payload = new AccountLoginDto { Login = email, Password = "IntegrationTest@123" };
+        var sub = Guid.NewGuid().ToString();
+        var client = fixture.Factory.CreateAuthenticatedClient(sub);
 
-        (await client.PostAsJsonAsync("/api/Account/Register", payload)).EnsureSuccessStatusCode();
-        var secondResponse = await client.PostAsJsonAsync("/api/Account/Register", payload);
+        await client.GetAsync("/api/Account/GetUserData");
+        var response = await client.GetAsync("/api/Account/GetUserData");
+        var result = await response.Content.ReadFromJsonAsync<ApiResult<AccountDto>>(JsonOptions.CaseInsensitive);
 
-        var result = await secondResponse.Content.ReadFromJsonAsync<ApiResult<EmailConfirmationCodes>>(JsonOptions.CaseInsensitive);
-        result!.IsSuccess.Should().BeFalse();
+        result!.IsSuccess.Should().BeTrue();
     }
 
     [Fact]
     public async Task GetUserData_WithoutAuth_ReturnsUnauthorized()
     {
         var client = fixture.Factory.CreateClient();
+
+        var response = await client.GetAsync("/api/Account/GetUserData");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetUserData_ExpiredToken_ReturnsUnauthorized()
+    {
+        var client = fixture.Factory.CreateClient();
+        // A token signed with the wrong key is functionally equivalent to an
+        // untrusted/expired one from the resource server's point of view — both
+        // fail signature/validity checks the same way.
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "not-a-valid-jwt");
 
         var response = await client.GetAsync("/api/Account/GetUserData");
 

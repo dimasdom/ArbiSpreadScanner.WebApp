@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createLocalStorageMock } from '../test/localStorageMock';
 
 const rawBaseQueryMock = vi.fn();
 
@@ -7,22 +8,12 @@ vi.mock('@reduxjs/toolkit/query/react', async (importOriginal) => {
     return { ...actual, fetchBaseQuery: () => rawBaseQueryMock };
 });
 
-const createLocalStorageMock = (): Storage => {
-    const store = new Map<string, string>();
-    return {
-        getItem: (key: string) => store.get(key) ?? null,
-        setItem: (key: string, value: string) => { store.set(key, value); },
-        removeItem: (key: string) => { store.delete(key); },
-        clear: () => { store.clear(); },
-        key: (index: number) => Array.from(store.keys())[index] ?? null,
-        get length() { return store.size; },
-    } as Storage;
-};
-
 describe('root store', () => {
     beforeEach(() => {
         rawBaseQueryMock.mockReset();
         rawBaseQueryMock.mockResolvedValue({ data: { isSuccess: true, value: [] } });
+        // languageSlice's initial state reads localStorage (preferred language)
+        // at module-init time, independent of anything auth-related here.
         vi.spyOn(globalThis, 'localStorage', 'get').mockReturnValue(createLocalStorageMock());
     });
 
@@ -54,16 +45,4 @@ describe('root store', () => {
         expect(Object.keys(store.getState()[subscriptionsAPI.reducerPath].queries)).toHaveLength(0);
     });
 
-    it('resets subscriptionsAPI cache when user data is cleared', async () => {
-        const { default: store } = await import('./store');
-        const { subscriptionsAPI } = await import('./services/subscription');
-        const { clearUserData } = await import('./slices/accountSlice');
-
-        await store.dispatch(subscriptionsAPI.endpoints.getAllSubscriptions.initiate());
-        expect(Object.keys(store.getState()[subscriptionsAPI.reducerPath].queries)).not.toHaveLength(0);
-
-        store.dispatch(clearUserData());
-
-        expect(Object.keys(store.getState()[subscriptionsAPI.reducerPath].queries)).toHaveLength(0);
-    });
 });

@@ -1,14 +1,11 @@
 using ArbiScannerWeb.Abstractions.Interfaces;
 using ArbiScannerWeb.API.Controllers;
-using ArbiScannerWeb.Domain.Models;
 using ArbiScannerWeb.Domain.Models.DTOs;
-using ArbiScannerWeb.Infrastructure.Settings;
-using ArbiScannerWeb.Tests.Helpers;
+using ArbiScannerWeb.Infrastructure.Extensions;
 using FluentAssertions;
 using FluentResults;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using Moq;
 
 namespace ArbiScannerWeb.Tests.API;
@@ -19,125 +16,58 @@ public class AccountControllerTests
 
     private AccountController CreateController(DefaultHttpContext? httpContext = null)
     {
-        var ctrl = new AccountController(
-            _accountService.Object,
-            Options.Create(MockHelpers.CreateTestJwtOptions()));
-
-        ctrl.ControllerContext = new ControllerContext
+        var ctrl = new AccountController(_accountService.Object)
         {
-            HttpContext = httpContext ?? new DefaultHttpContext()
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext ?? new DefaultHttpContext()
+            }
         };
         return ctrl;
     }
 
     [Fact]
-    public async Task Login_SuccessWithConfirmedEmail_SetsAuthCookies()
+    public async Task GetUserData_ServiceSucceeds_ReturnsOk()
     {
-        _accountService.Setup(s => s.Login(It.IsAny<AccountLoginDto>()))
-            .ReturnsAsync(Result.Ok(new AccountDto
-            {
-                EmailConfirmed = true,
-                AccessToken = "access-tok",
-                RefreshToken = "refresh-tok"
-            }));
+        _accountService.Setup(s => s.GetUserData())
+            .ReturnsAsync(Result.Ok(new AccountDto { Email = "a@b.com" }));
 
-        var httpContext = new DefaultHttpContext();
-        var ctrl = CreateController(httpContext);
-
-        await ctrl.Login(new AccountLoginDto { Login = "a@b.com", Password = "pass" });
-
-        var setCookie = string.Join("|", httpContext.Response.Headers["Set-Cookie"].ToArray());
-        setCookie.Should().Contain("arbiscanner.access_token");
-        setCookie.Should().Contain("arbiscanner.refresh_token");
-    }
-
-    [Fact]
-    public async Task Login_SuccessButEmailUnconfirmed_DoesNotSetAuthCookies()
-    {
-        _accountService.Setup(s => s.Login(It.IsAny<AccountLoginDto>()))
-            .ReturnsAsync(Result.Ok(new AccountDto
-            {
-                EmailConfirmed = false,
-                EmailConfirmToken = "token-id"
-            }));
-
-        var httpContext = new DefaultHttpContext();
-        var ctrl = CreateController(httpContext);
-
-        await ctrl.Login(new AccountLoginDto { Login = "a@b.com", Password = "pass" });
-
-        httpContext.Response.Headers.ContainsKey("Set-Cookie").Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task Login_ServiceFails_DoesNotSetCookies()
-    {
-        _accountService.Setup(s => s.Login(It.IsAny<AccountLoginDto>()))
-            .ReturnsAsync(Result.Fail<AccountDto>("invalid credentials"));
-
-        var httpContext = new DefaultHttpContext();
-        var ctrl = CreateController(httpContext);
-
-        await ctrl.Login(new AccountLoginDto { Login = "x@y.com", Password = "wrong" });
-
-        httpContext.Response.Headers.ContainsKey("Set-Cookie").Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task Refresh_NullRequestAndNoCookie_ReturnsBadRequest()
-    {
         var ctrl = CreateController();
 
-        var result = await ctrl.Refresh(request: null);
+        var result = await ctrl.GetUserData();
+        var body = (SerializableResult<AccountDto>)result.Value!;
 
-        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        body.IsSuccess.Should().BeTrue();
+        body.Value!.Email.Should().Be("a@b.com");
     }
 
     [Fact]
-    public async Task Refresh_EmptyRefreshToken_ReturnsBadRequest()
+    public async Task GetUserData_ServiceFails_ReturnsFailedResult()
     {
+        _accountService.Setup(s => s.GetUserData())
+            .ReturnsAsync(Result.Fail<AccountDto>("not authenticated"));
+
         var ctrl = CreateController();
 
-        var result = await ctrl.Refresh(new RefreshTokenRequest { RefreshToken = "" });
+        var result = await ctrl.GetUserData();
+        var body = (SerializableResult<AccountDto>)result.Value!;
 
-        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        body.IsFailed.Should().BeTrue();
     }
 
     [Fact]
-    public async Task Refresh_ValidToken_ClearsTokensFromResponseBody()
+    public async Task UpdateDetails_DelegatesToServiceAndReturnsResult()
     {
-        _accountService.Setup(s => s.RefreshAccessToken(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>()))
-            .ReturnsAsync(Result.Ok(new RefreshTokenResponse
-            {
-                AccessToken = "new-access",
-                RefreshToken = "new-refresh",
-                ExpiresIn = 900
-            }));
+        var dto = new AccountEditDto { SpreadSize = 3 };
+        _accountService.Setup(s => s.UpdateDetails(dto))
+            .ReturnsAsync(Result.Ok(dto));
 
-        var httpContext = new DefaultHttpContext();
-        var ctrl = CreateController(httpContext);
+        var ctrl = CreateController();
 
-        var result = await ctrl.Refresh(new RefreshTokenRequest { RefreshToken = "valid-token" });
+        var result = await ctrl.UpdateDetails(dto);
+        var body = (SerializableResult<AccountEditDto>)result.Value!;
 
-        var setCookie = string.Join("|", httpContext.Response.Headers["Set-Cookie"].ToArray());
-        setCookie.Should().Contain("arbiscanner.access_token");
-    }
-
-    [Fact]
-    public async Task Logout_NoRefreshToken_ClearsAuthCookiesAndReturnsOk()
-    {
-        var identity = new System.Security.Claims.ClaimsIdentity(
-            new[] { new System.Security.Claims.Claim(System.Security.Claims.ClaimsIdentity.DefaultNameClaimType, "user-1") },
-            "test");
-        var principal = new System.Security.Claims.ClaimsPrincipal(identity);
-        var httpContext = new DefaultHttpContext { User = principal };
-
-        var ctrl = CreateController(httpContext);
-
-        var result = await ctrl.Logout(request: null);
-
-        var setCookie = string.Join("|", httpContext.Response.Headers["Set-Cookie"].ToArray());
-        setCookie.Should().Contain("arbiscanner.access_token");
-        setCookie.Should().Contain("arbiscanner.refresh_token");
+        body.IsSuccess.Should().BeTrue();
+        _accountService.Verify(s => s.UpdateDetails(dto), Times.Once);
     }
 }

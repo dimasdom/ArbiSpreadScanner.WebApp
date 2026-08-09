@@ -26,7 +26,7 @@ public class TradeOpportunityControllerTests(WebApiTestFixture fixture)
     [Fact]
     public async Task GetSpreadsForUser_NoSpreadTypesEnabled_ReturnsEmptyList()
     {
-        var client = await RegisterConfirmAndLoginAsync();
+        var client = fixture.Factory.CreateAuthenticatedClient();
 
         var response = await client.GetAsync("/api/TradeOpportunity/GetSpreadsForUser");
 
@@ -36,9 +36,31 @@ public class TradeOpportunityControllerTests(WebApiTestFixture fixture)
     }
 
     [Fact]
+    public async Task GetRecommendedSpreads_WithoutAuth_ReturnsUnauthorized()
+    {
+        var client = fixture.Factory.CreateClient();
+
+        var response = await client.GetAsync("/api/TradeOpportunity/GetRecommendedSpreads");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetRecommendedSpreads_NoSpreadTypesEnabled_ReturnsEmptyList()
+    {
+        var client = fixture.Factory.CreateAuthenticatedClient();
+
+        var response = await client.GetAsync("/api/TradeOpportunity/GetRecommendedSpreads");
+
+        var result = await response.Content.ReadFromJsonAsync<ApiResult<List<RecommendedSpreadDto>>>(JsonOptions.CaseInsensitive);
+        result!.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetSpreadInfo_ExistingSpread_ReturnsDetails()
     {
-        var client = await RegisterConfirmAndLoginAsync();
+        var client = fixture.Factory.CreateAuthenticatedClient();
         var spread = BuildSpread();
 
         using (var scope = fixture.Factory.Services.CreateScope())
@@ -53,39 +75,18 @@ public class TradeOpportunityControllerTests(WebApiTestFixture fixture)
         result!.IsSuccess.Should().BeTrue();
         result.Value!.PositionModel.Guid.Should().Be(spread.Guid);
         result.Value.PositionModel.Symbol.Should().Be(spread.Symbol);
+        result.Value.Analysis.Should().NotBeNull();
     }
 
     [Fact]
     public async Task GetSpreadInfo_UnknownGuid_ReturnsNotFoundResult()
     {
-        var client = await RegisterConfirmAndLoginAsync();
+        var client = fixture.Factory.CreateAuthenticatedClient();
 
         var response = await client.GetAsync($"/api/TradeOpportunity/GetSpreadInfo/{Guid.NewGuid()}");
 
         var result = await response.Content.ReadFromJsonAsync<ApiResult<TradeOpportunityDetailsDto>>(JsonOptions.CaseInsensitive);
         result!.IsSuccess.Should().BeFalse();
-    }
-
-    private async Task<HttpClient> RegisterConfirmAndLoginAsync()
-    {
-        // CreateSecureClient(): the login cookie is Secure, so the client's CookieContainer
-        // only re-sends it on a base address it considers HTTPS.
-        var client = fixture.Factory.CreateSecureClient();
-        var email = $"integration-{Guid.NewGuid():N}@example.com";
-        const string password = "IntegrationTest@123";
-
-        var registerResponse = await client.PostAsJsonAsync("/api/Account/Register", new AccountLoginDto { Login = email, Password = password });
-        var registerResult = await registerResponse.Content.ReadFromJsonAsync<ApiResult<EmailConfirmationCodes>>(JsonOptions.CaseInsensitive);
-
-        await client.PostAsJsonAsync("/api/Account/ConfirmEmail", new ConfirmEmailDto
-        {
-            EmailConfirmToken = registerResult!.Value!.Id.ToString(),
-            Token = registerResult.Value.Code
-        });
-
-        await client.PostAsJsonAsync("/api/Account/Login", new AccountLoginDto { Login = email, Password = password });
-
-        return client;
     }
 
     private static TradeOpportunityModel BuildSpread()

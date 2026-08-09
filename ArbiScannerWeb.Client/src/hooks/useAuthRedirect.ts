@@ -1,15 +1,16 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router';
-import { useSelector } from 'react-redux';
-import type { IRootStore } from '../store/store';
+import { useAuth } from 'react-oidc-context';
 
-export function useAuthRedirect(redirectTo = '/account/login') {
-    const navigate = useNavigate();
-    const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
+// Same pattern as ProtectedRoute.tsx: there's no local /account/login route
+// anymore, so an unauthenticated visitor goes straight to Keycloak's hosted
+// login instead.
+export function useAuthRedirect() {
+    const auth = useAuth();
 
     useEffect(() => {
-        if (!isLoggedIn) {
-            navigate(redirectTo);
+        if (!auth.isLoading && !auth.isAuthenticated) {
+            void auth.signinRedirect();
         }
-    }, [isLoggedIn, navigate, redirectTo]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [auth.isLoading, auth.isAuthenticated]);
 }

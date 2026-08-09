@@ -47,9 +47,8 @@ try
     builder.Services.AddOpenApi();
     builder.Services.AddSignalR();
     builder.Services.AddDbContext(builder.Configuration);
-    builder.Services.AddIdentity();
     builder.Services.AddJwtOptions(builder.Configuration);
-    builder.Services.AddAuthenticationJwt(builder.Configuration);
+    builder.Services.AddAuthenticationJwt(builder.Configuration, builder.Environment);
     builder.Services.AddMongoDb(builder.Configuration);
     builder.Services.AddServices();
     builder.Services.AddHangfire(config => config
@@ -83,6 +82,26 @@ try
         var adminApiUrl = config["AdminApiUrl"]
             ?? throw new InvalidOperationException("AdminApiUrl configuration is required");
         client.BaseAddress = new Uri(adminApiUrl);
+        client.Timeout = TimeSpan.FromSeconds(30);
+    });
+    // Token endpoint for AdminService's Client Credentials grant (arbiscanner-admin realm) —
+    // base address is the realm's issuer, so relative POSTs resolve to .../protocol/openid-connect/token.
+    builder.Services.AddHttpClient("KeycloakAdminService", (sp, client) =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var authority = config["Keycloak:AdminService:Authority"]
+            ?? throw new InvalidOperationException("Keycloak:AdminService:Authority configuration is required");
+        client.BaseAddress = new Uri(authority.TrimEnd('/') + "/");
+        client.Timeout = TimeSpan.FromSeconds(30);
+    });
+    // Token endpoint for McpTokenService's Standard Token Exchange grant (arbiscanner-web
+    // realm, arbiscanner-mcp client) — see keycloak/README.md step 9.
+    builder.Services.AddHttpClient("KeycloakMcpExchange", (sp, client) =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var authority = config["Keycloak:McpExchange:Authority"]
+            ?? throw new InvalidOperationException("Keycloak:McpExchange:Authority configuration is required");
+        client.BaseAddress = new Uri(authority.TrimEnd('/') + "/");
         client.Timeout = TimeSpan.FromSeconds(30);
     });
     var observabilityEnabled = builder.Configuration.GetValue("Observability:Enabled", true);
@@ -156,7 +175,7 @@ try
     app.UseMiddleware<ExceptionHandlingMiddleware>();
     app.UseSerilogRequestLogging();
     app.UseCors("AllowAll");
-    app.MapHub<TradeOpportunityHub>("/hubs/TradeOpportunities").RequireCors("AllowAll");
+    app.MapHub<TradeOpportunityHub>("/hubs/TradeOpportunities").RequireCors("AllowAll").RequireAuthorization();
     app.UseDefaultFiles();
     app.MapStaticAssets();
 
@@ -170,6 +189,7 @@ try
         app.UseHttpsRedirection();
 
     app.UseAuthentication();
+    app.UseMiddleware<JitUserProvisioningMiddleware>();
     app.UseAuthorization();
     app.UseRateLimiter();
 

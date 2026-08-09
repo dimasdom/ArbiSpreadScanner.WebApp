@@ -69,6 +69,7 @@
     "form": {
       "emailLabel": "Електронна пошта",
       "emailPlaceholder": "you@email.com",
+      "manageInKeycloak": "Змінити email або пароль",
       "spreadSizeLabel": "Поріг розміру спреду",
       "spreadSizePlaceholder": "0.5",
       "positionSizeLabel": "Розмір позиції",

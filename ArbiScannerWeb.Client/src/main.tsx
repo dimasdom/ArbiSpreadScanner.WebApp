@@ -6,10 +6,13 @@ import App from './App.tsx'
 import { BrowserRouter } from 'react-router'
 import store from './store/store.ts'
 import { Provider } from 'react-redux'
+import { AuthProvider } from 'react-oidc-context'
+import { oidcUserManager } from './services/oidcUserManager.ts'
 import { logger } from './services/loggerService.ts'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import { ThemeProvider } from './contexts/ThemeContext.tsx'
 import MuiBridge from './contexts/MuiBridge.tsx'
+import { ChatContextProvider } from './contexts/ChatContext.tsx'
 import FullPageLoader from './components/FullPageLoader.tsx'
 
 window.onerror = (message, source, lineno, colno, error) => {
@@ -30,18 +33,29 @@ window.addEventListener('unhandledrejection', (event) => {
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <Provider store={store}>
-            <BrowserRouter>
-                <ThemeProvider>
-                    <MuiBridge>
-                        <ErrorBoundary>
-                            <Suspense fallback={<FullPageLoader />}>
-                                <App />
-                            </Suspense>
-                        </ErrorBoundary>
-                    </MuiBridge>
-                </ThemeProvider>
-            </BrowserRouter>
-        </Provider>
+        <AuthProvider
+            userManager={oidcUserManager}
+            onSigninCallback={() => {
+                // Strip ?code=&state= so a re-render doesn't re-process the same
+                // callback (oidc-client-ts would reject it: state already consumed).
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }}
+        >
+            <Provider store={store}>
+                <BrowserRouter>
+                    <ThemeProvider>
+                        <MuiBridge>
+                            <ErrorBoundary>
+                                <Suspense fallback={<FullPageLoader />}>
+                                    <ChatContextProvider>
+                                        <App />
+                                    </ChatContextProvider>
+                                </Suspense>
+                            </ErrorBoundary>
+                        </MuiBridge>
+                    </ThemeProvider>
+                </BrowserRouter>
+            </Provider>
+        </AuthProvider>
     </StrictMode>,
 )

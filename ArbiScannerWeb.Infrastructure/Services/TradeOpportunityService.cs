@@ -221,7 +221,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                         var dto = new TradeOpportunityDetailsDto
                         {
                             PositionModel = model,
-                            Tickers = new List<TradeOpportunityTickerModel>(),
+                            Tickers = [],
                             GroupName = GetGroupNameBasedOnPosition(model)
                         };
                         PopulateExchangeLinks(dto, allLinks);

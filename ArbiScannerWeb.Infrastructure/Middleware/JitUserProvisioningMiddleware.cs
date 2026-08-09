@@ -6,15 +6,8 @@ namespace ArbiScannerWeb.Infrastructure.Middleware;
 
 // Runs right after UseAuthentication() so it fronts both MVC controllers and the
 // SignalR hub's connection/negotiate requests — an action filter would miss the hub.
-public class JitUserProvisioningMiddleware
+public class JitUserProvisioningMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public JitUserProvisioningMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
-
     public async Task InvokeAsync(HttpContext context, IJitUserProvisioningService provisioningService)
     {
         if (context.User.Identity?.IsAuthenticated == true)
@@ -22,6 +15,6 @@ public class JitUserProvisioningMiddleware
             await provisioningService.EnsureProvisionedAsync(context.User);
         }
 
-        await _next(context);
+        await next(context);
     }
 }

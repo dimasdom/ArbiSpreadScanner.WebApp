@@ -15,16 +15,17 @@ public class McpTokenServiceTests
     private sealed class StubHttpMessageHandler(params HttpResponseMessage[] responses) : HttpMessageHandler
     {
         private readonly Queue<HttpResponseMessage> _responses = new(responses);
-        public List<HttpRequestMessage> Requests { get; } = new();
+        public List<HttpRequestMessage> Requests { get; } = [];
         public Func<HttpRequestMessage, HttpResponseMessage>? OnRequest { get; set; }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
-            if (OnRequest is not null)
-                return Task.FromResult(OnRequest(request));
-            return Task.FromResult(_responses.Count > 0 ? _responses.Dequeue() : new HttpResponseMessage(HttpStatusCode.OK));
+            return Task.FromResult(OnRequest is not null ? OnRequest(request) : NextQueuedResponse());
         }
+
+        private HttpResponseMessage NextQueuedResponse() =>
+            _responses.Count > 0 ? _responses.Dequeue() : new HttpResponseMessage(HttpStatusCode.OK);
     }
 
     private readonly StubHttpMessageHandler _handler = new();

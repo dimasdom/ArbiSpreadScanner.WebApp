@@ -85,7 +85,7 @@ describe('McpTokenPage', () => {
         stubClipboard(() => Promise.resolve());
         render(<McpTokenPage />);
         await userEvent.click(screen.getByRole('button', { name: 'generate.button' }));
-        await waitFor(() => expect(screen.getByDisplayValue('my-generated-token')).toBeInTheDocument());
+        expect(await screen.findByDisplayValue('my-generated-token')).toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'token.copyButton' }));
 
@@ -98,7 +98,7 @@ describe('McpTokenPage', () => {
         stubClipboard(() => Promise.reject(new Error('denied')));
         render(<McpTokenPage />);
         await userEvent.click(screen.getByRole('button', { name: 'generate.button' }));
-        await waitFor(() => expect(screen.getByDisplayValue('my-generated-token')).toBeInTheDocument());
+        expect(await screen.findByDisplayValue('my-generated-token')).toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'token.copyButton' }));
 

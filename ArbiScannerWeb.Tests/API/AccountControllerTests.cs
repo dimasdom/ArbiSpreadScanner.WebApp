@@ -16,11 +16,12 @@ public class AccountControllerTests
 
     private AccountController CreateController(DefaultHttpContext? httpContext = null)
     {
-        var ctrl = new AccountController(_accountService.Object);
-
-        ctrl.ControllerContext = new ControllerContext
+        var ctrl = new AccountController(_accountService.Object)
         {
-            HttpContext = httpContext ?? new DefaultHttpContext()
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext ?? new DefaultHttpContext()
+            }
         };
         return ctrl;
     }

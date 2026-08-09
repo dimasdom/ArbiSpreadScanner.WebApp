@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace ArbiScannerWeb.Infrastructure.Services
 {
-    public class AccountService : IAccountService
+    public class AccountService(AppDbContext context, IHttpContextAccessor httpContextAccessor, IConnectionMultiplexer redis) : IAccountService
     {
         private sealed class CachedAccountData
         {
@@ -24,25 +24,16 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
         private const string UserNotFoundMessage = "User not found.";
 
-        private readonly AppDbContext _context;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IDatabase _redis;
-
-        public AccountService(AppDbContext context, IHttpContextAccessor httpContextAccessor, IConnectionMultiplexer redis)
-        {
-            _context = context;
-            _httpContextAccessor = httpContextAccessor;
-            _redis = redis.GetDatabase();
-        }
+        private readonly IDatabase _redis = redis.GetDatabase();
 
         public async Task<Result<AccountEditDto>> UpdateDetails(AccountEditDto account)
         {
-            var userIdString = _httpContextAccessor.HttpContext?.User?.Identity?.Name;
+            var userIdString = httpContextAccessor.HttpContext?.User?.Identity?.Name;
             if (string.IsNullOrEmpty(userIdString))
             {
                 return Result.Fail(TypedErrors.Unauthorized("User is not authenticated."));
             }
-            var accountModel = await _context.Users
+            var accountModel = await context.Users
                 .Include(a => a.UserSettings)
                     .ThenInclude(s => s.Exchanges)
                 .FirstOrDefaultAsync(a => a.Id == userIdString);
@@ -53,16 +44,16 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 .Select(e => e.Exchange?.Name)
                 .Where(n => n != null)
                 .ToList();
-            var exchangeModels = await _context.Exchanges
+            var exchangeModels = await context.Exchanges
                 .Where(e => exchangeNames.Contains(e.Name))
                 .ToListAsync();
 
-            _context.UserExchanges.RemoveRange(accountModel.UserSettings.Exchanges);
+            context.UserExchanges.RemoveRange(accountModel.UserSettings.Exchanges);
             accountModel.UserSettings.Exchanges = exchangeModels
                 .Select(e => new UserExchangeModel { ExchangeId = e.Id, UserAccountId = accountModel.Id, Exchange = e })
                 .ToList();
-            _context.Users.Update(accountModel);
-            await _context.SaveChangesAsync();
+            context.Users.Update(accountModel);
+            await context.SaveChangesAsync();
             await _redis.StringSetAsync($"userEntity:{accountModel.Id}", SerializeCachedAccount(accountModel), System.TimeSpan.FromHours(1));
             account.Exchanges = accountModel.UserSettings.Exchanges;
             return Result.Ok(account);
@@ -79,7 +70,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
 
         public async Task<Result<AccountDto>> GetUserData()
         {
-            var userId = _httpContextAccessor.HttpContext?.User?.Identity?.Name;
+            var userId = httpContextAccessor.HttpContext?.User?.Identity?.Name;
             var userEntity = await _redis.StringGetAsync($"userEntity:{userId}");
             if (!userEntity.IsNullOrEmpty)
             {
@@ -97,7 +88,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             {
                 return Result.Fail(TypedErrors.Unauthorized("User is not authenticated."));
             }
-            var user = await _context.Users.Include(u => u.UserSettings).ThenInclude(u => u.Exchanges).ThenInclude(e => e.Exchange).FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await context.Users.Include(u => u.UserSettings).ThenInclude(u => u.Exchanges).ThenInclude(e => e.Exchange).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
                 return Result.Fail(TypedErrors.NotFound(UserNotFoundMessage));

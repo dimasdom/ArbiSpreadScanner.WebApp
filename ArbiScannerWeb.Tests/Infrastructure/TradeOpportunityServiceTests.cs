@@ -201,8 +201,8 @@ public class TradeOpportunityServiceTests
         _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
         _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(ticker);
         _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49))
-            .ReturnsAsync(new List<TradeOpportunityTickerModel>());
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+            .ReturnsAsync([]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetSpreadInfo(guid.ToString());
 
@@ -438,7 +438,7 @@ public class TradeOpportunityServiceTests
         var spread = MakeModel();
         _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Futures)).ReturnsAsync(new List<TradeOpportunityModel>());
         _spreadRepo.Setup(r => r.GetByTypeAsync(SpreadType.Futures)).ReturnsAsync(new List<TradeOpportunityModel> { spread });
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetSpreadsForUser("acc2");
 
@@ -511,8 +511,8 @@ public class TradeOpportunityServiceTests
         mostExpensive.ExchangeLong.SummarySlipage = 1.0;
 
         _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Futures))
-            .ReturnsAsync(new List<TradeOpportunityModel> { belowThreshold, cheap, expensive, mostExpensive });
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+            .ReturnsAsync([belowThreshold, cheap, expensive, mostExpensive]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetRecommendedSpreads("acc10");
 
@@ -540,8 +540,8 @@ public class TradeOpportunityServiceTests
         high.Spread = 5.0;
 
         _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Futures))
-            .ReturnsAsync(new List<TradeOpportunityModel> { low, mid, high });
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+            .ReturnsAsync([low, mid, high]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetRecommendedSpreads("acc11");
 
@@ -566,8 +566,8 @@ public class TradeOpportunityServiceTests
         higherSpreadNoFunding.Spread = 4.0;
 
         _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Funding))
-            .ReturnsAsync(new List<TradeOpportunityModel> { lowerSpreadHugeFunding, higherSpreadNoFunding });
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+            .ReturnsAsync([lowerSpreadHugeFunding, higherSpreadNoFunding]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetRecommendedSpreads("acc12");
 
@@ -598,8 +598,8 @@ public class TradeOpportunityServiceTests
         shortFundingCounted.ExchangeShort.FundingRateValue = 0.01; // small but non-zero cost
 
         _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Spot))
-            .ReturnsAsync(new List<TradeOpportunityModel> { longFundingIgnored, shortFundingCounted });
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+            .ReturnsAsync([longFundingIgnored, shortFundingCounted]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetRecommendedSpreads("acc13");
 
@@ -622,8 +622,8 @@ public class TradeOpportunityServiceTests
         _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
         _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(ticker);
         _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49))
-            .ReturnsAsync(new List<TradeOpportunityTickerModel>());
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+            .ReturnsAsync([]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetSpreadInfo(guid.ToString());
 
@@ -644,8 +644,8 @@ public class TradeOpportunityServiceTests
         _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
         _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(ticker);
         _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49))
-            .ReturnsAsync(new List<TradeOpportunityTickerModel>());
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+            .ReturnsAsync([]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetSpreadInfo(guid.ToString());
 
@@ -666,8 +666,8 @@ public class TradeOpportunityServiceTests
         _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
         _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(ticker);
         _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49))
-            .ReturnsAsync(new List<TradeOpportunityTickerModel>());
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+            .ReturnsAsync([]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetSpreadInfo(guid.ToString());
 
@@ -693,7 +693,7 @@ public class TradeOpportunityServiceTests
         _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
         _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(latest);
         _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49)).ReturnsAsync(older);
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetSpreadInfo(guid.ToString());
 
@@ -718,7 +718,7 @@ public class TradeOpportunityServiceTests
         _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
         _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(latest);
         _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49)).ReturnsAsync(older);
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetSpreadInfo(guid.ToString());
 
@@ -738,8 +738,8 @@ public class TradeOpportunityServiceTests
         _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
         _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(latest);
         _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49))
-            .ReturnsAsync(new List<TradeOpportunityTickerModel> { new(model) { Spread = 2.0 } });
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+            .ReturnsAsync([new(model) { Spread = 2.0 }]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetSpreadInfo(guid.ToString());
 
@@ -753,8 +753,8 @@ public class TradeOpportunityServiceTests
         SetupContextFactory(dbName);
         await SeedEligibleUserAsync(dbName, 20, "acc20", s => s.FuturesSpread = true);
         _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
-        _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Futures)).ReturnsAsync(new List<TradeOpportunityModel> { MakeEligibleModel() });
-        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<ExchangeLinkModel>());
+        _spreadRepo.Setup(r => r.GetOpenByTypeAsync(SpreadType.Futures)).ReturnsAsync([MakeEligibleModel()]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 
         var result = await _sut.GetSpreadsForUser("acc20");
 

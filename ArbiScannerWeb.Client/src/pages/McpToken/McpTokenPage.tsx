@@ -6,6 +6,12 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import { useGenerateMcpTokenMutation } from '../../store/services/mcpToken';
 
+function getGenerateButtonLabel(isLoading: boolean, hasToken: boolean, t: (key: string) => string): string {
+    if (isLoading) return t('generate.generating');
+    if (hasToken) return t('generate.regenerateButton');
+    return t('generate.button');
+}
+
 export function McpTokenPage() {
     const { t } = useTranslation('mcpToken');
     const [generateMcpToken, { isLoading }] = useGenerateMcpTokenMutation();
@@ -89,11 +95,7 @@ export function McpTokenPage() {
                             disabled={isLoading}
                             className="mt-4 inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         >
-                            {isLoading
-                                ? t('generate.generating')
-                                : token
-                                    ? t('generate.regenerateButton')
-                                    : t('generate.button')}
+                            {getGenerateButtonLabel(isLoading, Boolean(token), t)}
                         </button>
 
                         {token && (

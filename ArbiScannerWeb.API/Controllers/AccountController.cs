@@ -14,25 +14,18 @@ namespace ArbiScannerWeb.API.Controllers
     [ApiController]
     [Authorize]
     [Route("api/{controller}")]
-    public class AccountController : ControllerBase
+    public class AccountController(IAccountService accountService) : ControllerBase
     {
-        private readonly IAccountService _accountService;
-
-        public AccountController(IAccountService accountService)
-        {
-            _accountService = accountService;
-        }
-
         [HttpPost("UpdateDetails")]
         public async Task<ActionResult<Result<AccountEditDto>>> UpdateDetails([FromBody] AccountEditDto account)
         {
-            return (await _accountService.UpdateDetails(account)).ToSerializable();
+            return (await accountService.UpdateDetails(account)).ToSerializable();
         }
 
         [HttpGet("GetUserData")]
         public async Task<ActionResult<Result<AccountDto>>> GetUserData()
         {
-            return (await _accountService.GetUserData()).ToSerializable();
+            return (await accountService.GetUserData()).ToSerializable();
         }
     }
 }

@@ -7,61 +7,51 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace ArbiScannerWeb.Infrastructure.Services
-{
-    public class JitUserProvisioningService : IJitUserProvisioningService
-    {
-        private readonly AppDbContext _context;
-        private readonly ILogger<JitUserProvisioningService> _logger;
+namespace ArbiScannerWeb.Infrastructure.Services;
 
-        public JitUserProvisioningService(AppDbContext context, ILogger<JitUserProvisioningService> logger)
+public class JitUserProvisioningService(AppDbContext context, ILogger<JitUserProvisioningService> logger) : IJitUserProvisioningService
+{
+    public async Task EnsureProvisionedAsync(ClaimsPrincipal user)
+    {
+        var userId = user.Identity?.Name;
+        if (string.IsNullOrEmpty(userId))
         {
-            _context = context;
-            _logger = logger;
+            return;
         }
 
-        public async Task EnsureProvisionedAsync(ClaimsPrincipal user)
+        var alreadyProvisioned = await context.Users.AnyAsync(u => u.Id == userId);
+        if (alreadyProvisioned)
         {
-            var userId = user.Identity?.Name;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return;
-            }
+            return;
+        }
 
-            var alreadyProvisioned = await _context.Users.AnyAsync(u => u.Id == userId);
-            if (alreadyProvisioned)
-            {
-                return;
-            }
+        var email = user.FindFirst("email")?.Value ?? user.FindFirst(ClaimTypes.Email)?.Value;
+        var userName = user.FindFirst("preferred_username")?.Value ?? email ?? userId;
 
-            var email = user.FindFirst("email")?.Value ?? user.FindFirst(ClaimTypes.Email)?.Value;
-            var userName = user.FindFirst("preferred_username")?.Value ?? email ?? userId;
+        var account = new AccountModel
+        {
+            Id = userId,
+            UserName = userName,
+            NormalizedUserName = userName.ToUpperInvariant(),
+            Email = email,
+            NormalizedEmail = email?.ToUpperInvariant(),
+            EmailConfirmed = true,
+            CreatedAt = DateTime.UtcNow,
+            UserSettings = new UserSettingsModel { AccountId = userId }
+        };
 
-            var account = new AccountModel
-            {
-                Id = userId,
-                UserName = userName,
-                NormalizedUserName = userName.ToUpperInvariant(),
-                Email = email,
-                NormalizedEmail = email?.ToUpperInvariant(),
-                EmailConfirmed = true,
-                CreatedAt = DateTime.UtcNow,
-                UserSettings = new UserSettingsModel { AccountId = userId }
-            };
+        context.Users.Add(account);
 
-            _context.Users.Add(account);
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException ex)
-            {
-                // Another request for the same brand-new user (e.g. GetUserData and the
-                // SignalR handshake firing back-to-back right after login) already won
-                // the race between the AnyAsync check above and this SaveChanges.
-                _logger.LogDebug(ex, "JIT provisioning race for user {UserId} — already provisioned.", userId);
-            }
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            // Another request for the same brand-new user (e.g. GetUserData and the
+            // SignalR handshake firing back-to-back right after login) already won
+            // the race between the AnyAsync check above and this SaveChanges.
+            logger.LogDebug(ex, "JIT provisioning race for user {UserId} — already provisioned.", userId);
         }
     }
 }

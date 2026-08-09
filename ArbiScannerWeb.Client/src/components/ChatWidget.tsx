@@ -36,12 +36,18 @@ interface ChatMessage {
 let nextMessageId = 0;
 
 const ThinkingIndicator: React.FC = () => (
-    <div className="flex items-center gap-1 py-1" role="status" aria-label="Thinking">
+    <output className="flex items-center gap-1 py-1" aria-label="Thinking">
         <span className="h-2 w-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce [animation-delay:-0.3s]" />
         <span className="h-2 w-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce [animation-delay:-0.15s]" />
         <span className="h-2 w-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce" />
-    </div>
+    </output>
 );
+
+function getMessageBubbleClass(message: ChatMessage): string {
+    if (message.role === 'user') return 'bg-indigo-600 text-white ml-8';
+    if (message.isError) return 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 mr-8';
+    return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 mr-8';
+}
 
 function renderPayload(payload: ChatMessagePayload) {
     switch (payload.kind) {
@@ -86,10 +92,32 @@ const ChatWidget: React.FC = () => {
     const [input, setInput] = useState('');
     const [isSending, setIsSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isOpen]);
+
+    // On mobile the panel covers the whole screen, so navigating to a spread/spreads-page
+    // link from inside the chat would otherwise happen invisibly behind it. Closing on
+    // click makes the resulting page transition visible and tells the user something
+    // happened. Desktop's floating panel already leaves the rest of the page visible, so
+    // it's left open there. Attached imperatively (rather than a JSX onClick on the
+    // container div) since this only delegates to genuinely interactive descendants
+    // (links), which are already keyboard-operable on their own.
+    useEffect(() => {
+        if (!isMobile || !isOpen) return;
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        const handleClick = (event: MouseEvent) => {
+            if (event.target instanceof HTMLElement && event.target.closest('a')) {
+                setIsOpen(false);
+            }
+        };
+        container.addEventListener('click', handleClick);
+        return () => container.removeEventListener('click', handleClick);
+    }, [isMobile, isOpen]);
 
     useEffect(() => () => {
         aiAssistantSignalrService.disconnect().catch(() => { /* teardown */ });
@@ -183,18 +211,6 @@ const ChatWidget: React.FC = () => {
         void send(input);
     };
 
-    // On mobile the panel covers the whole screen, so navigating to a spread/spreads-page
-    // link from inside the chat would otherwise happen invisibly behind it. Closing on
-    // click makes the resulting page transition visible and tells the user something
-    // happened. Desktop's floating panel already leaves the rest of the page visible, so
-    // it's left open there.
-    const handleMessagesClick = (event: React.MouseEvent<HTMLDivElement>) => {
-        if (!isMobile) return;
-        if (event.target instanceof HTMLElement && event.target.closest('a')) {
-            setIsOpen(false);
-        }
-    };
-
     return (
         <>
             <button
@@ -222,7 +238,7 @@ const ChatWidget: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3" onClick={handleMessagesClick}>
+                    <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
                         <div className="rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-900 dark:text-indigo-100 text-sm p-3">
                             {t('widget.greeting')}
                         </div>
@@ -240,13 +256,7 @@ const ChatWidget: React.FC = () => {
                         {messages.map((message) => (
                             <div
                                 key={message.id}
-                                className={`text-sm rounded-lg p-3 whitespace-pre-wrap break-words ${
-                                    message.role === 'user'
-                                        ? 'bg-indigo-600 text-white ml-8'
-                                        : message.isError
-                                            ? 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 mr-8'
-                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 mr-8'
-                                }`}
+                                className={`text-sm rounded-lg p-3 whitespace-pre-wrap break-words ${getMessageBubbleClass(message)}`}
                             >
                                 {renderMessageContent(message)}
                             </div>

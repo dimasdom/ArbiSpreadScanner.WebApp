@@ -112,25 +112,23 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
                 ["RabbitMq:Username"] = "guest",
                 ["RabbitMq:Password"] = "guest",
             },
+            // Jwt:Authority (set above) already points AddJwtBearer at this real
+            // container, so the framework's own JwtBearerPostConfigureOptions wires
+            // up real JWKS discovery/signature validation unmodified. Two things are
+            // relaxed relative to production: RequireHttpsMetadata (the raw
+            // testcontainer serves plain HTTP — production reaches Keycloak through
+            // nginx's TLS termination, per keycloak/README.md) and audience
+            // validation (the service-account token minted below isn't mapped to
+            // the SPA client's audience). This must run as a Configure (not
+            // PostConfigure) — the framework's own JwtBearerPostConfigureOptions
+            // throws on a plain-HTTP Authority when RequireHttpsMetadata is still
+            // true, and all Configure delegates run before any PostConfigure ones.
             configureTestServices: services =>
-            {
-                // Jwt:Authority (set above) already points AddJwtBearer at this real
-                // container, so the framework's own JwtBearerPostConfigureOptions wires
-                // up real JWKS discovery/signature validation unmodified. Two things are
-                // relaxed relative to production: RequireHttpsMetadata (the raw
-                // testcontainer serves plain HTTP — production reaches Keycloak through
-                // nginx's TLS termination, per keycloak/README.md) and audience
-                // validation (the service-account token minted below isn't mapped to
-                // the SPA client's audience). This must run as a Configure (not
-                // PostConfigure) — the framework's own JwtBearerPostConfigureOptions
-                // throws on a plain-HTTP Authority when RequireHttpsMetadata is still
-                // true, and all Configure delegates run before any PostConfigure ones.
                 services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
                     options.RequireHttpsMetadata = false;
                     options.TokenValidationParameters.ValidateAudience = false;
-                });
-            });
+                }));
 
         _ = Factory.Services;
     }
@@ -213,8 +211,8 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
 
     private async Task<string> GetClientInternalIdAsync(string clientId)
     {
-        var result = await ExecCapture("kcadm.sh", "get", "clients", "-r", RealmName, "-q", $"clientId={clientId}", "--fields", "id");
-        using var doc = JsonDocument.Parse(result.Stdout);
+        var (_, stdout, _) = await ExecCapture("kcadm.sh", "get", "clients", "-r", RealmName, "-q", $"clientId={clientId}", "--fields", "id");
+        using var doc = JsonDocument.Parse(stdout);
         return doc.RootElement[0].GetProperty("id").GetString()!;
     }
 
@@ -226,13 +224,10 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
         fullCommand.AddRange(command.Skip(1));
 
         var result = await _keycloak!.ExecAsync(fullCommand);
-        if (result.ExitCode != 0)
-        {
-            throw new InvalidOperationException(
-                $"'{string.Join(' ', fullCommand)}' failed (exit {result.ExitCode}):\n{result.Stdout}\n{result.Stderr}");
-        }
-
-        return (result.ExitCode, result.Stdout, result.Stderr);
+        return result.ExitCode != 0
+            ? throw new InvalidOperationException(
+                $"'{string.Join(' ', fullCommand)}' failed (exit {result.ExitCode}):\n{result.Stdout}\n{result.Stderr}")
+            : (result.ExitCode, result.Stdout, result.Stderr);
     }
 
     public async Task DisposeAsync()
@@ -273,11 +268,8 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
             dir = dir.Parent;
         }
 
-        if (dir is null)
-        {
-            throw new InvalidOperationException("Could not locate keycloak/realm-export/arbiscanner-web-realm.json by walking up from the test assembly's output directory.");
-        }
-
-        return Path.Combine(dir.FullName, "keycloak", "realm-export", "arbiscanner-web-realm.json");
+        return dir is null
+            ? throw new InvalidOperationException("Could not locate keycloak/realm-export/arbiscanner-web-realm.json by walking up from the test assembly's output directory.")
+            : Path.Combine(dir.FullName, "keycloak", "realm-export", "arbiscanner-web-realm.json");
     }
 }

@@ -304,8 +304,8 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     ? $"Spread is {absSpread:0.##}%, at or above the {MinRecommendedSpreadPercent:0.#}% minimum."
                     : $"Spread is {absSpread:0.##}%, below the {MinRecommendedSpreadPercent:0.#}% minimum.",
                 withinCostThreshold
-                    ? $"Combined funding, fee and slippage cost is {costRatio:P0} of the spread, within the {MaxCostRatio:P0} limit."
-                    : $"Combined funding, fee and slippage cost is {costRatio:P0} of the spread, above the {MaxCostRatio:P0} limit.",
+                    ? $"Combined funding, fee and slippage cost is {costRatio * 100:0}% of the spread, within the {MaxCostRatio * 100:0}% limit."
+                    : $"Combined funding, fee and slippage cost is {costRatio * 100:0}% of the spread, above the {MaxCostRatio * 100:0}% limit.",
             };
 
             return new SpreadAnalysisDto

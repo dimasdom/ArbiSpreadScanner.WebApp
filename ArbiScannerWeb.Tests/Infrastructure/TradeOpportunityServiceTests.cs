@@ -676,6 +676,31 @@ public class TradeOpportunityServiceTests
     }
 
     [Fact]
+    public async Task GetSpreadInfo_FundingType_IgnoresFundingRateInCostCheck()
+    {
+        var guid = Guid.NewGuid();
+        var model = MakeModel(guid);
+        model.Type = SpreadType.Funding;
+        model.Spread = 1.58;
+        model.SummaryTarrif = 0.02; // fee + slippage well within the 10% limit on their own
+        model.ExchangeLong.FundingRateValue = 0.02; // would push cost ratio well above the 10% limit if wrongly counted
+        model.ExchangeShort.FundingRateValue = 0.02;
+        var ticker = new TradeOpportunityTickerModel(model);
+
+        _subscriptions.Setup(s => s.CheckIfUserHasActiveSubscriptionAsync()).ReturnsAsync(true);
+        _spreadRepo.Setup(r => r.GetByGuidAsync(guid)).ReturnsAsync(model);
+        _tickerRepo.Setup(r => r.GetLatestByGuidAsync(guid)).ReturnsAsync(ticker);
+        _tickerRepo.Setup(r => r.GetRemainingWithoutOrderBookAsync(guid, 1, 49))
+            .ReturnsAsync([]);
+        _linkRepo.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
+
+        var result = await _sut.GetSpreadInfo(guid.ToString());
+
+        result.Value.Analysis!.Recommended.Should().BeTrue();
+        result.Value.Analysis.Reasons[1].Should().Be("Combined fee and slippage cost is 1% of the spread, within the 10% limit.");
+    }
+
+    [Fact]
     public async Task GetSpreadInfo_FundingTypeWithFastFallingTickerHistory_SetsTrendWarning()
     {
         var guid = Guid.NewGuid();

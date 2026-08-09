@@ -284,19 +284,21 @@ namespace ArbiScannerWeb.Infrastructure.Services
         private static double FundingRatePercent(double? value) => Math.Abs(value ?? 0) * 100;
 
         /// <summary>Builds GetSpreadInfo's Analysis block: a Recommended verdict against the
-        /// same &gt;=1%-spread rule GetRecommendedSpreads uses, plus a 10%-of-spread combined
-        /// cost check that - unlike GetRecommendedSpreads' ranking - always counts funding
-        /// cost for every type (including Funding), since here it's evaluating the specific
-        /// spread the user is already looking at, not choosing between candidates.</summary>
+        /// same &gt;=1%-spread rule GetRecommendedSpreads uses, plus a 10%-of-spread cost
+        /// check. For Funding spreads the funding rate is the return being evaluated, not a
+        /// cost against it, so - same as GetRecommendationCostScore's ranking - only fee and
+        /// slippage count there; every other type counts funding, fee and slippage together.</summary>
         private static SpreadAnalysisDto BuildAnalysis(TradeOpportunityModel model, List<TradeOpportunityTickerModel> tickers)
         {
             var absSpread = Math.Abs(model.Spread);
             var meetsMinSpread = absSpread >= MinRecommendedSpreadPercent;
 
-            var fundingCost = GetCombinedFundingExposureForAnalysis(model);
+            var isFunding = model.Type == SpreadType.Funding;
+            var fundingCost = isFunding ? 0 : GetCombinedFundingExposure(model);
             var costTotal = GetTotalSlippage(model) + model.SummaryTarrif + fundingCost;
             var costRatio = absSpread > 0 ? costTotal / absSpread : double.PositiveInfinity;
             var withinCostThreshold = costRatio <= MaxCostRatio;
+            var costLabel = isFunding ? "fee and slippage" : "funding, fee and slippage";
 
             var reasons = new List<string>
             {
@@ -304,25 +306,17 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     ? $"Spread is {absSpread:0.##}%, at or above the {MinRecommendedSpreadPercent:0.#}% minimum."
                     : $"Spread is {absSpread:0.##}%, below the {MinRecommendedSpreadPercent:0.#}% minimum.",
                 withinCostThreshold
-                    ? $"Combined funding, fee and slippage cost is {costRatio * 100:0}% of the spread, within the {MaxCostRatio * 100:0}% limit."
-                    : $"Combined funding, fee and slippage cost is {costRatio * 100:0}% of the spread, above the {MaxCostRatio * 100:0}% limit.",
+                    ? $"Combined {costLabel} cost is {costRatio * 100:0}% of the spread, within the {MaxCostRatio * 100:0}% limit."
+                    : $"Combined {costLabel} cost is {costRatio * 100:0}% of the spread, above the {MaxCostRatio * 100:0}% limit.",
             };
 
             return new SpreadAnalysisDto
             {
                 Recommended = meetsMinSpread && withinCostThreshold,
                 Reasons = reasons,
-                TrendWarning = model.Type == SpreadType.Funding ? BuildTrendWarning(tickers) : null,
+                TrendWarning = isFunding ? BuildTrendWarning(tickers) : null,
             };
         }
-
-        /// <summary>Unlike GetRecommendationCostScore's funding term, this never zeroes out
-        /// Funding-type spreads - the user asked specifically for "funding, fee and slippage"
-        /// to all count toward the 10% check regardless of type, only carving out Spot's
-        /// single (short) leg.</summary>
-        private static double GetCombinedFundingExposureForAnalysis(TradeOpportunityModel model) => model.Type == SpreadType.Spot
-            ? FundingRatePercent(model.ExchangeShort.FundingRateValue)
-            : FundingRatePercent(model.ExchangeLong.FundingRateValue) + FundingRatePercent(model.ExchangeShort.FundingRateValue);
 
         /// <summary>Tickers arrive newest-first (latest ticker prepended, then the remaining
         /// window in descending DateTime order - see GetSpreadInfo/GetRemainingWithoutOrderBookAsync),

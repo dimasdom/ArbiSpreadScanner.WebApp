@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    uses: dimasdom/SpreadScanner/.github/workflows/deploy-service.yml@f06e61425a422a4950b80ea8bb13fcdf69b5bc91 # master
+    uses: dimasdom/SpreadScanner/.github/workflows/deploy-service.yml@e37683f29801121d6e7335d2717e10ab25f1d7e6 # master
     with:
       self_checkout_path: ArbiScannerWebApp
       sonar_project_key: dimasdom_ArbiSpreadScanner.WebApp
@@ -37,6 +37,7 @@ jobs:
         /d:sonar.typescript.lcov.reportPaths="$(pwd)/ArbiScannerWeb.Client/coverage/lcov.info"
         /d:sonar.verbose=true
       sibling_repos: "[]"
+      needs_keycloak_realm_export: true
       images: >-
         [{"name":"arbiscanner-web","dockerfile":"ArbiScannerWebApp/Dockerfile","context":".","needs_root_checkout":false,"build_args":""},
          {"name":"arbiscanner-web-client","dockerfile":"ArbiScannerWebApp/Dockerfile.client","context":".","needs_root_checkout":true,"build_args":"VITE_API_URL="}]

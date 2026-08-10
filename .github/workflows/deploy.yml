@@ -1,51 +1,33 @@
 name: Deploy
 
-# Manual on-demand deploy: runs unit + integration + client tests, enforces the
-# SonarCloud quality gate, and only on success builds+pushes both the API and
-# client Docker images to GHCR and restarts web/web-client on the VPS. See the
+# Manual on-demand deploy: pulls the already-built, already-tested API and
+# client images for the chosen version (a release.yml-cut tag such as "v1.4.0",
+# or "latest") from GHCR and restarts web/web-client on the VPS. Does not
+# rebuild or retest - that happens once per release, in release.yml. See the
 # reusable workflow (dimasdom/SpreadScanner/.github/workflows/deploy-service.yml)
-# for the full job graph and scripts/deploy-remote.sh for the VPS-side restart
-# logic. web-client also needs the repo-root nginx/ directory (see CLAUDE.md).
+# for the job itself and scripts/deploy-remote.sh for the VPS-side restart logic.
 
 on:
   workflow_dispatch:
     inputs:
+      version:
+        description: 'Version/tag to deploy, e.g. "v1.4.0" (see Releases) or "latest"'
+        required: true
+        type: string
       dry_run:
-        description: "Run tests/build/push but skip the VPS deploy step"
+        description: "Resolve inputs but skip the VPS deploy step"
         type: boolean
         default: false
 
 jobs:
   deploy:
-    permissions:
-      contents: read
-      packages: write
-    uses: dimasdom/SpreadScanner/.github/workflows/deploy-service.yml@e37683f29801121d6e7335d2717e10ab25f1d7e6 # master
+    uses: dimasdom/SpreadScanner/.github/workflows/deploy-service.yml@be8acb9c9928400f197ba8a5d64535410458b916 # master
     with:
-      self_checkout_path: ArbiScannerWebApp
-      sonar_project_key: dimasdom_ArbiSpreadScanner.WebApp
-      solution_file: ArbiScannerWebApp.sln
-      unit_test_project: ArbiScannerWeb.Tests/ArbiScannerWeb.Tests.csproj
-      integration_test_project: ArbiScannerWeb.IntegrationTests/ArbiScannerWeb.IntegrationTests.csproj
-      has_client_tests: true
-      client_dir: ArbiScannerWebApp/ArbiScannerWeb.Client
-      sonar_begin_extra_args: >-
-        /d:sonar.projectBaseDir="$(pwd)"
-        /d:sonar.exclusions="**/Program.cs,**/ArbiScannerWeb.Domain/Models/**,**/ArbiScannerWeb.Infrastructure/Settings/**,**/ArbiScannerWeb.Infrastructure/DbContext/**,**/ArbiScannerWeb.Infrastructure/Migrations/**,**/ArbiScannerWeb.Abstractions/Interfaces/**,**/ArbiScannerWeb.Client/src/types/**,**/ArbiScannerWeb.Client/coverage/lcov-report/**"
-        /d:sonar.coverage.exclusions="**/ArbiScannerWeb.Client/src/test/**,**/ArbiScannerWeb.Client/src/main.tsx,**/ArbiScannerWeb.Client/*.config.ts,**/ArbiScannerWeb.Client/src/**/*.test.ts,**/ArbiScannerWeb.Client/src/**/*.test.tsx"
-        /d:sonar.javascript.lcov.reportPaths="$(pwd)/ArbiScannerWeb.Client/coverage/lcov.info"
-        /d:sonar.typescript.lcov.reportPaths="$(pwd)/ArbiScannerWeb.Client/coverage/lcov.info"
-        /d:sonar.verbose=true
-      sibling_repos: "[]"
-      needs_keycloak_realm_export: true
-      images: >-
-        [{"name":"arbiscanner-web","dockerfile":"ArbiScannerWebApp/Dockerfile","context":".","needs_root_checkout":false,"build_args":""},
-         {"name":"arbiscanner-web-client","dockerfile":"ArbiScannerWebApp/Dockerfile.client","context":".","needs_root_checkout":true,"build_args":"VITE_API_URL=\nVITE_OIDC_AUTHORITY=https://auth.arbiscannerwebapp.site/realms/arbiscanner-web\nVITE_OIDC_CLIENT_ID=arbiscanner-web-spa\nVITE_OIDC_REDIRECT_URI=https://www.arbiscannerwebapp.site/auth/callback"}]
+      version: ${{ inputs.version }}
       deploy_services: "web web-client"
       image_tag_vars: '{"web":"WEB_IMAGE_TAG","web-client":"WEB_CLIENT_IMAGE_TAG"}'
       dry_run: ${{ inputs.dry_run }}
     secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       VPS_HOST: ${{ secrets.VPS_HOST }}
       VPS_USER: ${{ secrets.VPS_USER }}
       VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}

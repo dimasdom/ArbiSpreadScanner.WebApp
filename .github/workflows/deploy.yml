@@ -40,7 +40,7 @@ jobs:
       needs_keycloak_realm_export: true
       images: >-
         [{"name":"arbiscanner-web","dockerfile":"ArbiScannerWebApp/Dockerfile","context":".","needs_root_checkout":false,"build_args":""},
-         {"name":"arbiscanner-web-client","dockerfile":"ArbiScannerWebApp/Dockerfile.client","context":".","needs_root_checkout":true,"build_args":"VITE_API_URL="}]
+         {"name":"arbiscanner-web-client","dockerfile":"ArbiScannerWebApp/Dockerfile.client","context":".","needs_root_checkout":true,"build_args":"VITE_API_URL=\nVITE_OIDC_AUTHORITY=https://auth.arbiscannerwebapp.site/realms/arbiscanner-web\nVITE_OIDC_CLIENT_ID=arbiscanner-web-spa\nVITE_OIDC_REDIRECT_URI=https://www.arbiscannerwebapp.site/auth/callback"}]
       deploy_services: "web web-client"
       image_tag_vars: '{"web":"WEB_IMAGE_TAG","web-client":"WEB_CLIENT_IMAGE_TAG"}'
       dry_run: ${{ inputs.dry_run }}

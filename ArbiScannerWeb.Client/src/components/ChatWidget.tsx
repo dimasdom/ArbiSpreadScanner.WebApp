@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import { aiAssistantSignalrService } from '../services/aiAssistantSignalrService';
 import { useChatContext } from '../contexts/ChatContext';
 import { logger } from '../services/loggerService';
@@ -49,6 +50,28 @@ function getMessageBubbleClass(message: ChatMessage): string {
     return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 mr-8';
 }
 
+// Tight spacing tuned for a narrow chat bubble - the default markdown/prose margins are
+// sized for full-width article text and look oversized here.
+const markdownComponents: Components = {
+    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+    ul: ({ children }) => <ul className="mb-2 last:mb-0 list-disc pl-4 space-y-0.5">{children}</ul>,
+    ol: ({ children }) => <ol className="mb-2 last:mb-0 list-decimal pl-4 space-y-0.5">{children}</ol>,
+    li: ({ children }) => <li>{children}</li>,
+    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+    a: ({ children, href }) => (
+        <a href={href} target="_blank" rel="noreferrer" className="underline text-indigo-600 dark:text-indigo-400">
+            {children}
+        </a>
+    ),
+    code: ({ children }) => <code className="rounded bg-black/10 dark:bg-white/10 px-1 py-0.5 text-xs">{children}</code>,
+};
+
+// Assistant replies come back as markdown (bold, numbered/bulleted lists) - render it
+// instead of dumping the raw `**`/`1.` syntax as plain text.
+const MarkdownText: React.FC<{ text: string }> = ({ text }) => (
+    <ReactMarkdown components={markdownComponents}>{text}</ReactMarkdown>
+);
+
 function renderPayload(payload: ChatMessagePayload) {
     switch (payload.kind) {
         case 'recommendedSpreads':
@@ -62,13 +85,14 @@ function renderPayload(payload: ChatMessagePayload) {
 
 function renderMessageContent(message: ChatMessage) {
     if (message.isPending && !message.text && !message.payload) return <ThinkingIndicator />;
-    if (!message.payload) return message.text;
+    const text = message.role === 'assistant' ? <MarkdownText text={message.text} /> : message.text;
+    if (!message.payload) return text;
 
     // A turn can stream some leading prose before deciding to call a tool - keep both
     // instead of letting the tool result blank out whatever text already arrived.
     return (
         <div className="space-y-2">
-            {message.text && <p>{message.text}</p>}
+            {message.text && text}
             {renderPayload(message.payload)}
         </div>
     );

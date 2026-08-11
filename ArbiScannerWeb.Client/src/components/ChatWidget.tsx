@@ -295,7 +295,7 @@ const ChatWidget: React.FC = () => {
                             onChange={(event) => setInput(event.target.value)}
                             placeholder={t('widget.inputPlaceholder')}
                             disabled={isSending}
-                            className="flex-1 rounded-full border border-gray-300 dark:border-gray-700 bg-transparent px-4 py-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="flex-1 rounded-full border border-gray-300 dark:border-gray-700 bg-transparent px-4 py-2 text-base sm:text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                         <button
                             type="submit"

@@ -1,10 +1,10 @@
 import './App.css';
 import { Toaster } from 'react-hot-toast';
 import NavBar from './components/NavBar';
+import Breadcrumbs from './components/Breadcrumbs';
 import AuthLoadingOverlay from './components/AuthLoadingOverlay';
 import { Route, Routes, useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
 import SpreadsPage from './pages/Spread/SpreadsPage';
 import SpreadPage from './pages/Spread/SpreadPage';
@@ -16,6 +16,7 @@ import { Suspense, useEffect } from 'react';
 import { logout, markSessionChecked } from './store/slices/accountSlice';
 import type { IRootStore } from './store/store';
 import MainPage from './pages/Main/MainPage';
+import NotFoundPage from './pages/NotFound/NotFoundPage';
 import SubscriptionPage from './pages/Subscription/SubscriptionPage';
 import PaymentCryptoPage from './pages/Subscription/Payment/PaymentCryptoPage';
 import PaymentInfoPage from './pages/Subscription/Payment/PaymentInfoPage';
@@ -67,7 +68,6 @@ function App() {
     });
     const isActiveSubscription = activeSubscriptionData?.value?.isActive || false;
     const location = useLocation();
-    const { t } = useTranslation('common');
 
     return (
         <div className="flex flex-col min-h-screen dark:bg-gray-950 transition-colors duration-200">
@@ -75,6 +75,7 @@ function App() {
             <NavBar isLoggedIn={isLoggedIn} isActiveSubscription={isActiveSubscription} onLogin={() => { void auth.signinRedirect(); }} onLogout={() => { void auth.signoutRedirect(); }} />
 
             <main className="flex-1 pt-20">
+                <Breadcrumbs />
                 <Suspense fallback={<PageLoader />}>
                     <AnimatePresence mode="wait">
                         <Routes location={location} key={stripLangPrefix(location.pathname)}>
@@ -94,7 +95,7 @@ function App() {
                                 <Route path="payment" element={<PageWrapper><PaymentInfoPage /></PageWrapper>} />
                                 <Route path="payment/pay" element={<PageWrapper><PaymentCryptoPage /></PageWrapper>} />
                                 <Route path="faq" element={<PageWrapper><FaqPage /></PageWrapper>} />
-                                <Route path="*" element={<PageWrapper><div className="p-4">{t('notFound')}</div></PageWrapper>} />
+                                <Route path="*" element={<PageWrapper><NotFoundPage /></PageWrapper>} />
                             </Route>
                         </Routes>
                     </AnimatePresence>

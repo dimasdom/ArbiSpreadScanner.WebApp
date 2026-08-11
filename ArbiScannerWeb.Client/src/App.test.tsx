@@ -50,6 +50,7 @@ vi.mock('./pages/Subscription/SubscriptionPage', () => ({ default: () => <div>Su
 vi.mock('./pages/Subscription/Payment/PaymentCryptoPage', () => ({ default: () => <div>PaymentCryptoPage</div> }));
 vi.mock('./pages/Subscription/Payment/PaymentInfoPage', () => ({ default: () => <div>PaymentInfoPage</div> }));
 vi.mock('./pages/Faq/FaqPage', () => ({ default: () => <div>FaqPage</div> }));
+vi.mock('./pages/NotFound/NotFoundPage', () => ({ default: () => <div>NotFoundPage</div> }));
 
 function buildStore(isLoggedIn = false) {
     const store = configureStore({
@@ -116,7 +117,7 @@ describe('App', () => {
     it('renders the not-found fallback for an unknown path', () => {
         renderApp('/en/does-not-exist');
 
-        expect(screen.getByText('notFound')).toBeInTheDocument();
+        expect(screen.getByText('NotFoundPage')).toBeInTheDocument();
     });
 
     it('passes login state and active subscription down to NavBar', () => {

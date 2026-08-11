@@ -24,7 +24,11 @@
     "copyright": "© {{year}} <brand>ArbiScanner</brand>. All rights reserved.",
     "faq": "FAQ"
   },
-  "notFound": "Page Not Found",
+  "notFound": {
+    "title": "Page Not Found",
+    "description": "The page you're looking for doesn't exist or may have been moved.",
+    "backHome": "Back to Home"
+  },
   "validation": {
     "email": {
       "invalid": "Please enter a valid email address."
@@ -105,5 +109,11 @@
   },
   "loading": {
     "tradingOpportunities": "Loading your trading opportunities"
+  },
+  "breadcrumbs": {
+    "aria": "Breadcrumb",
+    "spreadDetails": "Spread Details",
+    "payment": "Payment",
+    "checkout": "Checkout"
   }
 }

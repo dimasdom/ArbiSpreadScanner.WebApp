@@ -24,7 +24,11 @@
     "copyright": "© {{year}} <brand>ArbiScanner</brand>. Todos los derechos reservados.",
     "faq": "Preguntas frecuentes"
   },
-  "notFound": "Página no encontrada",
+  "notFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe o pudo haber sido movida.",
+    "backHome": "Volver al inicio"
+  },
   "validation": {
     "email": {
       "invalid": "Introduce una dirección de correo electrónico válida."
@@ -105,5 +109,11 @@
   },
   "loading": {
     "tradingOpportunities": "Cargando tus oportunidades de trading"
+  },
+  "breadcrumbs": {
+    "aria": "Ruta de navegación",
+    "spreadDetails": "Detalles del diferencial",
+    "payment": "Pago",
+    "checkout": "Finalizar compra"
   }
 }

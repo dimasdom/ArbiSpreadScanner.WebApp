@@ -24,7 +24,11 @@
     "copyright": "© {{year}} <brand>ArbiScanner</brand>. Alle Rechte vorbehalten.",
     "faq": "FAQ"
   },
-  "notFound": "Seite nicht gefunden",
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "backHome": "Zur Startseite"
+  },
   "validation": {
     "email": {
       "invalid": "Bitte gib eine gültige E-Mail-Adresse ein."
@@ -105,5 +109,11 @@
   },
   "loading": {
     "tradingOpportunities": "Deine Handelsmöglichkeiten werden geladen"
+  },
+  "breadcrumbs": {
+    "aria": "Brotkrumen",
+    "spreadDetails": "Spread-Details",
+    "payment": "Zahlung",
+    "checkout": "Kasse"
   }
 }

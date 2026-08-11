@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Trans, useTranslation } from 'react-i18next';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -102,7 +102,9 @@ function MainPage() {
                 <div className="p-8 md:p-12">
                     {sessionChecked && !isLoggedIn && (
                         <div className="mb-16">
-                            <LiveDemoWidget />
+                            <Suspense fallback={null}>
+                                <LiveDemoWidget />
+                            </Suspense>
                         </div>
                     )}
 

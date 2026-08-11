@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/compare/v1.1.0...v1.1.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* prevent Safari auto-zoom on AI chat input focus ([faa66ac](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/commit/faa66aceec6b17104228a4691774f8bbe3a121d3))
+* use correct i18n namespace on auth callback error screen, add retry ([1659da3](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/commit/1659da3559a3a99d1197f056bf7d2a5c8c435241))
+
 ## [1.1.0](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/compare/v1.0.0...v1.1.0) (2026-08-11)
 
 

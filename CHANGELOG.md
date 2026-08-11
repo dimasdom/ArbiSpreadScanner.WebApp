@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/compare/v1.0.0...v1.1.0) (2026-08-11)
+
+
+### Features
+
+* add breadcrumbs navigation to web client ([693d198](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/commit/693d198d14682c354c07c1bd0cf9fe57b8b2dfe9))
+* add robots.txt for web client ([bcc8e64](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/commit/bcc8e644998856dffd7a5e33160abc54aede190b))
+
+
+### Bug Fixes
+
+* prevent home page from rendering invisible after refresh, add themed 404 page ([75727a8](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/commit/75727a84b98647251e944f396defa9bd242f5748))
+
 ## 1.0.0 (2026-08-10)
 
 

@@ -11,7 +11,11 @@ import { useLocalizedNavigate } from '../../i18n/routing';
 export function AuthCallbackPage() {
     const auth = useAuth();
     const navigate = useLocalizedNavigate();
-    const { t } = useTranslation('common');
+    // Namespace must be 'account', not 'common' — that's where errors.*
+    // and errorState.* actually live (public/locales/<lng>/account.json).
+    // Using 'common' here silently rendered the raw key instead of the
+    // translated string (see AuthCallbackPage's error screen).
+    const { t } = useTranslation('account');
 
     useEffect(() => {
         if (!auth.isLoading && auth.isAuthenticated) {
@@ -24,6 +28,19 @@ export function AuthCallbackPage() {
             <div className="flex flex-col items-center justify-center min-h-64 mt-6 gap-4">
                 <p className="text-red-600 dark:text-red-400">{t('errors.networkError')}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{auth.error.message}</p>
+                {/* Keycloak self-registration + email verification can leave the
+                    original tab's auth session unresumable (error_description=
+                    authentication_expired, upstream keycloak/keycloak#41171)
+                    when the verification link opens in a different tab/context —
+                    common on mobile mail clients. There's no recovery for that
+                    session, so give the user a way out instead of a dead end. */}
+                <button
+                    type="button"
+                    onClick={() => void auth.signinRedirect()}
+                    className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                >
+                    {t('errorState.tryAgain')}
+                </button>
             </div>
         );
     }

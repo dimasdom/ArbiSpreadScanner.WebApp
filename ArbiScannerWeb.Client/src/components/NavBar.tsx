@@ -13,11 +13,13 @@ interface HeaderProps {
 
 const navLinksDefault = [
     { key: 'nav.main', to: '/' },
+    { key: 'nav.stats', to: '/stats' },
     { key: 'nav.subscriptions', to: '/subscriptions' },
     { key: 'nav.faq', to: '/faq' }
 ];
 const navLinksLoggedInNotActive = [
     { key: 'nav.main', to: '/' },
+    { key: 'nav.stats', to: '/stats' },
     { key: 'nav.account', to: '/account' },
     { key: 'nav.subscriptions', to: '/subscriptions' },
     { key: 'nav.mcpToken', to: '/mcp-token' },
@@ -26,6 +28,7 @@ const navLinksLoggedInNotActive = [
 const navLinksLoggedInActive = [
     { key: 'nav.main', to: '/' },
     { key: 'nav.spreads', to: '/spreads' },
+    { key: 'nav.stats', to: '/stats' },
     { key: 'nav.account', to: '/account' },
     { key: 'nav.mcpToken', to: '/mcp-token' },
     { key: 'nav.faq', to: '/faq' }
@@ -90,7 +93,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, isActiveSubscription, onLog
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.to}
-                                    className="mr-5 ml-5 transition-shadow hover:shadow-md px-5 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-200"
+                                    className="whitespace-nowrap transition-shadow hover:shadow-md px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-200"
                                     to={{
                                         pathname: link.to
                                     }}

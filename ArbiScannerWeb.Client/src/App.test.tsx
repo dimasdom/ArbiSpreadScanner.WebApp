@@ -44,6 +44,7 @@ vi.mock('./components/ProtectedRoute', () => ({
 vi.mock('./pages/Main/MainPage', () => ({ default: () => <div>MainPage</div> }));
 vi.mock('./pages/Spread/SpreadsPage', () => ({ default: () => <div>SpreadsPage</div> }));
 vi.mock('./pages/Spread/SpreadPage', () => ({ default: () => <div>SpreadPage</div> }));
+vi.mock('./pages/Stats/StatsPage', () => ({ default: () => <div>StatsPage</div> }));
 vi.mock('./pages/Account/AccountPage', () => ({ default: () => <div>AccountPage</div> }));
 vi.mock('./pages/Auth/AuthCallbackPage', () => ({ default: () => <div>AuthCallbackPage</div> }));
 vi.mock('./pages/Subscription/SubscriptionPage', () => ({ default: () => <div>SubscriptionPage</div> }));
@@ -112,6 +113,12 @@ describe('App', () => {
         renderApp('/en/faq');
 
         expect(screen.getByText('FaqPage')).toBeInTheDocument();
+    });
+
+    it('renders the stats page', () => {
+        renderApp('/en/stats');
+
+        expect(screen.getByText('StatsPage')).toBeInTheDocument();
     });
 
     it('renders the not-found fallback for an unknown path', () => {

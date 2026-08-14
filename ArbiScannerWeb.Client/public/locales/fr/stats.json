@@ -1,0 +1,46 @@
+{
+  "page": {
+    "title": "Statistiques des écarts",
+    "subtitle": "Agrégées toutes les 4 heures à partir de chaque écart détecté",
+    "totalAnalyzed": "{{count}} écarts analysés",
+    "generatedAt": "Généré le {{date}}"
+  },
+  "dateSelector": {
+    "label": "Date de l'instantané",
+    "latest": "Le plus récent"
+  },
+  "charts": {
+    "topSymbolsByAverageSpread": {
+      "title": "Meilleurs symboles par écart moyen",
+      "empty": "Aucune donnée d'écart pour le moment"
+    },
+    "topExchangesByCount": {
+      "title": "Plateformes les plus actives",
+      "empty": "Aucune donnée de plateforme pour le moment"
+    },
+    "topExchangePairsByCount": {
+      "title": "Paires de plateformes les plus fréquentes",
+      "empty": "Aucune donnée de paire pour le moment"
+    },
+    "medianVolumeByExchange": {
+      "title": "Volume de liquidité médian (±0,5 %)",
+      "empty": "Aucune donnée de volume pour le moment"
+    },
+    "spreadTypeDistribution": {
+      "title": "Répartition par type d'écart",
+      "empty": "Aucune donnée de type pour le moment"
+    },
+    "topSymbolsByCount": {
+      "title": "Symboles les plus fréquents",
+      "empty": "Aucune donnée de symbole pour le moment"
+    }
+  },
+  "carousel": {
+    "previous": "Graphique précédent",
+    "next": "Graphique suivant",
+    "goTo": "Aller à {{title}}"
+  },
+  "empty": {
+    "noSnapshot": "Aucun instantané de statistiques n'a encore été généré. Revenez après la prochaine exécution planifiée."
+  }
+}

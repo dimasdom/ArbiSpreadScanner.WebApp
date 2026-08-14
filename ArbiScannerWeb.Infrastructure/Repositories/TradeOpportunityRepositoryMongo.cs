@@ -59,5 +59,19 @@ namespace ArbiScannerWeb.Abstractions.Interfaces.Repositories
             => await _collection.Find(
                 Builders<TradeOpportunityModel>.Filter.Eq(x => x.Type, type))
                 .ToListAsync();
+
+        public async Task<List<TradeOpportunityModel>> GetAllForStatsAsync()
+        {
+            var projection = Builders<TradeOpportunityModel>.Projection
+                .Exclude(x => x.BidsExchangeA)
+                .Exclude(x => x.AsksExchangeA)
+                .Exclude(x => x.BidsExchangeB)
+                .Exclude(x => x.AsksExchangeB);
+
+            return await _collection
+                .Find(Builders<TradeOpportunityModel>.Filter.Empty)
+                .Project<TradeOpportunityModel>(projection)
+                .ToListAsync();
+        }
     }
 }

@@ -168,6 +168,13 @@ try
             "0 0 * * *",
             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
+    app.Services.GetRequiredService<IRecurringJobManager>()
+        .AddOrUpdate<SpreadStatsAggregationJob>(
+            "spread-stats-aggregation",
+            job => job.ExecuteAsync(JobCancellationToken.Null),
+            "0 */4 * * *",
+            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
     if (observabilityEnabled)
     {
         app.UseOpenTelemetryPrometheusScrapingEndpoint();

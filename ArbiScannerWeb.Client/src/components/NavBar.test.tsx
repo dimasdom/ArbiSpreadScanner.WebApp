@@ -40,26 +40,29 @@ describe('NavBar', () => {
         navigateMock.mockClear();
     });
 
-    it('shows the default nav links when logged out', () => {
+    it('shows the default nav links when logged out, including stats (public)', () => {
         renderNavBar({ isLoggedIn: false });
 
         expect(screen.getAllByText('nav.subscriptions').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('nav.stats').length).toBeGreaterThan(0);
         expect(screen.queryAllByText('nav.account')).toHaveLength(0);
         expect(screen.queryAllByText('nav.spreads')).toHaveLength(0);
     });
 
-    it('shows the account/subscriptions links when logged in without an active subscription', () => {
+    it('shows the account/subscriptions links when logged in without an active subscription, including stats (public)', () => {
         renderNavBar({ isLoggedIn: true, isActiveSubscription: false });
 
         expect(screen.getAllByText('nav.account').length).toBeGreaterThan(0);
         expect(screen.getAllByText('nav.subscriptions').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('nav.stats').length).toBeGreaterThan(0);
         expect(screen.queryAllByText('nav.spreads')).toHaveLength(0);
     });
 
-    it('shows the spreads link instead of subscriptions when logged in with an active subscription', () => {
+    it('shows the spreads and stats links instead of subscriptions when logged in with an active subscription', () => {
         renderNavBar({ isLoggedIn: true, isActiveSubscription: true });
 
         expect(screen.getAllByText('nav.spreads').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('nav.stats').length).toBeGreaterThan(0);
         expect(screen.getAllByText('nav.account').length).toBeGreaterThan(0);
         expect(screen.queryAllByText('nav.subscriptions')).toHaveLength(0);
     });

@@ -16,5 +16,13 @@ namespace ArbiScannerWeb.Abstractions.Interfaces.Repositories
         Task ReplaceAsync(TradeOpportunityModel model);
         Task<List<TradeOpportunityModel>> GetOpenByTypeAsync(SpreadType type);
         Task<List<TradeOpportunityModel>> GetByTypeAsync(SpreadType type);
+
+        /// <summary>
+        /// Returns every spread (open and closed) with the order-book level arrays
+        /// (Bids/AsksExchangeA/B) excluded, for aggregation reads that only need the
+        /// summary fields — avoids pulling potentially large embedded arrays into
+        /// memory for every document.
+        /// </summary>
+        Task<List<TradeOpportunityModel>> GetAllForStatsAsync();
     }
 }

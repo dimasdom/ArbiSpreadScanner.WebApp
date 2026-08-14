@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from 'react-oidc-context';
 import SpreadsPage from './pages/Spread/SpreadsPage';
 import SpreadPage from './pages/Spread/SpreadPage';
+import StatsPage from './pages/Stats/StatsPage';
 import AccountPage from './pages/Account/AccountPage';
 import McpTokenPage from './pages/McpToken/McpTokenPage';
 import AuthCallbackPage from './pages/Auth/AuthCallbackPage';
@@ -91,6 +92,7 @@ function App() {
                                 <Route index element={<PageWrapper><MainPage /></PageWrapper>} />
                                 <Route path="spreads" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadsPage /></PageWrapper></ProtectedRoute>} />
                                 <Route path="spread" element={<ProtectedRoute requireActiveSubscription><PageWrapper><SpreadPage /></PageWrapper></ProtectedRoute>} />
+                                <Route path="stats" element={<PageWrapper><StatsPage /></PageWrapper>} />
                                 <Route path="subscriptions" element={<PageWrapper><SubscriptionPage /></PageWrapper>} />
                                 <Route path="payment" element={<PageWrapper><PaymentInfoPage /></PageWrapper>} />
                                 <Route path="payment/pay" element={<PageWrapper><PaymentCryptoPage /></PageWrapper>} />

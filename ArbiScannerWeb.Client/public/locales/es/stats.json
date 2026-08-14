@@ -1,0 +1,46 @@
+{
+  "page": {
+    "title": "Estadísticas de diferenciales",
+    "subtitle": "Agregadas cada 4 horas a partir de cada diferencial detectado",
+    "totalAnalyzed": "{{count}} diferenciales analizados",
+    "generatedAt": "Generado el {{date}}"
+  },
+  "dateSelector": {
+    "label": "Fecha del snapshot",
+    "latest": "Más reciente"
+  },
+  "charts": {
+    "topSymbolsByAverageSpread": {
+      "title": "Símbolos principales por diferencial promedio",
+      "empty": "Aún no hay datos de diferenciales"
+    },
+    "topExchangesByCount": {
+      "title": "Exchanges más activos",
+      "empty": "Aún no hay datos de exchanges"
+    },
+    "topExchangePairsByCount": {
+      "title": "Pares de exchanges más comunes",
+      "empty": "Aún no hay datos de pares"
+    },
+    "medianVolumeByExchange": {
+      "title": "Mediana del volumen de liquidez (±0.5%)",
+      "empty": "Aún no hay datos de volumen"
+    },
+    "spreadTypeDistribution": {
+      "title": "Distribución por tipo de diferencial",
+      "empty": "Aún no hay datos de tipo"
+    },
+    "topSymbolsByCount": {
+      "title": "Símbolos más frecuentes",
+      "empty": "Aún no hay datos de símbolos"
+    }
+  },
+  "carousel": {
+    "previous": "Gráfico anterior",
+    "next": "Gráfico siguiente",
+    "goTo": "Ir a {{title}}"
+  },
+  "empty": {
+    "noSnapshot": "Aún no se ha generado ningún snapshot de estadísticas. Vuelve a comprobarlo después de la próxima ejecución programada."
+  }
+}

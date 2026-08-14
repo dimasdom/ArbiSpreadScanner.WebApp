@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/compare/v1.1.1...v1.1.2) (2026-08-14)
+
+
+### Bug Fixes
+
+* keep auth loading overlay up until user data and subscriptions finish loading ([#6](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/issues/6)) ([5503ad4](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/commit/5503ad4fd892ddf8143e7f8af3b9a9f14475b413))
+
 ## [1.1.1](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/compare/v1.1.0...v1.1.1) (2026-08-11)
 
 

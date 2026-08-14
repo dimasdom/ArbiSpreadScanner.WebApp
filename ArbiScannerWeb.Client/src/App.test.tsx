@@ -194,4 +194,33 @@ describe('App', () => {
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
         expect(screen.getByTestId('navbar-state')).toHaveTextContent('true-false');
     });
+
+    it('keeps the auth loading overlay up while GetUserData is still loading after oidc resolves', () => {
+        useAuthMock.mockReturnValue({
+            isLoading: false,
+            isAuthenticated: true,
+            signinRedirect: signinRedirectMock,
+            signoutRedirect: signoutRedirectMock,
+        });
+        useGetUserDataQueryMock.mockReturnValue({ data: undefined, isLoading: true, isUninitialized: false });
+
+        renderApp('/en/', false);
+
+        expect(screen.getByRole('status')).toBeInTheDocument();
+    });
+
+    it('keeps the auth loading overlay up while GetUserActiveSubscriptions is still loading after GetUserData resolves', () => {
+        useAuthMock.mockReturnValue({
+            isLoading: false,
+            isAuthenticated: true,
+            signinRedirect: signinRedirectMock,
+            signoutRedirect: signoutRedirectMock,
+        });
+        useGetUserDataQueryMock.mockReturnValue({ data: undefined, isLoading: false, isUninitialized: false });
+        useGetUserActiveSubscriptionsQueryMock.mockReturnValue({ data: undefined, isLoading: true, isUninitialized: false });
+
+        renderApp('/en/', true);
+
+        expect(screen.getByRole('status')).toBeInTheDocument();
+    });
 });

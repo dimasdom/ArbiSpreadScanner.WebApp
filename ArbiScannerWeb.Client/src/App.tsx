@@ -55,8 +55,10 @@ function App() {
     const auth = useAuth();
     const isLoggedIn = useSelector((state: IRootStore) => state.account.isLoggedIn);
     const dispatch = useAppDispatch();
-    const showAuthLoader = auth.isLoading;
-    useGetUserDataQuery(undefined, { skip: !auth.isAuthenticated, refetchOnMountOrArgChange: true });
+    const { isLoading: isUserDataLoading, isUninitialized: isUserDataUninitialized } = useGetUserDataQuery(undefined, {
+        skip: !auth.isAuthenticated,
+        refetchOnMountOrArgChange: true,
+    });
     useEffect(() => {
         if (auth.isLoading) return;
         dispatch(markSessionChecked());
@@ -64,10 +66,20 @@ function App() {
             dispatch(logout());
         }
     }, [auth.isLoading, auth.isAuthenticated, dispatch]);
-    const { data: activeSubscriptionData } = useGetUserActiveSubscriptionsQuery(undefined, {
+    const { data: activeSubscriptionData, isLoading: isSubscriptionLoading, isUninitialized: isSubscriptionUninitialized } = useGetUserActiveSubscriptionsQuery(undefined, {
         skip: !isLoggedIn,
     });
     const isActiveSubscription = activeSubscriptionData?.value?.isActive || false;
+    // Once react-oidc-context finishes processing the redirect, auth.isLoading
+    // flips false immediately — but GetUserData/GetUserActiveSubscriptions
+    // (which NavBar's logged-in/subscribed state depends on) are still in
+    // flight for another beat or two. Without this, the overlay drops and the
+    // nav briefly renders its logged-out buttons before flipping once those
+    // requests resolve. isLoading (not isFetching) so this only gates the
+    // first load, not background refetches.
+    const isFetchingUserInfo =
+        auth.isAuthenticated && (isUserDataUninitialized || isUserDataLoading || (isLoggedIn && (isSubscriptionUninitialized || isSubscriptionLoading)));
+    const showAuthLoader = auth.isLoading || isFetchingUserInfo;
     const location = useLocation();
 
     return (

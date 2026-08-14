@@ -37,7 +37,7 @@ describe('i18n config', () => {
     it('exports the lazily-loaded namespace list', async () => {
         const { NAMESPACES } = await import('./config');
 
-        expect(NAMESPACES).toEqual(['common', 'main', 'account', 'spreads', 'subscription', 'faq', 'mcpToken', 'chat']);
+        expect(NAMESPACES).toEqual(['common', 'main', 'account', 'spreads', 'stats', 'subscription', 'faq', 'mcpToken', 'chat']);
     });
 
     it('syncs redux and localStorage when the language changes', async () => {

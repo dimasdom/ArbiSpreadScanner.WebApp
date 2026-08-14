@@ -71,6 +71,16 @@ namespace ArbiScannerWeb.Infrastructure
                         cm.SetIgnoreExtraElements(true);
                     });
                 }
+
+                if (!BsonClassMap.IsClassMapRegistered(typeof(SpreadStatsSnapshotModel)))
+                {
+                    BsonClassMap.RegisterClassMap<SpreadStatsSnapshotModel>(cm =>
+                    {
+                        cm.AutoMap();
+                        cm.MapIdProperty(x => x.Id);
+                        cm.SetIgnoreExtraElements(true);
+                    });
+                }
             }
 
             services.AddSingleton(sp => configuration.GetSection(MongoDbSettings.SectionName).Get<MongoDbSettings>()
@@ -86,6 +96,8 @@ namespace ArbiScannerWeb.Infrastructure
             .AddScoped<ITradeOpportunityService, ArbiScannerWeb.Infrastructure.Services.TradeOpportunityService>()
             .AddSingleton<ITradeOpportunityRepository, TradeOpportunityRepositoryMongo>()
             .AddSingleton<ITradeOpportunityTickerRepository, TradeOpportunityTickerRepositoryMongo>()
+            .AddSingleton<ISpreadStatsRepository, SpreadStatsRepositoryMongo>()
+            .AddScoped<ISpreadStatsService, SpreadStatsService>()
             .AddSingleton<IAdminService, AdminService>()
             .AddScoped<IUserSettingsService, UserSettingsService>()
             .AddScoped<ISubscriptionService, SubscriptionService>()

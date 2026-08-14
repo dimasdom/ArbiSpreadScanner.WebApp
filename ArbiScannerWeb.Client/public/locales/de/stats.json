@@ -1,0 +1,46 @@
+{
+  "page": {
+    "title": "Spread-Statistik",
+    "subtitle": "Alle 4 Stunden aus jedem erkannten Spread aggregiert",
+    "totalAnalyzed": "{{count}} Spreads analysiert",
+    "generatedAt": "Erstellt am {{date}}"
+  },
+  "dateSelector": {
+    "label": "Snapshot-Datum",
+    "latest": "Aktuell"
+  },
+  "charts": {
+    "topSymbolsByAverageSpread": {
+      "title": "Top-Symbole nach durchschnittlichem Spread",
+      "empty": "Noch keine Spread-Daten"
+    },
+    "topExchangesByCount": {
+      "title": "Aktivste Börsen",
+      "empty": "Noch keine Börsendaten"
+    },
+    "topExchangePairsByCount": {
+      "title": "Häufigste Börsenpaare",
+      "empty": "Noch keine Paardaten"
+    },
+    "medianVolumeByExchange": {
+      "title": "Median-Liquiditätsvolumen (±0,5%)",
+      "empty": "Noch keine Volumendaten"
+    },
+    "spreadTypeDistribution": {
+      "title": "Verteilung der Spread-Typen",
+      "empty": "Noch keine Typdaten"
+    },
+    "topSymbolsByCount": {
+      "title": "Häufigste Symbole",
+      "empty": "Noch keine Symboldaten"
+    }
+  },
+  "carousel": {
+    "previous": "Vorheriges Diagramm",
+    "next": "Nächstes Diagramm",
+    "goTo": "Zu {{title}} wechseln"
+  },
+  "empty": {
+    "noSnapshot": "Es wurde noch kein Statistik-Snapshot erstellt. Bitte nach dem nächsten geplanten Lauf erneut prüfen."
+  }
+}

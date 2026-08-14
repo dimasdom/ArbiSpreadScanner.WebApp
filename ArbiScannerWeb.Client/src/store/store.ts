@@ -5,6 +5,7 @@ import { accountApi } from './services/account';
 import { spreadApi } from './services/spread';
 import { subscriptionsAPI } from './services/subscription';
 import { mcpTokenApi } from './services/mcpToken';
+import { statsApi } from './services/stats';
 
 const rootReducer = {
     account: accountReducer,
@@ -13,6 +14,7 @@ const rootReducer = {
     [spreadApi.reducerPath]: spreadApi.reducer,
     [subscriptionsAPI.reducerPath]: subscriptionsAPI.reducer,
     [mcpTokenApi.reducerPath]: mcpTokenApi.reducer,
+    [statsApi.reducerPath]: statsApi.reducer,
 };
 
 const sessionListenerMiddleware = createListenerMiddleware();
@@ -30,7 +32,7 @@ const store = configureStore({
             serializableCheck: false,
         })
             .prepend(sessionListenerMiddleware.middleware)
-            .concat(accountApi.middleware, spreadApi.middleware, subscriptionsAPI.middleware, mcpTokenApi.middleware),
+            .concat(accountApi.middleware, spreadApi.middleware, subscriptionsAPI.middleware, mcpTokenApi.middleware, statsApi.middleware),
 });
 
 export type AppDispatch = typeof store.dispatch;

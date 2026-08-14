@@ -1,0 +1,46 @@
+{
+  "page": {
+    "title": "Spread Statistics",
+    "subtitle": "Aggregated every 4 hours from every detected spread",
+    "totalAnalyzed": "{{count}} spreads analyzed",
+    "generatedAt": "Generated {{date}}"
+  },
+  "dateSelector": {
+    "label": "Snapshot date",
+    "latest": "Latest"
+  },
+  "charts": {
+    "topSymbolsByAverageSpread": {
+      "title": "Top Symbols by Average Spread",
+      "empty": "No spread data yet"
+    },
+    "topExchangesByCount": {
+      "title": "Most Active Exchanges",
+      "empty": "No exchange data yet"
+    },
+    "topExchangePairsByCount": {
+      "title": "Most Common Exchange Pairs",
+      "empty": "No exchange pair data yet"
+    },
+    "medianVolumeByExchange": {
+      "title": "Median Liquidity Volume (±0.5%)",
+      "empty": "No volume data yet"
+    },
+    "spreadTypeDistribution": {
+      "title": "Spread Type Distribution",
+      "empty": "No type data yet"
+    },
+    "topSymbolsByCount": {
+      "title": "Most Frequent Symbols",
+      "empty": "No symbol data yet"
+    }
+  },
+  "carousel": {
+    "previous": "Previous chart",
+    "next": "Next chart",
+    "goTo": "Go to {{title}}"
+  },
+  "empty": {
+    "noSnapshot": "No stats snapshot has been generated yet. Check back after the next scheduled run."
+  }
+}

@@ -22,6 +22,7 @@ describe('root store', () => {
         const { accountApi } = await import('./services/account');
         const { spreadApi } = await import('./services/spread');
         const { subscriptionsAPI } = await import('./services/subscription');
+        const { statsApi } = await import('./services/stats');
 
         const state = store.getState();
 
@@ -30,6 +31,7 @@ describe('root store', () => {
         expect(state).toHaveProperty(accountApi.reducerPath);
         expect(state).toHaveProperty(spreadApi.reducerPath);
         expect(state).toHaveProperty(subscriptionsAPI.reducerPath);
+        expect(state).toHaveProperty(statsApi.reducerPath);
     });
 
     it('resets subscriptionsAPI cache when the user logs out', async () => {

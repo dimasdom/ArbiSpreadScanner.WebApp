@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import type { ApexOptions } from 'apexcharts';
 
 const useThemeMock = vi.fn();
+const { capturedOptions } = vi.hoisted(() => ({ capturedOptions: { current: null as ApexOptions | null } }));
 
 vi.mock('react-apexcharts', () => ({
-    default: (props: { options: { labels?: string[] }; series: unknown; type: string }) => (
-        <div data-testid="apex-chart" data-type={props.type}>{JSON.stringify({ series: props.series, labels: props.options.labels })}</div>
-    ),
+    default: (props: { options: ApexOptions; series: unknown; type: string }) => {
+        capturedOptions.current = props.options;
+        return <div data-testid="apex-chart" data-type={props.type}>{JSON.stringify({ series: props.series, labels: props.options.labels })}</div>;
+    },
 }));
 vi.mock('../../../contexts/ThemeContext', () => ({ useTheme: () => useThemeMock() }));
 
@@ -39,5 +42,15 @@ describe('DonutStatChart', () => {
         const chart = screen.getByTestId('apex-chart');
         expect(chart).toHaveAttribute('data-type', 'donut');
         expect(JSON.parse(chart.textContent ?? '{}')).toEqual({ series: [5, 3], labels: ['Futures', 'Spot'] });
+    });
+
+    it('formats data labels as a percentage with one decimal place', async () => {
+        useThemeMock.mockReturnValue({ theme: 'light' });
+        const { default: DonutStatChart } = await import('./DonutStatChart');
+
+        render(<DonutStatChart labels={['Futures', 'Spot']} series={[5, 3]} emptyMessage="No data yet" />);
+
+        const formatter = capturedOptions.current?.dataLabels?.formatter as (val: number) => string;
+        expect(formatter(62.5)).toBe('62.5%');
     });
 });

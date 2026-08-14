@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import StatsChartCarousel, { type StatsChartPanel } from './StatsChartCarousel';
 
@@ -71,5 +71,64 @@ describe('StatsChartCarousel', () => {
         render(<StatsChartCarousel panels={[panels[0]]} />);
 
         expect(screen.queryAllByRole('button', { name: 'carousel.goTo' })).toHaveLength(0);
+    });
+
+    describe('native scroll (touch swipe)', () => {
+        afterEach(() => {
+            vi.unstubAllGlobals();
+        });
+
+        it('syncs the active index when the scroll container fires a scroll event', async () => {
+            // jsdom has no layout engine, so scrollLeft/clientWidth need to be stubbed, and
+            // jsdom does not implement requestAnimationFrame, so it's stubbed to run synchronously.
+            vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+                cb(0);
+                return 0;
+            });
+            vi.stubGlobal('cancelAnimationFrame', vi.fn());
+
+            const { container } = render(<StatsChartCarousel panels={panels} />);
+            const scrollContainer = container.querySelector('.snap-x') as HTMLDivElement;
+            Object.defineProperty(scrollContainer, 'clientWidth', { value: 300, configurable: true });
+            Object.defineProperty(scrollContainer, 'scrollLeft', { value: 300, configurable: true });
+
+            fireEvent.scroll(scrollContainer);
+
+            expect(await screen.findByText('Panel B')).toBeInTheDocument();
+        });
+
+        it('ignores a scroll event before the container has been laid out', () => {
+            vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+                cb(0);
+                return 0;
+            });
+            vi.stubGlobal('cancelAnimationFrame', vi.fn());
+
+            const { container } = render(<StatsChartCarousel panels={panels} />);
+            const scrollContainer = container.querySelector('.snap-x') as HTMLDivElement;
+            // clientWidth defaults to 0 in jsdom (no layout engine) — dividing by it
+            // would be meaningless, so the handler should bail out instead.
+
+            fireEvent.scroll(scrollContainer);
+
+            expect(screen.getByText('Panel A')).toBeInTheDocument();
+        });
+
+        it('does not change state when a scroll event resolves to the already-active index', async () => {
+            vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+                cb(0);
+                return 0;
+            });
+            vi.stubGlobal('cancelAnimationFrame', vi.fn());
+
+            const { container } = render(<StatsChartCarousel panels={panels} />);
+            const scrollContainer = container.querySelector('.snap-x') as HTMLDivElement;
+            Object.defineProperty(scrollContainer, 'clientWidth', { value: 300, configurable: true });
+            Object.defineProperty(scrollContainer, 'scrollLeft', { value: 0, configurable: true });
+
+            fireEvent.scroll(scrollContainer);
+
+            expect(await screen.findByText('Panel A')).toBeInTheDocument();
+        });
     });
 });

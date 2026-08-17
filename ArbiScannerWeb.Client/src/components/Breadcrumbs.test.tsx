@@ -31,6 +31,13 @@ describe('Breadcrumbs', () => {
         expect(screen.getByText('nav.faq')).toBeInTheDocument();
     });
 
+    it('shows a single crumb for the stats page', () => {
+        renderAt('/en/stats');
+
+        expect(screen.getByText('nav.main')).toBeInTheDocument();
+        expect(screen.getByText('nav.stats')).toHaveAttribute('aria-current', 'page');
+    });
+
     it('marks the current page as the active crumb', () => {
         renderAt('/en/account');
 

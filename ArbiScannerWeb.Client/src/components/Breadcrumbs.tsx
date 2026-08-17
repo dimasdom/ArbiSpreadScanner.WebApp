@@ -15,6 +15,7 @@ const routeMeta: Record<string, RouteMeta> = {
     account: { labelKey: 'nav.account' },
     'mcp-token': { labelKey: 'nav.mcpToken' },
     spreads: { labelKey: 'nav.spreads' },
+    stats: { labelKey: 'nav.stats' },
     spread: { labelKey: 'breadcrumbs.spreadDetails', parent: 'spreads' },
     subscriptions: { labelKey: 'nav.subscriptions' },
     payment: { labelKey: 'breadcrumbs.payment', parent: 'subscriptions' },

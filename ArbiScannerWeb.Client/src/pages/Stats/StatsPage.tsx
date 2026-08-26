@@ -6,14 +6,14 @@ import DonutStatChart from './components/DonutStatChart';
 import StatsChartCarousel, { type StatsChartPanel } from './components/StatsChartCarousel';
 import { useStatsPage } from './hooks/useStatsPage';
 
-// DDMMYYHH, in the viewer's local time zone (generatedAtUtc is UTC on the wire).
+// DDMMYYYY, in the viewer's local time zone (generatedAtUtc is UTC on the wire).
+// Snapshots are now daily, so the hour component is no longer meaningful.
 function formatSnapshotOption(generatedAtUtc: string): string {
     const date = new Date(generatedAtUtc);
     const dd = String(date.getDate()).padStart(2, '0');
     const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const yy = String(date.getFullYear() % 100).padStart(2, '0');
-    const hh = String(date.getHours()).padStart(2, '0');
-    return `${dd}${mm}${yy}${hh}`;
+    const yyyy = date.getFullYear();
+    return `${dd}${mm}${yyyy}`;
 }
 
 function StatsPage() {

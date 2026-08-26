@@ -14,7 +14,9 @@ namespace ArbiScannerWeb.Infrastructure.Services
         private const int TopN = 10;
         private const string LatestCacheKey = "stats:latest";
         private const string IndexCacheKey = "stats:index";
-        private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(6);
+        // Comfortably longer than the daily aggregation cadence so a missed/delayed
+        // run degrades gracefully to the Mongo fallback instead of serving stale data.
+        private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(30);
 
         private readonly ITradeOpportunityRepository _tradeOpportunityRepository;
         private readonly ISpreadStatsRepository _statsRepository;

@@ -172,7 +172,7 @@ try
         .AddOrUpdate<SpreadStatsAggregationJob>(
             "spread-stats-aggregation",
             job => job.ExecuteAsync(JobCancellationToken.Null),
-            "0 */4 * * *",
+            "0 1 * * *", // 1am UTC, offset from stale-spread-cleanup's midnight run
             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
     if (observabilityEnabled)

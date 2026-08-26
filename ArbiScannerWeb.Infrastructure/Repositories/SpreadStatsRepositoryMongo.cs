@@ -7,6 +7,10 @@ namespace ArbiScannerWeb.Infrastructure.Repositories
 {
     public class SpreadStatsRepositoryMongo : ISpreadStatsRepository
     {
+        // How far back the snapshot index (and therefore the frontend's date selector)
+        // reaches; older snapshots stay in Mongo, just not browsable.
+        private const int IndexRetentionDays = 30;
+
         private readonly IMongoCollection<SpreadStatsSnapshotModel> _collection;
 
         public SpreadStatsRepositoryMongo(IMongoDatabase mongoDatabase, MongoDbSettings mongoSettings)
@@ -36,9 +40,10 @@ namespace ArbiScannerWeb.Infrastructure.Repositories
         {
             var projection = Builders<SpreadStatsSnapshotModel>.Projection
                 .Expression(x => new SnapshotIndexEntry { Id = x.Id, GeneratedAtUtc = x.GeneratedAtUtc });
+            var cutoff = DateTime.UtcNow.AddDays(-IndexRetentionDays);
 
             return await _collection
-                .Find(Builders<SpreadStatsSnapshotModel>.Filter.Empty)
+                .Find(Builders<SpreadStatsSnapshotModel>.Filter.Gte(x => x.GeneratedAtUtc, cutoff))
                 .SortByDescending(x => x.GeneratedAtUtc)
                 .Project(projection)
                 .ToListAsync();

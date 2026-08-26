@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using ArbiScannerWeb.Abstractions.Interfaces;
+using ArbiScannerWeb.Abstractions.Interfaces.Repositories;
 using ArbiScannerWeb.Domain.Models;
 using ArbiScannerWeb.IntegrationTests.Fixtures;
 using ArbiScannerWeb.IntegrationTests.Support;
@@ -72,6 +73,40 @@ public class SpreadStatsControllerTests(WebApiTestFixture fixture)
 
         response.StatusCode.Should().NotBe(System.Net.HttpStatusCode.Unauthorized);
     }
+
+    [Fact]
+    public async Task GetSnapshotIndex_ExcludesSnapshotsOlderThan30Days()
+    {
+        var recent = await GenerateSnapshotAsync();
+        var old = BuildEmptySnapshot(DateTime.UtcNow.AddDays(-31));
+
+        using (var scope = fixture.Factory.Services.CreateScope())
+        {
+            var statsRepository = scope.ServiceProvider.GetRequiredService<ISpreadStatsRepository>();
+            await statsRepository.InsertSnapshotAsync(old);
+        }
+
+        var client = fixture.Factory.CreateClient();
+        var response = await client.GetAsync("/api/SpreadStats/GetSnapshotIndex");
+
+        var result = await response.Content.ReadFromJsonAsync<ApiResult<List<SnapshotIndexEntry>>>(JsonOptions.CaseInsensitive);
+        result!.IsSuccess.Should().BeTrue();
+        result.Value.Should().Contain(e => e.Id == recent.Id);
+        result.Value.Should().NotContain(e => e.Id == old.Id);
+    }
+
+    private static SpreadStatsSnapshotModel BuildEmptySnapshot(DateTime generatedAtUtc) => new()
+    {
+        Id = Guid.NewGuid(),
+        GeneratedAtUtc = generatedAtUtc,
+        TotalSpreadsAnalyzed = 0,
+        TopSymbolsByAverageSpread = [],
+        TopExchangesByCount = [],
+        TopExchangePairsByCount = [],
+        MedianVolumeByExchange = [],
+        SpreadTypeDistribution = [],
+        TopSymbolsByCount = [],
+    };
 
     private async Task<SpreadStatsSnapshotModel> GenerateSnapshotAsync()
     {

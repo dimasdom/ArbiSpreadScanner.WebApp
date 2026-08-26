@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "Spread Statistics",
-    "subtitle": "Aggregated every 4 hours from every detected spread",
+    "subtitle": "Aggregated daily from every detected spread",
     "totalAnalyzed": "{{count}} spreads analyzed",
     "generatedAt": "Generated {{date}}"
   },

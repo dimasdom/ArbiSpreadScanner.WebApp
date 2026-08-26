@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "Statistiques des écarts",
-    "subtitle": "Agrégées toutes les 4 heures à partir de chaque écart détecté",
+    "subtitle": "Agrégées quotidiennement à partir de chaque écart détecté",
     "totalAnalyzed": "{{count}} écarts analysés",
     "generatedAt": "Généré le {{date}}"
   },

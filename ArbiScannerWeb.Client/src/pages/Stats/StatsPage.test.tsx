@@ -37,15 +37,14 @@ const snapshots: SnapshotIndexEntry[] = [
     { id: 'snap-0', generatedAtUtc: '2026-01-03T08:00:00Z' },
 ];
 
-// Mirrors StatsPage's own DDMMYYHH formatter, computed at test time so the
+// Mirrors StatsPage's own DDMMYYYY formatter, computed at test time so the
 // assertion doesn't depend on which timezone the test runner happens to use.
 function expectedOptionLabel(generatedAtUtc: string): string {
     const date = new Date(generatedAtUtc);
     const dd = String(date.getDate()).padStart(2, '0');
     const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const yy = String(date.getFullYear() % 100).padStart(2, '0');
-    const hh = String(date.getHours()).padStart(2, '0');
-    return `${dd}${mm}${yy}${hh}`;
+    const yyyy = date.getFullYear();
+    return `${dd}${mm}${yyyy}`;
 }
 
 function baseHookValue(overrides: Partial<ReturnType<typeof useStatsPageMock>> = {}) {
@@ -123,7 +122,7 @@ describe('StatsPage', () => {
         expect(screen.getByTestId('donut-chart')).toHaveTextContent('Futures,Spot');
     });
 
-    it('populates the select with one option per available snapshot, formatted as DDMMYYHH', () => {
+    it('populates the select with one option per available snapshot, formatted as DDMMYYYY', () => {
         useStatsPageMock.mockReturnValue(baseHookValue({
             snapshot,
             hasAnySnapshot: true,

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/compare/v1.2.0...v1.3.0) (2026-08-26)
+
+
+### Features
+
+* switch spread stats aggregation to a daily cadence ([#10](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/issues/10)) ([743b0ed](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/commit/743b0edc0255caa79beb6f3639e1edb018c6668c))
+
 ## [1.2.0](https://github.com/dimasdom/ArbiSpreadScanner.WebApp/compare/v1.1.2...v1.2.0) (2026-08-17)
 
 

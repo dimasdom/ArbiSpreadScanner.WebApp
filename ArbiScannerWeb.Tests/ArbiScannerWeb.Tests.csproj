@@ -29,6 +29,13 @@
     <ProjectReference Include="..\ArbiScannerWeb.Abstractions\ArbiScannerWeb.Abstractions.csproj" />
     <ProjectReference Include="..\ArbiScannerWeb.Infrastructure\ArbiScannerWeb.Infrastructure.csproj" />
     <ProjectReference Include="..\ArbiScannerWeb.API\ArbiScannerWeb.API.csproj" />
+    <ProjectReference Include="..\ArbiScannerWeb.Messaging.Kafka\ArbiScannerWeb.Messaging.Kafka.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Messaging\spread-key-vectors.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

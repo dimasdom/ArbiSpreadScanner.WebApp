@@ -29,7 +29,7 @@ The main user-facing web application for the ArbiScanner platform. It displays r
 
 ## Overview
 
-ArbiScannerWebApp is a full-stack application composed of an ASP.NET Core 10 REST API with a React 19 + Vite SPA. The backend consumes spread events from a RabbitMQ fanout exchange, persists them to MongoDB, and pushes updates to connected browser clients in real time over SignalR WebSockets. User accounts, identity, refresh tokens, and Telegram link state are stored in PostgreSQL. Redis provides caching.
+ArbiScannerWebApp is a full-stack application composed of an ASP.NET Core 10 REST API with a React 19 + Vite SPA. The backend consumes spread events from Kafka, persists them to MongoDB, and pushes updates to connected browser clients in real time over SignalR WebSockets. User accounts, identity, refresh tokens, and Telegram link state are stored in PostgreSQL. Redis provides caching.
 
 Key user-facing features:
 
@@ -57,8 +57,8 @@ ArbiScannerWeb.API  ──>  ArbiScannerWeb.Infrastructure  ──>  ArbiScanner
 
 **Data flows:**
 
-1. The ArbitrageScanner engine publishes spread events to the durable `spread_fanout_exchange` RabbitMQ exchange with publisher confirms.
-2. `RabbitMqService` in Infrastructure consumes from the durable `spread_api` queue (dead-lettering to `spread_api_dlq` on failure), de-duplicates via a Redis `SET NX` claim keyed on `(queue, Guid, ActionType)`, and only acknowledges a message to the broker *after* `MessageProcessingService` has actually finished persisting it — see [Message Processing Correctness](#message-processing-correctness).
+1. The ArbitrageScanner engine publishes every `Open`, `Update` and `Close` of a spread to the Kafka `spreads` topic, keyed by the spread's stable identity so a spread's events stay in order on one partition.
+2. `KafkaConsumerService` (project `ArbiScannerWeb.Messaging.Kafka`) consumes the topic in group `webapp-spreads` and hands each message to `TradeOpportunityKafkaHandler`, which de-duplicates by `message-id` in Redis and applies the event through `ITradeOpportunityService`. The offset is committed only *after* the handler has finished; a failure is retried and then dead-lettered to `spreads.dlq` — see [Message Processing Correctness](#message-processing-correctness).
 3. After persistence, `IRealtimeNotifier` (implemented by `SignalRService` in the API project) pushes the updated spread data to all connected browser clients over the `TradeOpportunityHub` SignalR hub.
 4. The React SPA receives real-time events via `@microsoft/signalr` and updates the Redux store.
 5. REST endpoints serve historical data from MongoDB and user/account data from PostgreSQL.
@@ -84,7 +84,7 @@ Notable types:
 Defines the contracts (interfaces) consumed by the API and implemented by Infrastructure. References only the Domain project.
 
 Key interfaces:
-- `IRabbitMqService` — RabbitMQ consumer lifecycle
+- `IIdempotencyStore` (`Messaging/`) — two-state duplicate suppression shared by every spread consumer
 - `IRealtimeNotifier` — push notifications to SignalR clients
 - `IAccountService`, `IEmailService`, `ISubscriptionService`, `IAdminService`, `IUserSettingsService`
 - `ITradeOpportunityRepository`, `ITradeOpportunityTickerRepository` — MongoDB repositories
@@ -101,9 +101,9 @@ Responsibilities:
 - **ASP.NET Core Identity + JWT** — authentication and authorization
 - **MongoDB repositories** (`TradeOpportunityRepositoryMongo`, `TradeOpportunityTickerRepositoryMongo`) via `MongoDB.Driver` 3.x
 - **Redis cache** via `StackExchange.Redis` 2.10
-- **RabbitMQ consumer** (`RabbitMqService`) via `RabbitMQ.Client` 7 — binds to `spread_fanout_exchange`, queue `spread_api`
+- **Kafka consumer** — lives in the separate `ArbiScannerWeb.Messaging.Kafka` project (so `ArbiScannerAdminPannel`, which references Infrastructure, never pulls in the Kafka client); Infrastructure holds the pieces every consumer shares: `RedisIdempotencyStore`, the `SpreadKey` / `SpreadEventKeys` key helpers and the `TradeOpportunitySerializer` protobuf contract
 - **Email service** — SMTP via Gmail
-- `MessageProcessingService` — deserializes incoming RabbitMQ messages and orchestrates MongoDB writes + SignalR push
+- `TradeOpportunityKafkaHandler` (`ArbiScannerWeb.Messaging.Kafka`) — decodes incoming Kafka messages and applies them through `ITradeOpportunityService` (MongoDB writes + SignalR push)
 - **Error handling** (`Extensions/ErrorCodes.cs`, `Extensions/TypedErrors.cs`, `Filters/ResultStatusCodeFilter.cs`, `Middleware/ExceptionHandlingMiddleware.cs`) — see [Error Handling](#error-handling)
 
 ### ArbiScannerWeb.API
@@ -158,7 +158,7 @@ Internationalization: every route is prefixed with a `:lang` segment (`LangGuard
 | Identity | ASP.NET Core Identity + JWT Bearer |
 | Document store | MongoDB.Driver 3.x |
 | Cache | StackExchange.Redis 2.10 |
-| Message broker | RabbitMQ.Client 7 |
+| Message broker | Apache Kafka via Confluent.Kafka 2.16 |
 | Real-time | ASP.NET Core SignalR |
 | Logging | Serilog → Grafana Loki |
 | API docs | Scalar / OpenAPI |
@@ -201,7 +201,7 @@ Internationalization: every route is prefixed with a `:lang` segment (`LangGuard
 | PostgreSQL | 17 |
 | MongoDB | latest |
 | Redis | 7 |
-| RabbitMQ | 3 (management plugin) |
+| Apache Kafka | 3.9 (KRaft, single node) |
 | Grafana Loki | latest |
 | Grafana Tempo | latest |
 | Prometheus | latest |
@@ -219,7 +219,7 @@ Ensure the following are installed and running before starting local development
 - PostgreSQL (default port 5432)
 - MongoDB (default port 27017)
 - Redis (default port 6379)
-- RabbitMQ with the management plugin (AMQP port 5672, management UI port 15672)
+- Apache Kafka with the `spreads` topic (compose network only; `docker-compose.yml` here starts a broker and a `kafka-init` job)
 
 You can start all infrastructure services using the provided `docker-compose.yml` (see [Docker](#docker)).
 
@@ -232,10 +232,10 @@ You can start all infrastructure services using the provided `docker-compose.yml
 From the `ArbiScannerWebApp` directory:
 
 ```bash
-docker compose up postgres rabbitmq redis loki -d
+docker compose up postgres kafka kafka-init redis loki -d
 ```
 
-This starts PostgreSQL, RabbitMQ, Redis, and Loki without building the application images.
+This starts PostgreSQL, Kafka (and creates its topics), Redis, and Loki without building the application images.
 
 ### 2. Apply database migrations
 
@@ -292,13 +292,16 @@ All settings below can be overridden via environment variables using the `__` do
     "CurrentSpreadsCollection": "CurrentSpreads",
     "SpreadsTickerCollection": "SpreadsTicker"
   },
-  "RabbitMq": {
-    "Host": "localhost",
-    "Queue": "spread_api",
-    "Username": "guest",
-    "Password": "guest",
-    "Exchange": "spread_fanout_exchange",
-    "RoutingKey": ""
+  "Messaging": {
+    "ServiceName": "webapp"
+  },
+  "Kafka": {
+    "BootstrapServers": "localhost:9092",
+    "ClientId": "arbiscanner-web",
+    "Consumer": {
+      "Topic": "spreads",
+      "AutoOffsetReset": "Latest"
+    }
   },
   "Redis": {
     "Endpoint": "localhost:6379"
@@ -380,16 +383,16 @@ Note that both the middleware and the filter/error-code helpers live in `ArbiSca
 
 ## Message Processing Correctness
 
-`RabbitMqService` (shared with `ArbiScanner.TelegramNotifierApp` via project reference) used to acknowledge a message to the broker as soon as the `OnMessageReceived` handler was *fired*, not once it actually finished — the handler was invoked without being awaited, and the wrapper (`MessageProcessingService`) compounded this by detaching its real work via `Task.Run` and returning an already-completed `Task`. A message could be acked before the Mongo write it represented had even started.
+The consumer is built around one rule: **an event is only considered done after its effects are durable**. (An earlier RabbitMQ version broke it — it acknowledged a message as soon as the handler was *fired*, so a message could be acked before the Mongo write it represented had started. The broker has since been replaced; see ADR-0007 in the monorepo, `docs/arc42/adr/`.)
 
-This is now fixed end-to-end:
+- **Commit after processing.** `KafkaConsumerService` disables auto-commit, processes messages sequentially (so per-partition order is preserved) and commits offsets in batches (every 100 messages or 5 s) and on partition revoke. A crash re-delivers the uncommitted tail.
+- **Failures are not swallowed.** `ITradeOpportunityService` returns a `Result` and never throws; the old consumer ignored it and acknowledged the message, silently losing it. `TradeOpportunityKafkaHandler` throws on a failed `Result`, so the event is retried three times with backoff and then published to `spreads.dlq` with the error, attempt count and source offset in headers. An undecodable payload, a missing `message-id` or an unknown action skips the retries. A failing message never blocks its partition.
+- **Duplicates are suppressed by `message-id`.** `spread-dedupe:{service}:{message-id}` is a two-state Redis claim: `processing` for 60 s while the handler runs, then `done` for 15 min. A crash mid-handler leaves only the short `processing` claim, so the redelivery is retried instead of being mistaken for a duplicate and lost. (The residual window — a crash between the ticker insert and the `done` marker — can add one extra chart point; it cannot lose an event.)
+- **Order.** The Kafka key is the spread's stable identity, never the long/short direction, so Open → Update… → Close of a spread are applied in publish order.
+- **One replica.** The web API must run as a single instance: SignalR has no backplane, so a second instance would receive only its share of partitions and push only to its own clients.
+- **Health.** `/health` reports `kafka` (a metadata request) alongside Postgres, Mongo and Redis. Setting `Kafka__Consumer__Enabled=false` keeps the consumer from starting, for hosts without a broker.
 
-- The consumer awaits the full handler chain before acking. On failure it retries (Polly, exponential backoff + jitter) before dead-lettering the message (`x-dead-letter-exchange` → `spread_api_dlq`) rather than requeuing forever.
-- Before processing, a Redis `SET NX` claim keyed on `(queue, Guid, ActionType)` — not `Guid` alone, since the same event legitimately recurs across the Open/Update/Close lifecycle — de-duplicates redelivered messages. The claim is deleted if processing ultimately fails, so a later DLQ replay isn't mistaken for a stale duplicate.
-- `MessageProcessingService`'s `SemaphoreSlim(30)` concurrency limiter was removed: it existed to bound concurrent Mongo writes while the broker had already (incorrectly) moved on to the next message. Now that RabbitMQ's default sequential consumer dispatch only advances after the current message is actually acked, at most one message is ever in flight — the limiter had become dead weight.
-- Publisher confirms and durable queues (`spread_api`, `spread_telegram`) with a `spread_dlx` dead-letter exchange were added on the `ArbitrageScanner` publishing side to match.
-
-Proven, not just asserted: `ArbiScannerWeb.IntegrationTests/RabbitMq/RabbitMqIdempotencyTests.cs` publishes the same event twice against a real Testcontainers broker and asserts exactly one ticker write results; `RabbitMqDeadLetterTests.cs` publishes a non-deserializable message and asserts it lands in the dead-letter queue instead of looping forever. See `docs/completed-work-summary.md` (monorepo root) for the full write-up.
+Proven, not just asserted (Testcontainers): `Kafka/KafkaMessagingTests` (same-key ordering, resume from the committed offset after a restart, no duplicate side effect, poison message to the DLQ while later events flow, a two-instance rebalance), `Kafka/KafkaCutoverTests` (the real API against real Postgres, Redis, Mongo and Kafka: lifecycle applied in order, a duplicate delivery writes exactly one ticker, a poison message is dead-lettered) and `Kafka/RedisIdempotencyStoreTests` (a crash before completion is never mistaken for "done"). See the monorepo's `docs/architecture/kafka-operations.md` for topics, partition sizing and replay.
 
 ---
 
@@ -462,7 +465,7 @@ Runs on every push/PR to `main`:
 2. CodeQL initializes twice — C# (`build-mode: manual`) and JavaScript/TypeScript (`build-mode: none`, since the client isn't compiled) — then analyzes both after the build/test steps.
 3. `npm ci --ignore-scripts` + `npm test -- --coverage --reporter=junit` in `ArbiScannerWeb.Client`, then the vitest lcov report's `SF:` source paths are rewritten to absolute (`sed`) so SonarCloud's coverage import resolves them correctly.
 4. `dotnet restore`/`build` on `ArbiScannerWebApp.sln` with analyzers (the API references the React client as an MSBuild project, so Node/npm needs to be set up first).
-5. `ArbiScannerWeb.Tests` (unit), then `ArbiScannerWeb.IntegrationTests` (Testcontainers — real Postgres/Mongo/RabbitMQ/Redis containers), both with coverage collection feeding the SonarCloud scan.
+5. `ArbiScannerWeb.Tests` (unit), then `ArbiScannerWeb.IntegrationTests` (Testcontainers — real Postgres/Mongo/Kafka/Redis containers), both with coverage collection feeding the SonarCloud scan.
 6. `.trx` and JUnit results are published as check-run summaries via `dorny/test-reporter`.
 
 Both SonarCloud and CodeQL are free for this public repo; SonarCloud additionally requires a `SONAR_TOKEN` secret.
@@ -481,7 +484,7 @@ Runs `ArbiScannerWeb.LoadTests` separately from `ci.yml` (`workflow_dispatch` wi
 
 ### Health checks
 
-`/health` (Postgres, Mongo, Redis, RabbitMQ) is exposed on the same host/port as the REST API, backed by `Microsoft.Extensions.Diagnostics.HealthChecks` and the classes in `ArbiScannerWeb.Infrastructure/HealthChecks/` — several of which (`RedisHealthCheck`, `RabbitMqHealthCheck`, `DbContextHealthCheck<T>`, `DbContextFactoryHealthCheck<T>`) are reused by `ArbiScannerAdminPannel` and `ArbiScanner.TelegramNotifierApp` via the same project reference that shares `RabbitMqService`.
+`/health` (Postgres, Mongo, Redis, Kafka) is exposed on the same host/port as the REST API, backed by `Microsoft.Extensions.Diagnostics.HealthChecks` and the classes in `ArbiScannerWeb.Infrastructure/HealthChecks/` — several of which (`RedisHealthCheck`, `DbContextHealthCheck<T>`, `DbContextFactoryHealthCheck<T>`) are reused by `ArbiScannerAdminPannel` and `ArbiScanner.TelegramNotifierApp` via the same project reference; the Telegram notifier also reuses `ArbiScannerWeb.Messaging.Kafka`, which holds `KafkaHealthCheck` and the consumer loop.
 
 ---
 
@@ -507,7 +510,7 @@ dotnet test ArbiScannerWeb.Tests/ArbiScannerWeb.Tests.csproj
 
 ### ArbiScannerWeb.IntegrationTests
 
-Testcontainers-backed tests using `Microsoft.AspNetCore.Mvc.Testing`'s `WebApplicationFactory` to host the real API in-process against real Postgres, MongoDB, RabbitMQ, and Redis containers. **Docker must be running locally.** The AdminPanel dependency is faked with WireMock.Net rather than run for real.
+Testcontainers-backed tests using `Microsoft.AspNetCore.Mvc.Testing`'s `WebApplicationFactory` to host the real API in-process against real Postgres, MongoDB, Kafka, and Redis containers. **Docker must be running locally.** The AdminPanel dependency is faked with WireMock.Net rather than run for real.
 
 | File | Coverage |
 |---|---|
@@ -515,9 +518,9 @@ Testcontainers-backed tests using `Microsoft.AspNetCore.Mvc.Testing`'s `WebAppli
 | `Api/TradeOpportunityControllerTests` | Spread endpoints against real Mongo data |
 | `Api/ClientLogSmokeTests` | The frontend error-logging endpoint |
 | `AdminPanel/AdminPanelIntegrationTests` | Subscription data sourced from a WireMock-stubbed AdminPanel API |
-| `RabbitMq/RabbitMqIntegrationTests` | `RabbitMqService` consuming real messages from a `Testcontainers.RabbitMq` broker |
-| `RabbitMq/RabbitMqIdempotencyTests` | Publishing the same event twice results in exactly one ticker write — proves the Redis dedupe claim actually prevents reprocessing, not just that it compiles |
-| `RabbitMq/RabbitMqDeadLetterTests` | A non-deserializable ("poison") message lands in `spread_api_dlq` instead of being nacked-and-requeued forever |
+| `Kafka/KafkaMessagingTests` | The consumer loop against a real broker: same-key order, restart resumes from the committed offset without loss, a duplicate `message-id` has no duplicate side effect, a poison message lands in `spreads.dlq` and later events still flow, a non-retryable message is dead-lettered after one attempt, a two-instance rebalance neither loses nor repeats work |
+| `Kafka/KafkaCutoverTests` | The real API with Kafka as its only spread source: Open / Update / Close applied in order to Mongo, a duplicate delivery writes exactly one ticker, a poison message is dead-lettered, live consumer group and `kafka` health check |
+| `Kafka/RedisIdempotencyStoreTests` | The two-state claim: first caller wins, a crash before completion is never reported as done, completed work is done with the long TTL, an abandoned claim can be taken again |
 
 ```bash
 dotnet test ArbiScannerWeb.IntegrationTests/ArbiScannerWeb.IntegrationTests.csproj
@@ -595,7 +598,8 @@ This starts:
 | Container | Port(s) | Description |
 |---|---|---|
 | `arbiscanner-postgres` | 5432 | PostgreSQL database |
-| `arbiscanner-rabbitmq` | 5672, 15672 | RabbitMQ + management UI |
+| `arbiscanner-kafka` | — (compose network only) | Kafka broker (KRaft) |
+| `arbiscanner-kafka-init` | — | One-shot topic creation (`spreads`, `spreads.dlq`) |
 | `arbiscanner-redis` | 6379 | Redis cache |
 | `arbiscanner-web` | 8080 | .NET API (+ `/metrics` for Prometheus) |
 | `arbiscanner-client` | 3001 | React SPA (nginx) |
@@ -604,7 +608,7 @@ This starts:
 | `arbiscanner-prometheus` | 9090 | Metrics storage |
 | `arbiscanner-grafana` | 3000 | Grafana dashboards |
 
-After startup, open `http://localhost:3001` in your browser. Grafana is available at `http://localhost:3000` (default credentials: `admin` / `admin`). RabbitMQ management UI is at `http://localhost:15672`.
+After startup, open `http://localhost:3001` in your browser. Grafana is available at `http://localhost:3000` (default credentials: `admin` / `admin`).
 
 ### nginx reverse proxy
 
@@ -628,19 +632,22 @@ ArbiScannerWebApp/
 ├── ArbiScannerWeb.Abstractions/        # Service and repository interfaces
 │   └── Interfaces/
 │       ├── Repositories/               # ITradeOpportunityRepository, etc.
-│       └── *.cs                        # IAccountService, IRabbitMqService, etc.
+│       └── *.cs                        # IAccountService, ITradeOpportunityService, etc.
 │
 ├── ArbiScannerWeb.Infrastructure/      # Concrete implementations
 │   ├── DbContext/                      # AppDbContext (EF Core + PostgreSQL)
 │   ├── Migrations/                     # EF Core migration files
 │   ├── Repositories/                   # MongoDB and PostgreSQL repositories
-│   ├── Services/                       # RabbitMqService, AccountService, EmailService, etc.
-│   ├── HealthChecks/                   # Redis/RabbitMQ/DbContext(Factory) checks — shared with AdminPanel and TelegramNotifierApp
-│   ├── Settings/                       # JwtOptions, MongoDbSettings, RabbitMqConfiguration
+│   ├── Services/                       # AccountService, EmailService, TradeOpportunityService, etc.
+│   ├── Messaging/                      # SpreadKey, RedisIdempotencyStore, TradeOpportunitySerializer (shared by every consumer)
+│   ├── HealthChecks/                   # Redis/DbContext(Factory) checks — shared with AdminPanel and TelegramNotifierApp
+│   ├── Settings/                       # JwtOptions, MongoDbSettings, MessagingOptions
 │   ├── Middleware/                     # ExceptionHandlingMiddleware (see Error Handling)
 │   ├── Filters/                        # ResultStatusCodeFilter
 │   ├── Extensions/                     # ResultExtensions, ErrorCodes, TypedErrors
 │   └── StartupSetup.cs                 # DI registration extension method
+│
+├── ArbiScannerWeb.Messaging.Kafka/     # Kafka producer/consumer building blocks (also used by TelegramNotifierApp)
 │
 ├── ArbiScannerWeb.API/                 # ASP.NET Core 10 Web API host
 │   ├── Controllers/                    # AccountController, TradeOpportunityController, etc.
@@ -658,7 +665,7 @@ ArbiScannerWebApp/
 ├── ArbiScannerWeb.IntegrationTests/     # Testcontainers-backed API tests — see Testing
 │   ├── Api/                             # Account/spread/client-log flow tests
 │   ├── AdminPanel/                      # WireMock-stubbed AdminPanel dependency tests
-│   ├── RabbitMq/                        # Real-broker consumer tests
+│   ├── Kafka/                           # Real-broker consumer and full-stack cutover tests
 │   ├── Fixtures/                        # WebApiTestFixture, AdminPanelTestFixture, etc.
 │   └── Support/                         # CustomWebApplicationFactory and helpers
 │

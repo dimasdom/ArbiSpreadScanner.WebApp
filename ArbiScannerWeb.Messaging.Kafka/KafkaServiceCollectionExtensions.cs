@@ -42,13 +42,4 @@ public static class KafkaServiceCollectionExtensions
         services.AddHostedService<KafkaConsumerService>();
         return services;
     }
-
-    /// <summary>Uses the application's existing <c>IConnectionMultiplexer</c> for duplicate suppression.</summary>
-    public static IServiceCollection AddRedisIdempotencyStore(this IServiceCollection services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-
-        services.TryAddSingleton<IIdempotencyStore, RedisIdempotencyStore>();
-        return services;
-    }
 }

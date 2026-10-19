@@ -13,6 +13,8 @@ using ArbiScannerWeb.API.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
+using ArbiScannerWeb.Infrastructure.Messaging;
+using ArbiScannerWeb.Messaging.Kafka;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
@@ -65,6 +67,8 @@ try
     builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>();
     builder.Services.AddScoped<IRealtimeNotifier, SignalRService>();
     builder.Services.AddHostedService<MessageProcessingService>();
+    // Kafka side of the RabbitMQ -> Kafka migration; a no-op unless Messaging:Consumer:Mode=Shadow.
+    builder.Services.AddSpreadMessaging(builder.Configuration);
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     {
@@ -120,12 +124,14 @@ try
                 .AddEntityFrameworkCoreInstrumentation()
                 .AddRedisInstrumentation()
                 .AddSource("RabbitMQ.Client.*")
+                .AddSource(KafkaTelemetry.SourceName)
                 .AddSource("MongoDB.Driver.Core.Extensions.DiagnosticSources")
                 .AddOtlpExporter())
             .WithMetrics(metrics => metrics
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
+                .AddMeter(ParityMetrics.MeterName)
                 .AddPrometheusExporter());
     }
     builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));

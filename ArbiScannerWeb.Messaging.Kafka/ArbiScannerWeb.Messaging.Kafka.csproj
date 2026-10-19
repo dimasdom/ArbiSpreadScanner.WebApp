@@ -15,7 +15,12 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.13" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.13" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.13" />
-    <PackageReference Include="StackExchange.Redis" Version="2.10.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ArbiScannerWeb.Abstractions\ArbiScannerWeb.Abstractions.csproj" />
+    <ProjectReference Include="..\ArbiScannerWeb.Domain\ArbiScannerWeb.Domain.csproj" />
+    <ProjectReference Include="..\ArbiScannerWeb.Infrastructure\ArbiScannerWeb.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

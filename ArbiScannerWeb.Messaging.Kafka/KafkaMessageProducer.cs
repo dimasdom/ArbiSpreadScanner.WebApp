@@ -17,6 +17,7 @@ public interface IKafkaMessageProducer
         byte[] value,
         string messageType,
         string? messageId = null,
+        DateTimeOffset? producedAt = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>Re-publishes a message with the headers it already carries (used for dead-lettering).</summary>
@@ -52,6 +53,7 @@ public sealed class KafkaMessageProducer : IKafkaMessageProducer, IDisposable
         byte[] value,
         string messageType,
         string? messageId = null,
+        DateTimeOffset? producedAt = null,
         CancellationToken cancellationToken = default)
     {
         using var activity = KafkaTelemetry.StartProducer(topic, key);
@@ -62,7 +64,7 @@ public sealed class KafkaMessageProducer : IKafkaMessageProducer, IDisposable
 
         try
         {
-            return await SendAsync(topic, key, value, headers, cancellationToken);
+            return await SendAsync(topic, key, value, headers, producedAt, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -72,11 +74,17 @@ public sealed class KafkaMessageProducer : IKafkaMessageProducer, IDisposable
     }
 
     public Task<ProducedMessage> ForwardAsync(string topic, string key, byte[] value, Headers headers, CancellationToken cancellationToken = default)
-        => SendAsync(topic, key, value, headers, cancellationToken);
+        => SendAsync(topic, key, value, headers, producedAt: null, cancellationToken);
 
-    private async Task<ProducedMessage> SendAsync(string topic, string key, byte[] value, Headers headers, CancellationToken cancellationToken)
+    private async Task<ProducedMessage> SendAsync(string topic, string key, byte[] value, Headers headers, DateTimeOffset? producedAt, CancellationToken cancellationToken)
     {
-        var message = new Message<string, byte[]> { Key = key, Value = value, Headers = headers };
+        var message = new Message<string, byte[]>
+        {
+            Key = key,
+            Value = value,
+            Headers = headers,
+            Timestamp = producedAt is { } at ? new Timestamp(at) : Timestamp.Default,
+        };
 
         try
         {

@@ -1,4 +1,6 @@
 ﻿using ArbiScannerWeb.Abstractions.Interfaces;
+using ArbiScannerWeb.Abstractions.Messaging;
+using ArbiScannerWeb.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -38,16 +40,26 @@ namespace ArbiScannerWeb.Infrastructure.Services
         private readonly IOptions<RabbitMqSettings> _settings;
         private readonly IDatabase _redis;
         private readonly ResiliencePipeline _retryPipeline;
+        private readonly IParityRecorder _parity;
+        private readonly IIdempotencyStore _idempotency;
+        private readonly string _dedupeScope;
         private bool _disposed = false;
-        private static readonly RuntimeTypeModel ProtobufModel = CreateProtobufModel();
         public event Func<TradeOpportunityModel, Task>? OnMessageReceived;
 
-        public RabbitMqService(ILogger<RabbitMqService> logger, IOptions<RabbitMqSettings> settings, IConnectionMultiplexer redis)
+        public RabbitMqService(
+            ILogger<RabbitMqService> logger,
+            IOptions<RabbitMqSettings> settings,
+            IConnectionMultiplexer redis,
+            IParityRecorder? parity = null,
+            IOptions<MessagingOptions>? messaging = null)
         {
             _logger = logger;
             _settings = settings;
             _queueName = _settings.Value.Queue;
             _redis = redis.GetDatabase();
+            _parity = parity ?? new NoOpParityRecorder();
+            _idempotency = new RedisIdempotencyStore(redis);
+            _dedupeScope = string.IsNullOrWhiteSpace(messaging?.Value.ServiceName) ? _queueName : messaging.Value.ServiceName;
             _retryPipeline = new ResiliencePipelineBuilder()
                 .AddRetry(new RetryStrategyOptions
                 {
@@ -58,39 +70,6 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     UseJitter = true
                 })
                 .Build();
-        }
-
-        private static RuntimeTypeModel CreateProtobufModel()
-        {
-            var model = RuntimeTypeModel.Create();
-
-            model.Add(typeof(ExchangeRateModel), true);
-
-            var orderLevelMeta = model.Add(typeof(OrderLevelModel), false);
-            orderLevelMeta.Add(1, nameof(OrderLevelModel.Price));
-            orderLevelMeta.Add(2, nameof(OrderLevelModel.Amount));
-
-            var tradeOpportunityMeta = model.Add(typeof(TradeOpportunityModel), false);
-            tradeOpportunityMeta.Add(1, nameof(TradeOpportunityModel.Guid));
-            tradeOpportunityMeta.Add(2, nameof(TradeOpportunityModel.ExchangeRateA));
-            tradeOpportunityMeta.Add(3, nameof(TradeOpportunityModel.ExchangeRateB));
-            tradeOpportunityMeta.Add(4, nameof(TradeOpportunityModel.ExchangeShort));
-            tradeOpportunityMeta.Add(5, nameof(TradeOpportunityModel.ExchangeLong));
-            tradeOpportunityMeta.Add(7, nameof(TradeOpportunityModel.SummaryTarrif));
-            tradeOpportunityMeta.Add(8, nameof(TradeOpportunityModel.PossibleProfit));
-            tradeOpportunityMeta.Add(9, nameof(TradeOpportunityModel.TotalFunding));
-            tradeOpportunityMeta.Add(10, nameof(TradeOpportunityModel.Spread));
-            tradeOpportunityMeta.Add(11, nameof(TradeOpportunityModel.Type));
-            tradeOpportunityMeta.Add(12, nameof(TradeOpportunityModel.ActionType));
-            tradeOpportunityMeta.Add(13, nameof(TradeOpportunityModel.StartSpread));
-            tradeOpportunityMeta.Add(14, nameof(TradeOpportunityModel.Symbol));
-            tradeOpportunityMeta.Add(15, nameof(TradeOpportunityModel.BidsExchangeA));
-            tradeOpportunityMeta.Add(16, nameof(TradeOpportunityModel.AsksExchangeA));
-            tradeOpportunityMeta.Add(17, nameof(TradeOpportunityModel.BidsExchangeB));
-            tradeOpportunityMeta.Add(18, nameof(TradeOpportunityModel.AsksExchangeB));
-            tradeOpportunityMeta.Add(19, nameof(TradeOpportunityModel.DateTime));
-
-            return model;
         }
 
         // Hashes the fields that actually change tick-to-tick into a fixed-size fingerprint
@@ -162,39 +141,20 @@ namespace ArbiScannerWeb.Infrastructure.Services
                     TradeOpportunityModel? position = null;
                     try
                     {
-                        using var stream = new MemoryStream(ea.Body.ToArray());
-                        position = (TradeOpportunityModel)ProtobufModel.Deserialize(
-                            stream,
-                            value: null,
-                            type: typeof(TradeOpportunityModel));
+                        position = TradeOpportunitySerializer.Deserialize(ea.Body.ToArray());
 
                         _logger.LogInformation("Received message: {Message}", position.Spread);
 
-                        var dedupeKey = BuildDedupeKey(_queueName, position);
-                        var claimed = await _redis.StringSetAsync(dedupeKey, "1", DedupeWindow, When.NotExists);
-                        if (!claimed)
-                        {
-                            _logger.LogInformation("Duplicate delivery skipped: {DedupeKey}", dedupeKey);
-                            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: CancellationToken.None);
-                            return;
-                        }
+                        var messageId = ea.BasicProperties.IsMessageIdPresent() ? ea.BasicProperties.MessageId : null;
+                        await RecordParityAsync(position, messageId, ea.BasicProperties);
 
-                        try
+                        if (string.IsNullOrEmpty(messageId))
                         {
-                            await _retryPipeline.ExecuteAsync(async _ =>
-                            {
-                                if (OnMessageReceived != null)
-                                {
-                                    await OnMessageReceived.Invoke(position);
-                                }
-                            });
-
-                            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: CancellationToken.None);
+                            await ProcessWithContentHashDedupeAsync(position, ea);
                         }
-                        catch (Exception)
+                        else
                         {
-                            await _redis.KeyDeleteAsync(dedupeKey);
-                            throw;
+                            await ProcessWithMessageIdDedupeAsync(position, messageId, ea);
                         }
                     }
                     catch (Exception ex)
@@ -215,6 +175,82 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 _connection = null;
                 _channel = null;
                 _logger.LogError(ex, "Failed to start consuming messages");
+            }
+        }
+
+        // Messages published by a scanner that stamps a message-id: dedupe on (service, message-id) with the same two-state
+        // store the Kafka consumer uses, so a redelivery after a crash is retried (not skipped) and both brokers agree on what
+        // has already been processed.
+        private async Task ProcessWithMessageIdDedupeAsync(TradeOpportunityModel position, string messageId, BasicDeliverEventArgs ea)
+        {
+            var ran = await IdempotentExecutor.RunOnceAsync(
+                _idempotency,
+                $"spread-dedupe:{_dedupeScope}:{messageId}",
+                _ => _retryPipeline.ExecuteAsync(async _ => await InvokeHandlerAsync(position)).AsTask(),
+                maxWait: TimeSpan.FromSeconds(90),
+                pollInterval: TimeSpan.FromSeconds(1),
+                CancellationToken.None);
+
+            if (!ran)
+            {
+                _logger.LogInformation("Duplicate delivery skipped: message-id {MessageId}", messageId);
+            }
+
+            await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: CancellationToken.None);
+        }
+
+        // Legacy messages without a message-id: content-hash dedupe, unchanged.
+        private async Task ProcessWithContentHashDedupeAsync(TradeOpportunityModel position, BasicDeliverEventArgs ea)
+        {
+            var dedupeKey = BuildDedupeKey(_queueName, position);
+            var claimed = await _redis.StringSetAsync(dedupeKey, "1", DedupeWindow, When.NotExists);
+            if (!claimed)
+            {
+                _logger.LogInformation("Duplicate delivery skipped: {DedupeKey}", dedupeKey);
+                await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: CancellationToken.None);
+                return;
+            }
+
+            try
+            {
+                await _retryPipeline.ExecuteAsync(async _ => await InvokeHandlerAsync(position));
+
+                await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: CancellationToken.None);
+            }
+            catch (Exception)
+            {
+                await _redis.KeyDeleteAsync(dedupeKey);
+                throw;
+            }
+        }
+
+        private async Task InvokeHandlerAsync(TradeOpportunityModel position)
+        {
+            if (OnMessageReceived != null)
+            {
+                await OnMessageReceived.Invoke(position);
+            }
+        }
+
+        // Parity bookkeeping must never affect delivery: any failure here is logged and swallowed.
+        private async Task RecordParityAsync(TradeOpportunityModel position, string? messageId, IReadOnlyBasicProperties properties)
+        {
+            if (string.IsNullOrEmpty(messageId))
+            {
+                return;
+            }
+
+            try
+            {
+                var producedAt = properties.IsTimestampPresent()
+                    ? DateTimeOffset.FromUnixTimeSeconds(properties.Timestamp.UnixTime)
+                    : DateTimeOffset.UtcNow;
+
+                await _parity.RecordAsync(MessagingBackends.RabbitMq, SpreadEventKeys.For(position), messageId, producedAt);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to record RabbitMQ parity for message {MessageId}", messageId);
             }
         }
 

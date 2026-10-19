@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace ArbiScannerWeb.Messaging.Kafka;
+namespace ArbiScannerWeb.Infrastructure.Messaging;
 
 public enum SpreadKeyType
 {

@@ -1,6 +1,4 @@
-using StackExchange.Redis;
-
-namespace ArbiScannerWeb.Messaging.Kafka;
+namespace ArbiScannerWeb.Abstractions.Messaging;
 
 public enum ClaimResult
 {
@@ -16,7 +14,8 @@ public enum ClaimResult
 
 /// <summary>Two-state duplicate suppression: a short-lived <c>processing</c> claim, upgraded to a long-lived
 /// <c>done</c> marker only after the side effects succeeded. A crash mid-handler leaves only the short claim,
-/// so the redelivered message is retried once it expires instead of being skipped as a "duplicate" and lost.</summary>
+/// so the redelivered message is retried once it expires instead of being skipped as a "duplicate" and lost.
+/// Shared by the RabbitMQ and Kafka consumers so both backends agree on what has already been processed.</summary>
 public interface IIdempotencyStore
 {
     Task<ClaimResult> TryBeginAsync(string key, CancellationToken cancellationToken);
@@ -24,42 +23,6 @@ public interface IIdempotencyStore
     Task CompleteAsync(string key);
 
     Task AbandonAsync(string key);
-}
-
-public sealed class RedisIdempotencyStore(IConnectionMultiplexer redis) : IIdempotencyStore
-{
-    public static readonly TimeSpan ProcessingTtl = TimeSpan.FromSeconds(60);
-
-    public static readonly TimeSpan DoneTtl = TimeSpan.FromMinutes(15);
-
-    private const string Processing = "processing";
-    private const string Done = "done";
-
-    public async Task<ClaimResult> TryBeginAsync(string key, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        var db = redis.GetDatabase();
-
-        if (await db.StringSetAsync(key, Processing, ProcessingTtl, When.NotExists))
-        {
-            return ClaimResult.Started;
-        }
-
-        var state = await db.StringGetAsync(key);
-        if (state.IsNull)
-        {
-            // Expired between the SET and the GET — try to claim again.
-            return await db.StringSetAsync(key, Processing, ProcessingTtl, When.NotExists)
-                ? ClaimResult.Started
-                : ClaimResult.InProgress;
-        }
-
-        return state == Done ? ClaimResult.AlreadyDone : ClaimResult.InProgress;
-    }
-
-    public Task CompleteAsync(string key) => redis.GetDatabase().StringSetAsync(key, Done, DoneTtl);
-
-    public Task AbandonAsync(string key) => redis.GetDatabase().KeyDeleteAsync(key);
 }
 
 /// <summary>Runs a side-effecting action at most once per idempotency key.</summary>

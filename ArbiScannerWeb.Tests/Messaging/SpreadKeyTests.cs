@@ -1,3 +1,5 @@
+using ArbiScannerWeb.Abstractions.Messaging;
+using ArbiScannerWeb.Infrastructure.Messaging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ArbiScannerWeb.Messaging.Kafka;

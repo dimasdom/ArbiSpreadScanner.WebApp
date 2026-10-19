@@ -1,3 +1,5 @@
+using ArbiScannerWeb.Abstractions.Messaging;
+using ArbiScannerWeb.Infrastructure.Messaging;
 using System.Collections.Concurrent;
 using System.Text;
 using ArbiScannerWeb.Messaging.Kafka;

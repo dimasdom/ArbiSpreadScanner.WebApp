@@ -1,3 +1,5 @@
+using ArbiScannerWeb.Abstractions.Messaging;
+using ArbiScannerWeb.Infrastructure.Messaging;
 using ArbiScannerWeb.IntegrationTests.Support;
 using ArbiScannerWeb.Messaging.Kafka;
 using FluentAssertions;

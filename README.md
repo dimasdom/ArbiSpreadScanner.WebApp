@@ -18,6 +18,7 @@ The main user-facing web application for the ArbiScanner platform. It displays r
 - [Environment Variables](#environment-variables)
 - [Error Handling](#error-handling)
 - [Message Processing Correctness](#message-processing-correctness)
+- [Live Spread Updates (SSE)](#live-spread-updates-sse)
 - [Internationalization](#internationalization)
 - [Database Migrations](#database-migrations)
 - [CI/CD](#cicd)
@@ -29,11 +30,11 @@ The main user-facing web application for the ArbiScanner platform. It displays r
 
 ## Overview
 
-ArbiScannerWebApp is a full-stack application composed of an ASP.NET Core 10 REST API with a React 19 + Vite SPA. The backend consumes spread events from Kafka, persists them to MongoDB, and pushes updates to connected browser clients in real time over SignalR WebSockets. User accounts, identity, refresh tokens, and Telegram link state are stored in PostgreSQL. Redis provides caching.
+ArbiScannerWebApp is a full-stack application composed of an ASP.NET Core 10 REST API with a React 19 + Vite SPA. The backend consumes spread events from Kafka, persists them to MongoDB, and streams updates to connected browser clients in real time over Server-Sent Events (SSE). User accounts, identity, refresh tokens, and Telegram link state are stored in PostgreSQL. Redis provides caching.
 
 Key user-facing features:
 
-- Live spread table updated in real time via SignalR
+- Live spread detail page updated in real time via SSE
 - Historical spread ticker charts (ApexCharts)
 - Spread detail pages with order book visualization
 - User registration, login, email confirmation, and password reset
@@ -50,7 +51,7 @@ The solution follows Clean Architecture, organized into five projects with a str
 ```
 ArbiScannerWeb.Client  (SPA)
         |
-        | HTTP / WebSocket
+        | HTTP (REST + SSE)
         v
 ArbiScannerWeb.API  ──>  ArbiScannerWeb.Infrastructure  ──>  ArbiScannerWeb.Abstractions  ──>  ArbiScannerWeb.Domain
 ```
@@ -59,8 +60,8 @@ ArbiScannerWeb.API  ──>  ArbiScannerWeb.Infrastructure  ──>  ArbiScanner
 
 1. The ArbitrageScanner engine publishes every `Open`, `Update` and `Close` of a spread to the Kafka `spreads` topic, keyed by the spread's stable identity so a spread's events stay in order on one partition.
 2. `KafkaConsumerService` (project `ArbiScannerWeb.Messaging.Kafka`) consumes the topic in group `webapp-spreads` and hands each message to `TradeOpportunityKafkaHandler`, which de-duplicates by `message-id` in Redis and applies the event through `ITradeOpportunityService`. The offset is committed only *after* the handler has finished; a failure is retried and then dead-lettered to `spreads.dlq` — see [Message Processing Correctness](#message-processing-correctness).
-3. After persistence, `IRealtimeNotifier` (implemented by `SignalRService` in the API project) pushes the updated spread data to all connected browser clients over the `TradeOpportunityHub` SignalR hub.
-4. The React SPA receives real-time events via `@microsoft/signalr` and updates the Redux store.
+3. After persistence, `IRealtimeNotifier` (implemented by `SseNotifier`) publishes the new ticker, or the close, to the in-process `ISpreadStreamBroker`, which fans it out to every open stream of that spread — see [Live Spread Updates](#live-spread-updates-sse).
+4. The spread page's `spreadStreamService` receives the events from `GET /api/TradeOpportunity/Stream/{id}` and appends them to the chart.
 5. REST endpoints serve historical data from MongoDB and user/account data from PostgreSQL.
 6. Telegram linking: the user requests a link ID via the API; the TelegramNotifierApp service handles the Telegram-side confirmation and writes the result back to PostgreSQL.
 
@@ -85,7 +86,8 @@ Defines the contracts (interfaces) consumed by the API and implemented by Infras
 
 Key interfaces:
 - `IIdempotencyStore` (`Messaging/`) — two-state duplicate suppression shared by every spread consumer
-- `IRealtimeNotifier` — push notifications to SignalR clients
+- `IRealtimeNotifier` — transport-agnostic push of a spread update to its live clients
+- `ISpreadStreamBroker`, `ISpreadStreamService` — per-spread fan-out and the SSE stream itself
 - `IAccountService`, `IEmailService`, `ISubscriptionService`, `IAdminService`, `IUserSettingsService`
 - `ITradeOpportunityRepository`, `ITradeOpportunityTickerRepository` — MongoDB repositories
 - `IAccountRepository`, `IExchangeLinkRepository` — PostgreSQL repositories
@@ -103,12 +105,12 @@ Responsibilities:
 - **Redis cache** via `StackExchange.Redis` 2.10
 - **Kafka consumer** — lives in the separate `ArbiScannerWeb.Messaging.Kafka` project (so `ArbiScannerAdminPannel`, which references Infrastructure, never pulls in the Kafka client); Infrastructure holds the pieces every consumer shares: `RedisIdempotencyStore`, the `SpreadKey` / `SpreadEventKeys` key helpers and the `TradeOpportunitySerializer` protobuf contract
 - **Email service** — SMTP via Gmail
-- `TradeOpportunityKafkaHandler` (`ArbiScannerWeb.Messaging.Kafka`) — decodes incoming Kafka messages and applies them through `ITradeOpportunityService` (MongoDB writes + SignalR push)
+- `TradeOpportunityKafkaHandler` (`ArbiScannerWeb.Messaging.Kafka`) — decodes incoming Kafka messages and applies them through `ITradeOpportunityService` (MongoDB writes + push to the open SSE streams)
 - **Error handling** (`Extensions/ErrorCodes.cs`, `Extensions/TypedErrors.cs`, `Filters/ResultStatusCodeFilter.cs`, `Middleware/ExceptionHandlingMiddleware.cs`) — see [Error Handling](#error-handling)
 
 ### ArbiScannerWeb.API
 
-ASP.NET Core 10 Web API host. Wires up Infrastructure services via `StartupSetup.cs`, exposes REST endpoints, hosts the SignalR hub, and serves API documentation.
+ASP.NET Core 10 Web API host. Wires up Infrastructure services via `StartupSetup.cs`, exposes REST endpoints and the SSE spread stream, and serves API documentation.
 
 Controllers:
 - `AccountController` — registration, login, token refresh, email confirmation, password reset, Telegram link, profile management
@@ -117,8 +119,8 @@ Controllers:
 - `ClientLogController` — frontend error logging endpoint
 
 Other:
-- `TradeOpportunityHub` — SignalR hub for real-time spread push
-- `SignalRService` — implements `IRealtimeNotifier`, calls hub methods
+- `SpreadStreamController` — `GET /api/TradeOpportunity/Stream/{id}`, the SSE stream of one spread's live tickers
+- `Streaming/SseFormatter` — `text/event-stream` wire format
 - Swagger/Scalar API documentation at `/scalar`
 - Serilog structured logging, shipped to Grafana Loki
 
@@ -137,7 +139,7 @@ Pages:
 - `SubscriptionPage` — plans; `PaymentInfoPage`, `PaymentCryptoPage`, `PaymentSuccessPage`
 - `FaqPage` — FAQ accordion
 
-State management: Redux Toolkit with RTK Query (services: `account`, `spread`, `subscription`) plus a plain `language` slice mirroring the active i18next locale. SignalR connection is managed by `signalrService.ts`. Token refresh coordination is handled by `refreshCoordinator.ts` to prevent concurrent refresh races.
+State management: Redux Toolkit with RTK Query (services: `account`, `spread`, `subscription`) plus a plain `language` slice mirroring the active i18next locale. The spread page's live stream is managed by `spreadStreamService.ts`. Token refresh coordination is handled by `refreshCoordinator.ts` to prevent concurrent refresh races.
 
 Error handling: `normalizeApiError.ts` converts any RTK Query `FetchBaseQueryError`/`SerializedError` into a `{ code, message }` shape, reading the `errorCode`/`message` fields the API's `TypedErrors` envelope always returns (see [Error Handling](#error-handling)); `ErrorState.tsx` renders that shape consistently wherever a query fails.
 
@@ -159,7 +161,7 @@ Internationalization: every route is prefixed with a `:lang` segment (`LangGuard
 | Document store | MongoDB.Driver 3.x |
 | Cache | StackExchange.Redis 2.10 |
 | Message broker | Apache Kafka via Confluent.Kafka 2.16 |
-| Real-time | ASP.NET Core SignalR |
+| Real-time | Server-Sent Events (in-process `Channel<T>` fan-out) |
 | Logging | Serilog → Grafana Loki |
 | API docs | Scalar / OpenAPI |
 | Serialization | Google.Protobuf, protobuf-net |
@@ -175,7 +177,7 @@ Internationalization: every route is prefixed with a `:lang` segment (`LangGuard
 | UI libraries | HeroUI, MUI 7, Tailwind CSS 4 |
 | State | Redux Toolkit 2 + RTK Query |
 | Charts | ApexCharts 4 / react-apexcharts |
-| Real-time | @microsoft/signalr 8 |
+| Real-time | @microsoft/fetch-event-source 2 (spread stream); @microsoft/signalr 8 (AI chat widget only) |
 | HTTP | axios 1 |
 | Routing | react-router 7 |
 | Animations | framer-motion 12 |
@@ -267,7 +269,7 @@ npm install
 npm run dev
 ```
 
-The Vite dev server starts at `https://localhost:12321`. It proxies `/api/` and `/hubs/` to the running API process.
+The Vite dev server starts at `https://localhost:12321`. It proxies `/api/` (REST and the SSE stream) to the running API process, and `/ai-hub/` to the AI assistant.
 
 ### 5. Open the application
 
@@ -389,12 +391,50 @@ The consumer is built around one rule: **an event is only considered done after 
 - **Failures are not swallowed.** `ITradeOpportunityService` returns a `Result` and never throws; the old consumer ignored it and acknowledged the message, silently losing it. `TradeOpportunityKafkaHandler` throws on a failed `Result`, so the event is retried three times with backoff and then published to `spreads.dlq` with the error, attempt count and source offset in headers. An undecodable payload, a missing `message-id` or an unknown action skips the retries. A failing message never blocks its partition.
 - **Duplicates are suppressed by `message-id`.** `spread-dedupe:{service}:{message-id}` is a two-state Redis claim: `processing` for 60 s while the handler runs, then `done` for 15 min. A crash mid-handler leaves only the short `processing` claim, so the redelivery is retried instead of being mistaken for a duplicate and lost. (The residual window — a crash between the ticker insert and the `done` marker — can add one extra chart point; it cannot lose an event.)
 - **Order.** The Kafka key is the spread's stable identity, never the long/short direction, so Open → Update… → Close of a spread are applied in publish order.
-- **One replica.** The web API must run as a single instance: SignalR has no backplane, so a second instance would receive only its share of partitions and push only to its own clients.
+- **One replica.** The web API must run as a single instance: the SSE broker is in-process, so a second instance would receive only its share of partitions and push only to its own clients.
 - **Health.** `/health` reports `kafka` (a metadata request) alongside Postgres, Mongo and Redis. Setting `Kafka__Consumer__Enabled=false` keeps the consumer from starting, for hosts without a broker.
 
 Proven, not just asserted (Testcontainers): `Kafka/KafkaMessagingTests` (same-key ordering, resume from the committed offset after a restart, no duplicate side effect, poison message to the DLQ while later events flow, a two-instance rebalance), `Kafka/KafkaCutoverTests` (the real API against real Postgres, Redis, Mongo and Kafka: lifecycle applied in order, a duplicate delivery writes exactly one ticker, a poison message is dead-lettered) and `Kafka/RedisIdempotencyStoreTests` (a crash before completion is never mistaken for "done"). See the monorepo's `docs/architecture/kafka-operations.md` for topics, partition sizing and replay.
 
 ---
+
+## Live Spread Updates (SSE)
+
+The spread detail page shows a live chart. Its updates arrive over **Server-Sent Events** from `GET /api/TradeOpportunity/Stream/{id}` (this replaced a SignalR hub; the AI chat widget still uses SignalR, against its own service).
+
+```
+Kafka handler -> TradeOpportunityService -> IRealtimeNotifier (SseNotifier) -> ISpreadStreamBroker
+                                                                                  |  one bounded drop-oldest Channel per open stream
+                                                                       SpreadStreamService -> SpreadStreamController -> text/event-stream -> spreadStreamService.ts
+```
+
+**Protocol**
+
+| | |
+|---|---|
+| Request | `GET /api/TradeOpportunity/Stream/{id}` with `Authorization: Bearer ...` (header only; a token in the query string is rejected). Optional `Last-Event-ID: <unix ms>` |
+| `401` / `403` / `404` | not authenticated / no active subscription / unknown spread |
+| First bytes | `: connected` and `retry: 3000`, flushed immediately so the client knows it is connected |
+| `event: ticker` | `id:` is the ticker's Unix-millisecond time; `data:` is the camelCase ticker JSON including order books |
+| `event: close` | the scanner closed the spread. No `id`. The server then ends the stream and the client does not reconnect. Connecting to an already-closed spread yields just this event |
+| `: keep-alive` | comment every `KeepAliveSeconds` while idle, so proxies do not time the connection out |
+
+**Resuming.** The page remembers the newest ticker of its REST snapshot and sends it as `Last-Event-ID` when it connects, and `fetch-event-source` resends the newest id it has seen on every reconnect. The server subscribes to the broker *first*, then replays tickers recorded after the cursor from MongoDB (oldest first, **without order books**, at most `ReplayLimit`, keeping the newest if there are more), then goes live, de-duplicating by id. Nothing recorded between the snapshot and the connect, or while the client was away, is lost.
+
+**Lifetime and tokens.** A JWT is validated only when the connection opens, so the server ends every stream after `MaxLifetimeMinutes` (10); the client reconnects with a freshly renewed token and resumes from its cursor. A client that stops reading never slows the Kafka consumer: its channel drops the oldest events (counted in `arbiscanner.realtime.spread_stream.events_dropped`).
+
+**Access control.** The spread id is in the route (there is no client-chosen group to join), and the active-subscription check runs on every connect, the same rule as `GetSpreadInfo`.
+
+**Configuration** (`SpreadStream` section; env vars `SpreadStream__KeepAliveSeconds`, ...):
+
+| Key | Default | |
+|---|---|---|
+| `SubscriberBufferSize` | 256 | events buffered per open stream before the oldest is dropped |
+| `KeepAliveSeconds` | 15 | idle interval before a keep-alive comment |
+| `MaxLifetimeMinutes` | 10 | server-side stream cap (forces a token refresh) |
+| `ReplayLimit` | 500 | most missed tickers replayed on reconnect |
+
+**Operations.** Metrics: `arbiscanner.realtime.spread_stream.active` (open streams) and `.events_dropped`. The route is exempt from the 60/min per-IP rate limit (one held-open request; reconnects would otherwise eat the budget) and from tracing. Behind nginx the stream needs `proxy_buffering off` and a long read timeout, and HTTP/2 so several tabs do not exhaust the browser's six-connections-per-origin limit on HTTP/1.1. The broker is in-process, so the API stays a single replica.
 
 ## Internationalization
 
@@ -501,6 +541,9 @@ Fast, no-I/O unit tests (xUnit + FluentAssertions + Moq):
 | `API/AccountControllerTests` | Controller behavior against mocked `IAccountService` |
 | `API/ExceptionHandlingMiddlewareTests` | Middleware produces the expected JSON envelope for thrown exceptions |
 | `API/ResultStatusCodeFilterTests` | Filter maps `Result` failures to the correct HTTP status code from `TypedErrors` metadata |
+| `Infrastructure/Realtime/*` | SSE broker (fan-out, drop-oldest, concurrency), stream service (replay, de-duplication, keep-alive, lifetime, cleanup), notifier, DI |
+| `API/SseFormatterTests`, `API/SpreadStreamControllerTests` | `text/event-stream` wire format; status mapping, headers, `Last-Event-ID` parsing |
+| `API/SpreadStreamEndpointTests` | The real HTTP pipeline over an in-process `TestServer` (no Docker): auth, preamble, live events, close, replay, keep-alive, lifetime cap, 20 concurrent clients, a client that never reads, resume without gaps |
 | `Domain/RefreshTokenModelTests`, `Domain/UserSettingsModelTests` | Domain model invariants |
 | `Infrastructure/AccountServiceTests`, `SubscriptionServiceTests`, `TradeOpportunityServiceTests` | Service-layer logic against mocked repositories |
 
@@ -517,6 +560,8 @@ Testcontainers-backed tests using `Microsoft.AspNetCore.Mvc.Testing`'s `WebAppli
 | `Api/AccountFlowTests` | End-to-end registration/login/refresh flows against a real Postgres-backed Identity store |
 | `Api/TradeOpportunityControllerTests` | Spread endpoints against real Mongo data |
 | `Api/ClientLogSmokeTests` | The frontend error-logging endpoint |
+| `Api/SpreadStreamEndpointTests` | The SSE stream on the full app: 401 / 404, a query-string token is rejected, live ticker then close ends the stream, replay of stored tickers without order books |
+| `Repositories/TickerReplayQueryTests` | The replay query against real MongoDB: strict cursor, chronological order, newest-kept limit, per-spread isolation, order books omitted |
 | `AdminPanel/AdminPanelIntegrationTests` | Subscription data sourced from a WireMock-stubbed AdminPanel API |
 | `Kafka/KafkaMessagingTests` | The consumer loop against a real broker: same-key order, restart resumes from the committed offset without loss, a duplicate `message-id` has no duplicate side effect, a poison message lands in `spreads.dlq` and later events still flow, a non-retryable message is dead-lettered after one attempt, a two-instance rebalance neither loses nor repeats work |
 | `Kafka/KafkaCutoverTests` | The real API with Kafka as its only spread source: Open / Update / Close applied in order to Mongo, a duplicate delivery writes exactly one ticker, a poison message is dead-lettered, live consumer group and `kafka` health check |
@@ -531,6 +576,7 @@ dotnet test ArbiScannerWeb.IntegrationTests/ArbiScannerWeb.IntegrationTests.cspr
 A separate, not-part-of-the-normal-test-run project (per the monorepo's CLAUDE.md) with a small hand-rolled throttled load runner (`Support/LoadRunner.cs` — a `SemaphoreSlim`-bounded request loop, not a dependency like NBomber) rather than pass/fail assertions:
 
 - `LoadTests/AccountUpdateLoadTest`, `LoadTests/SpreadFetchLoadTest` — sustained-throughput smoke tests against a running instance of the API
+- `LoadTests/SpreadStreamLoadTest` — opens spread SSE streams at the configured rate (auth, subscription check, broker subscribe, preamble) and disconnects; needs at least one open spread
 
 Uses `Xunit.SkippableFact` so these can be skipped by default and only run explicitly against an environment configured for load testing, via these environment variables:
 
@@ -615,7 +661,7 @@ After startup, open `http://localhost:3001` in your browser. Grafana is availabl
 In the production Docker setup the React app is served by nginx. The `nginx.conf` configuration:
 
 - Proxies `/api/*` to the `web` container on port 8080
-- Proxies `/hubs/*` to the `web` container with WebSocket upgrade headers (`Connection: upgrade`) and a 3600-second read timeout for persistent SignalR connections
+- Proxies `/api/TradeOpportunity/Stream/*` to the `web` container with response buffering off and a 3600-second read timeout, so the SSE stream is delivered as it is written
 - Falls back to `index.html` for all other paths to support client-side routing
 
 ---
@@ -651,8 +697,7 @@ ArbiScannerWebApp/
 │
 ├── ArbiScannerWeb.API/                 # ASP.NET Core 10 Web API host
 │   ├── Controllers/                    # AccountController, TradeOpportunityController, etc.
-│   ├── Hubs/                           # TradeOpportunityHub (SignalR)
-│   ├── Services/                       # SignalRService (IRealtimeNotifier)
+│   ├── Streaming/                      # SseFormatter (text/event-stream)
 │   ├── Program.cs                      # Application entry point
 │   ├── appsettings.json                # Configuration file
 │   └── CHANGELOG.md                    # Visual Studio project-scaffolding log
@@ -688,7 +733,7 @@ ArbiScannerWebApp/
 │   │   │   ├── Spread/                 # SpreadsPage, SpreadPage, real-time chart
 │   │   │   ├── Subscription/           # Plans, payment pages
 │   │   │   └── Faq/                    # FAQ page
-│   │   ├── services/                   # authTokenService, signalrService, refreshCoordinator
+│   │   ├── services/                   # authTokenService, spreadStreamService, refreshCoordinator
 │   │   ├── store/                      # Redux store, RTK Query services, slices
 │   │   ├── test/                       # Vitest global setup
 │   │   ├── types/                      # TypeScript type definitions (ApiError, SpreadType, etc.)

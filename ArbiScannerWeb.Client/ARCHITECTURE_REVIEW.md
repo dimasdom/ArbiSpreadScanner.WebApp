@@ -144,6 +144,8 @@ A component defined inside another component is recreated on every parent render
 
 ### 6. SignalR `useEffect` Cleanup Has a Race Condition (Medium)
 
+> **Resolved.** The spread page no longer uses SignalR: `useSpreadPage` opens one SSE stream per spread (`spreadStreamService.openSpreadStream`) and closes it in the effect cleanup, with no connect / join / leave sequence to race. The code below is kept as the historical finding.
+
 **File:** `src/pages/Spread/SpreadPage.tsx`
 
 ```ts

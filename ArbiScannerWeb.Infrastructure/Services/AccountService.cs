@@ -34,8 +34,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
                 return Result.Fail(TypedErrors.Unauthorized("User is not authenticated."));
             }
             var accountModel = await context.Users
-                .Include(a => a.UserSettings)
-                    .ThenInclude(s => s.Exchanges)
+                .Include(a => a.UserSettings.Exchanges)
                 .FirstOrDefaultAsync(a => a.Id == userIdString);
             if (accountModel is null)
                 return Result.Fail(TypedErrors.NotFound("There are no user"));
@@ -88,7 +87,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             {
                 return Result.Fail(TypedErrors.Unauthorized("User is not authenticated."));
             }
-            var user = await context.Users.Include(u => u.UserSettings).ThenInclude(u => u.Exchanges).ThenInclude(e => e.Exchange).FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await context.Users.Include(u => u.UserSettings.Exchanges).ThenInclude(e => e.Exchange).FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
                 return Result.Fail(TypedErrors.NotFound(UserNotFoundMessage));

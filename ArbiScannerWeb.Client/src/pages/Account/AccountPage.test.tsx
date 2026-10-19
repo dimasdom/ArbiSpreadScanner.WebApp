@@ -145,7 +145,7 @@ describe('AccountPage', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'accountPage.telegram.notConnected.linkButton' }));
 
-        await waitFor(() => expect(screen.getByText('telegramLink.title')).toBeInTheDocument());
+        expect(await screen.findByText('telegramLink.title')).toBeInTheDocument();
     });
 
     it('shows the connected state and unlinks Telegram', async () => {
@@ -167,7 +167,7 @@ describe('AccountPage', () => {
 
         await userEvent.click(screen.getByTitle('accountPage.telegram.unlinkAria'));
 
-        await waitFor(() => expect(screen.getByText('Unlink failed')).toBeInTheDocument());
+        expect(await screen.findByText('Unlink failed')).toBeInTheDocument();
     });
 
     it('toggles an exchange chip on and off', async () => {

@@ -33,10 +33,18 @@ function buildTrail(path: string): string[] {
     return trail;
 }
 
+function trimSlashes(value: string): string {
+    let start = 0;
+    let end = value.length;
+    while (start < end && value[start] === '/') start++;
+    while (end > start && value[end - 1] === '/') end--;
+    return value.slice(start, end);
+}
+
 export default function Breadcrumbs() {
     const { t } = useTranslation('common');
     const location = useLocation();
-    const path = stripLangPrefix(location.pathname).replace(/^\/+|\/+$/g, '');
+    const path = trimSlashes(stripLangPrefix(location.pathname));
 
     if (!routeMeta[path]) return null;
 

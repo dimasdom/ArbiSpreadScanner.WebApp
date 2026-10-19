@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArbiScannerWeb.IntegrationT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArbiScannerWeb.LoadTests", "ArbiScannerWeb.LoadTests\ArbiScannerWeb.LoadTests.csproj", "{8DB9DDC5-777E-417F-9167-5C9C2DFEF86E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArbiScannerWeb.Messaging.Kafka", "ArbiScannerWeb.Messaging.Kafka\ArbiScannerWeb.Messaging.Kafka.csproj", "{4925BACB-09B4-4FDD-B711-3B75A02E2D80}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -123,6 +125,18 @@ Global
 		{8DB9DDC5-777E-417F-9167-5C9C2DFEF86E}.Release|x64.Build.0 = Release|Any CPU
 		{8DB9DDC5-777E-417F-9167-5C9C2DFEF86E}.Release|x86.ActiveCfg = Release|Any CPU
 		{8DB9DDC5-777E-417F-9167-5C9C2DFEF86E}.Release|x86.Build.0 = Release|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Debug|x64.Build.0 = Debug|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Debug|x86.Build.0 = Debug|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Release|x64.ActiveCfg = Release|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Release|x64.Build.0 = Release|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Release|x86.ActiveCfg = Release|Any CPU
+		{4925BACB-09B4-4FDD-B711-3B75A02E2D80}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

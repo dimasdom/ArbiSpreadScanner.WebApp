@@ -49,7 +49,7 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
     // The API needs its usual dependencies to start up at all (Postgres for
     // AddDbContext/SeedExchangesAsync, Redis for the connection multiplexer, Mongo
     // for the spreads store) — this fixture only swaps out auth for a real IdP, it
-    // doesn't test business logic, so RabbitMq is left pointed at a dummy address
+    // doesn't test business logic, so the Kafka consumer is switched off
     // like the other fixtures do.
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder(Images.Postgres)
         .WithDatabase("ArbiScannerBot")
@@ -104,13 +104,8 @@ public sealed class KeycloakTestFixture : IAsyncLifetime
                 ["MongoDb:DatabaseName"] = "ArbiScannerWebIntegrationTests",
                 ["MongoDb:CurrentSpreadsCollection"] = "CurrentSpreads",
                 ["MongoDb:SpreadsTickerCollection"] = "SpreadsTicker",
-                ["RabbitMq:Host"] = "127.0.0.1",
-                ["RabbitMq:Port"] = "1",
-                ["RabbitMq:Queue"] = "spread_api_unused",
-                ["RabbitMq:Exchange"] = "spread_fanout_exchange_unused",
-                ["RabbitMq:RoutingKey"] = "",
-                ["RabbitMq:Username"] = "guest",
-                ["RabbitMq:Password"] = "guest",
+                ["Messaging:ServiceName"] = "webapp",
+                ["Kafka:Consumer:Enabled"] = "false",
             },
             // Jwt:Authority (set above) already points AddJwtBearer at this real
             // container, so the framework's own JwtBearerPostConfigureOptions wires

@@ -29,7 +29,7 @@ describe('useLiveDemoWidget', () => {
 
         act(() => { vi.advanceTimersByTime(3000); });
 
-        expect(result.current.tickers.length).toBe(initialCount + 1);
+        expect(result.current.tickers).toHaveLength(initialCount + 1);
     });
 
     it('caps the ticker history at the maximum length', () => {
@@ -47,6 +47,6 @@ describe('useLiveDemoWidget', () => {
         unmount();
         act(() => { vi.advanceTimersByTime(3000 * 5); });
 
-        expect(result.current.tickers.length).toBe(countBeforeUnmount);
+        expect(result.current.tickers).toHaveLength(countBeforeUnmount);
     });
 });

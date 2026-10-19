@@ -1,6 +1,6 @@
 global using Xunit;
 
-// Every fixture (WebApi/RabbitMq/AdminPanel/Keycloak) spins up its own WebApplicationFactory<Program>
+// Every fixture (WebApi/KafkaWeb/AdminPanel/Keycloak) spins up its own WebApplicationFactory<Program>
 // against the same ArbiScannerWeb.API entry point. Program.cs's top-level statements use the
 // process-wide static Serilog.Log.Logger for bootstrap/fatal/close-and-flush, so running collections
 // in parallel (xUnit's default) lets one fixture's shutdown dispose the logger another fixture's

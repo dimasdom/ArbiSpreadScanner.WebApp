@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.1738743">
   <PropertyGroup>
+    <!-- The JS SDK fixes the framework at net6.0, which the .NET 10 SDK pairs with a target platform of "none"; NuGet then
+         rejects the project (NU1012: platform version is not present) and fails `dotnet restore` on the whole solution. -->
+    <TargetPlatformIdentifier></TargetPlatformIdentifier>
+    <TargetPlatformMoniker></TargetPlatformMoniker>
     <StartupCommand>npm run dev</StartupCommand>
     <JavaScriptTestRoot>src\</JavaScriptTestRoot>
     <JavaScriptTestFramework>Jest</JavaScriptTestFramework>

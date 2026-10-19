@@ -25,6 +25,7 @@ COPY ["ArbiScannerWebApp/ArbiScannerWeb.API/ArbiScannerWeb.API.csproj", "ArbiSca
 COPY ["ArbiScannerWebApp/ArbiScannerWeb.Abstractions/ArbiScannerWeb.Abstractions.csproj", "ArbiScannerWebApp/ArbiScannerWeb.Abstractions/"]
 COPY ["ArbiScannerWebApp/ArbiScannerWeb.Domain/ArbiScannerWeb.Domain.csproj", "ArbiScannerWebApp/ArbiScannerWeb.Domain/"]
 COPY ["ArbiScannerWebApp/ArbiScannerWeb.Infrastructure/ArbiScannerWeb.Infrastructure.csproj", "ArbiScannerWebApp/ArbiScannerWeb.Infrastructure/"]
+COPY ["ArbiScannerWebApp/ArbiScannerWeb.Messaging.Kafka/ArbiScannerWeb.Messaging.Kafka.csproj", "ArbiScannerWebApp/ArbiScannerWeb.Messaging.Kafka/"]
 COPY ["ArbiScannerWebApp/ArbiScannerWeb.Client/ArbiScannerWeb.Client.esproj", "ArbiScannerWebApp/ArbiScannerWeb.Client/"]
 COPY ["ArbiScannerWebApp/ArbiScannerWeb.Client/package.json", "ArbiScannerWebApp/ArbiScannerWeb.Client/"]
 COPY ["ArbiScannerWebApp/ArbiScannerWeb.Client/package-lock.json", "ArbiScannerWebApp/ArbiScannerWeb.Client/"]

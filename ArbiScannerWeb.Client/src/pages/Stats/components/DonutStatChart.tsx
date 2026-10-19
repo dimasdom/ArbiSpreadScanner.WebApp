@@ -31,7 +31,7 @@ const DonutStatChart: React.FC<DonutStatChartProps> = ({ labels, series, emptyMe
         },
     }), [theme, labels]);
 
-    const hasData = series.length > 0 && series.some((value) => value > 0);
+    const hasData = series.some((value) => value > 0);
 
     if (!hasData) {
         return (

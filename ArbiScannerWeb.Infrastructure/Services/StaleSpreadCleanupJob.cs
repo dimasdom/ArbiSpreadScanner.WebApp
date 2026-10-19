@@ -65,7 +65,7 @@ namespace ArbiScannerWeb.Infrastructure.Services
             }
 
             // Delete tickers whose spread is no longer open (orphaned by the
-            // fire-and-forget race in MessageProcessingService, or by prior bugs).
+            // fire-and-forget race in the spread consumer, or by prior bugs).
             var openGuids = allOpenSpreads
                 .Where(s => !staleSpreads.Any(stale => stale.Guid == s.Guid))
                 .Select(s => s.Guid)

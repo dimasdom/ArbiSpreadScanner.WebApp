@@ -13,6 +13,8 @@ using ArbiScannerWeb.API.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
+using ArbiScannerWeb.Infrastructure.Messaging;
+using ArbiScannerWeb.Messaging.Kafka;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
@@ -62,20 +64,19 @@ try
         options.WorkerCount = 2;
         options.Queues = ["default"];
     });
-    builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>();
     builder.Services.AddScoped<IRealtimeNotifier, SignalRService>();
-    builder.Services.AddHostedService<MessageProcessingService>();
+    builder.Services.AddSpreadMessaging<TradeOpportunityKafkaHandler>(builder.Configuration);
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     {
         var redisEndpoint = builder.Configuration["Redis:Endpoint"] ?? "localhost:6379";
         return ConnectionMultiplexer.ConnectAsync(redisEndpoint).GetAwaiter().GetResult();
     });
-    builder.Services.AddHealthChecks()
+    var healthChecks = builder.Services.AddHealthChecks()
         .AddCheck<DbContextHealthCheck<AppDbContext>>("postgres")
         .AddCheck<MongoHealthCheck>("mongo")
-        .AddCheck<RedisHealthCheck>("redis")
-        .AddCheck<RabbitMqHealthCheck>("rabbitmq");
+        .AddCheck<RedisHealthCheck>("redis");
+    healthChecks.AddCheck<KafkaHealthCheck>("kafka");
     builder.Services.AddHttpClient("AdminApi", (sp, client) =>
     {
         var config = sp.GetRequiredService<IConfiguration>();
@@ -119,16 +120,16 @@ try
                 .AddHttpClientInstrumentation(o => o.RecordException = true)
                 .AddEntityFrameworkCoreInstrumentation()
                 .AddRedisInstrumentation()
-                .AddSource("RabbitMQ.Client.*")
+                .AddSource(KafkaTelemetry.SourceName)
                 .AddSource("MongoDB.Driver.Core.Extensions.DiagnosticSources")
                 .AddOtlpExporter())
             .WithMetrics(metrics => metrics
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
+                .AddMeter(ConsumerMetrics.MeterName)
                 .AddPrometheusExporter());
     }
-    builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
     builder.Services.AddRateLimiter(options =>
     {
         options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;

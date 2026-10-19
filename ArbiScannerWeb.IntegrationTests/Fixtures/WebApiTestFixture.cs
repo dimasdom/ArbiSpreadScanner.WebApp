@@ -37,13 +37,8 @@ public sealed class WebApiTestFixture : IAsyncLifetime
                 ["MongoDb:DatabaseName"] = "ArbiScannerWebIntegrationTests",
                 ["MongoDb:CurrentSpreadsCollection"] = "CurrentSpreads",
                 ["MongoDb:SpreadsTickerCollection"] = "SpreadsTicker",
-                ["RabbitMq:Host"] = "127.0.0.1",
-                ["RabbitMq:Port"] = "1",
-                ["RabbitMq:Queue"] = "spread_api_unused",
-                ["RabbitMq:Exchange"] = "spread_fanout_exchange_unused",
-                ["RabbitMq:RoutingKey"] = "",
-                ["RabbitMq:Username"] = "guest",
-                ["RabbitMq:Password"] = "guest",
+                ["Messaging:ServiceName"] = "webapp",
+                ["Kafka:Consumer:Enabled"] = "false",
             },
             configureTestServices: services =>
             {

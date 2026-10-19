@@ -52,7 +52,7 @@ public sealed class ShadowModeTests(KafkaTestFixture kafka) : IAsyncLifetime
             ["Kafka:Consumer:MaxHandlerAttempts"] = "2",
         });
         builder.Services.AddSingleton<IConnectionMultiplexer>(_connection);
-        builder.Services.AddSpreadMessaging(builder.Configuration);
+        builder.Services.AddSpreadMessaging<TradeOpportunityKafkaHandler>(builder.Configuration);
 
         var host = builder.Build();
         await host.StartAsync();

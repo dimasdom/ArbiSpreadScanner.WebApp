@@ -1,15 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useSelector } from 'react-redux';
 import { useLocalizedNavigate } from '../../../i18n/routing';
 import type { IRootStore } from '../../../store/store';
 import { useGetSpreadInfoQuery } from '../../../store/services/spread';
-import { signalRService } from '../../../services/signalrService';
+import { latestEventId, openSpreadStream } from '../../../services/spreadStreamService';
 import { useChatContext } from '../../../contexts/ChatContext';
 import { logger } from '../../../services/loggerService';
 import type { TradeOpportunityDetailsDTO } from '../../../types/tradeOpportunityModel';
-import type { MessageDTO, PossiblePositionTickerModel } from '../../../types/tickerType';
-import { PositionAction } from '../../../types/PositionAction';
+import type { PossiblePositionTickerModel } from '../../../types/tickerType';
 import { SpreadType } from '../../../types/SpreadType';
 import { calcVolatility, calcSlippage } from '../../../utils/spreadUtils';
 
@@ -45,6 +44,8 @@ export function useSpreadPage() {
     const [longRate, setLongRate] = useState<number | undefined>();
     const [spreadVal, setSpreadVal] = useState<number>(0);
     const [isSpreadClosedDialogOpen, setIsSpreadClosedDialogOpen] = useState(false);
+    // Where the REST snapshot ends: the stream resumes from here, so nothing recorded between the snapshot and the connect is lost.
+    const resumeFromRef = useRef<string | undefined>(undefined);
 
     useEffect(() => {
         if (tickers.length === 0) return;
@@ -65,6 +66,7 @@ export function useSpreadPage() {
                 const spread = data.value;
                 setPossiblePositionDTO(spread);
                 setTickers([...spread.tickers].reverse());
+                resumeFromRef.current = latestEventId(spread.tickers);
                 setSpreadVal(Math.abs(spread.positionModel.spread));
                 setGroupName(spread.groupName);
                 setLoading(false);
@@ -84,39 +86,19 @@ export function useSpreadPage() {
     }, [spreadId, data, isError, navigate]);
 
     useEffect(() => {
-        if (!groupName) return;
-        let cancelled = false;
+        if (!groupName || !spreadId) return;
 
-        const handleMessage = (message: MessageDTO) => {
-            if (message.possiblePosition?.actionType === PositionAction.Close) {
-                setIsSpreadClosedDialogOpen(true);
-                return;
-            }
-            if (message.ticker) {
-                setTickers((prev) => [...prev, message.ticker]);
-            }
-        };
-
-        const start = async () => {
-            await signalRService.connect('/hubs/TradeOpportunities');
-            if (cancelled) return;
-            await signalRService.joinGroup(groupName);
-            if (cancelled) return;
-            signalRService.onTickerUpdate(handleMessage);
-        };
-
-        start().catch((error: unknown) => {
-            const details = error instanceof Error ? error.message : 'Unknown SignalR startup error';
-            logger.error('SignalR startup failed', 'SpreadPage', details);
+        const stream = openSpreadStream(spreadId, {
+            lastEventId: resumeFromRef.current,
+            onTicker: (ticker) => setTickers((prev) => [...prev, ticker]),
+            onClose: () => setIsSpreadClosedDialogOpen(true),
+            onRejected: (status) => {
+                logger.error('Live updates refused', 'SpreadPage', `HTTP ${status}`);
+            },
         });
 
-        return () => {
-            cancelled = true;
-            signalRService.leaveGroup(groupName).catch(() => {});
-            signalRService.offTickerUpdate();
-            signalRService.disconnect().catch(() => {});
-        };
-    }, [groupName]);
+        return () => stream.close();
+    }, [groupName, spreadId]);
 
     const handleSpreadClosedConfirm = () => {
         setIsSpreadClosedDialogOpen(false);

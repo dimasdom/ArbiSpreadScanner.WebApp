@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 
 // A single shared UserManager instance, used both by react-oidc-context's
 // <AuthProvider userManager={...}> and by non-component code (RTK Query's
-// prepareHeaders, signalrService) that can't use the useAuth() hook.
+// prepareHeaders, spreadStreamService) that can't use the useAuth() hook.
 export const oidcUserManager = new UserManager({
     authority: import.meta.env.VITE_OIDC_AUTHORITY ?? '',
     client_id: import.meta.env.VITE_OIDC_CLIENT_ID ?? '',

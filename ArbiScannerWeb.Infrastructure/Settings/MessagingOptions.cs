@@ -10,7 +10,7 @@ public enum MessagingConsumerMode
     /// and both backends are recorded for the parity check.</summary>
     Shadow,
 
-    /// <summary>Consume from Kafka only. Not available until the cutover phase.</summary>
+    /// <summary>Consume from Kafka only (consumer group <c>{ServiceName}-spreads</c>). RabbitMQ is not consumed at all.</summary>
     Kafka,
 }
 
@@ -29,4 +29,21 @@ public sealed class MessagingOptions
 public sealed class MessagingConsumerSettings
 {
     public MessagingConsumerMode Mode { get; set; } = MessagingConsumerMode.RabbitMq;
+
+    /// <summary>Replay protection for user-facing alerts (Telegram): an Open event whose producer timestamp is older than this
+    /// is not alerted on. Without it, a long outage or an offset reset would re-send alerts for spreads that are long gone.</summary>
+    public int MaxOpenAlertAgeMinutes { get; set; } = 10;
+}
+
+public static class MessagingConfigurationExtensions
+{
+    /// <summary>Reads <c>Messaging:Consumer:Mode</c> (default <see cref="MessagingConsumerMode.RabbitMq"/>). Hosts use it to decide
+    /// which broker consumer to register at all.</summary>
+    public static MessagingConsumerMode GetConsumerMode(this Microsoft.Extensions.Configuration.IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var raw = configuration[$"{MessagingOptions.SectionName}:Consumer:Mode"];
+        return Enum.TryParse<MessagingConsumerMode>(raw, ignoreCase: true, out var mode) ? mode : MessagingConsumerMode.RabbitMq;
+    }
 }

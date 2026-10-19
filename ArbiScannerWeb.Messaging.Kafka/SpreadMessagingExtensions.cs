@@ -10,18 +10,20 @@ namespace ArbiScannerWeb.Messaging.Kafka;
 public static class SpreadMessagingExtensions
 {
     /// <summary>
-    /// Wires the Kafka side of a spread-consuming service according to <c>Messaging:Consumer:Mode</c>. The existing RabbitMQ
-    /// consumer is registered by the host as before and is untouched in every mode except <c>Kafka</c>.
+    /// Wires the Kafka side of a spread-consuming service according to <c>Messaging:Consumer:Mode</c>. The host registers the
+    /// RabbitMQ consumer itself, and only when the mode is not <c>Kafka</c>.
     /// <list type="bullet">
     /// <item><c>RabbitMq</c> (default): nothing Kafka-related runs; parity recording is a no-op.</item>
     /// <item><c>Shadow</c>: a Kafka consumer in group <c>{ServiceName}-spreads-shadow</c> processes the same events with no side
     /// effects, and both backends are recorded and compared per minute.</item>
-    /// <item><c>Kafka</c>: rejected at startup until the cutover phase.</item>
+    /// <item><c>Kafka</c>: <typeparamref name="TLiveHandler"/> consumes in group <c>{ServiceName}-spreads</c> and is the only path.</item>
     /// </list>
-    /// Deliberately registers no Kafka health check: a Kafka outage must not mark the service unhealthy while RabbitMQ is live.
-    /// The host must already provide an <c>IConnectionMultiplexer</c>.
+    /// Registers no Kafka health check in <c>Shadow</c> (a Kafka outage must not mark the service unhealthy while RabbitMQ is live);
+    /// in <c>Kafka</c> mode the host adds <see cref="KafkaHealthCheck"/>. The host must already provide an <c>IConnectionMultiplexer</c>.
     /// </summary>
-    public static IServiceCollection AddSpreadMessaging(this IServiceCollection services, IConfiguration configuration)
+    /// <typeparam name="TLiveHandler">Scoped handler applying events when the mode is <c>Kafka</c>.</typeparam>
+    public static IServiceCollection AddSpreadMessaging<TLiveHandler>(this IServiceCollection services, IConfiguration configuration)
+        where TLiveHandler : class, IKafkaMessageHandler
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
@@ -51,7 +53,17 @@ public static class SpreadMessagingExtensions
                 break;
 
             case MessagingConsumerMode.Kafka:
-                throw new NotSupportedException("Messaging:Consumer:Mode=Kafka is not available yet; it arrives with the cutover phase. Use RabbitMq or Shadow.");
+                if (string.IsNullOrWhiteSpace(options.ServiceName))
+                {
+                    throw new InvalidOperationException("Messaging:ServiceName is required when Messaging:Consumer:Mode is Kafka.");
+                }
+
+                services.TryAddSingleton<IParityRecorder, NoOpParityRecorder>();
+                services.AddSingleton<IIdempotencyStore, RedisIdempotencyStore>();
+                services.AddKafkaMessaging(configuration);
+                services.AddKafkaConsumer<TLiveHandler>(configuration);
+                services.PostConfigure<KafkaConsumerOptions>(o => o.GroupId = LiveGroupId(options.ServiceName));
+                break;
 
             default:
                 throw new NotSupportedException($"Unknown Messaging:Consumer:Mode '{options.Consumer.Mode}'.");
@@ -61,4 +73,6 @@ public static class SpreadMessagingExtensions
     }
 
     public static string ShadowGroupId(string serviceName) => $"{serviceName}-spreads-shadow";
+
+    public static string LiveGroupId(string serviceName) => $"{serviceName}-spreads";
 }

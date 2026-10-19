@@ -64,22 +64,35 @@ try
         options.WorkerCount = 2;
         options.Queues = ["default"];
     });
-    builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>();
+    // RabbitMQ -> Kafka migration: in Kafka mode RabbitMQ is not consumed at all (see docs/architecture/kafka-migration-plan.md).
+    var consumerMode = builder.Configuration.GetConsumerMode();
+    if (consumerMode != MessagingConsumerMode.Kafka)
+    {
+        builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>();
+        builder.Services.AddHostedService<MessageProcessingService>();
+    }
+
     builder.Services.AddScoped<IRealtimeNotifier, SignalRService>();
-    builder.Services.AddHostedService<MessageProcessingService>();
-    // Kafka side of the RabbitMQ -> Kafka migration; a no-op unless Messaging:Consumer:Mode=Shadow.
-    builder.Services.AddSpreadMessaging(builder.Configuration);
+    builder.Services.AddSpreadMessaging<TradeOpportunityKafkaHandler>(builder.Configuration);
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     {
         var redisEndpoint = builder.Configuration["Redis:Endpoint"] ?? "localhost:6379";
         return ConnectionMultiplexer.ConnectAsync(redisEndpoint).GetAwaiter().GetResult();
     });
-    builder.Services.AddHealthChecks()
+    var healthChecks = builder.Services.AddHealthChecks()
         .AddCheck<DbContextHealthCheck<AppDbContext>>("postgres")
         .AddCheck<MongoHealthCheck>("mongo")
-        .AddCheck<RedisHealthCheck>("redis")
-        .AddCheck<RabbitMqHealthCheck>("rabbitmq");
+        .AddCheck<RedisHealthCheck>("redis");
+    // The broker that carries spread events gates health; the other one must not. (Shadow mode adds no Kafka check on purpose.)
+    if (consumerMode == MessagingConsumerMode.Kafka)
+    {
+        healthChecks.AddCheck<KafkaHealthCheck>("kafka");
+    }
+    else
+    {
+        healthChecks.AddCheck<RabbitMqHealthCheck>("rabbitmq");
+    }
     builder.Services.AddHttpClient("AdminApi", (sp, client) =>
     {
         var config = sp.GetRequiredService<IConfiguration>();
@@ -132,6 +145,7 @@ try
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
                 .AddMeter(ParityMetrics.MeterName)
+                .AddMeter(ConsumerMetrics.MeterName)
                 .AddPrometheusExporter());
     }
     builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));

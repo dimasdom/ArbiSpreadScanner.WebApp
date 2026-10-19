@@ -11,7 +11,7 @@
 
   <!-- Security pins. These are transitive (EF SqlServer -> SqlClient -> Pkcs, and Xml via the Identity/Data Protection stack); the
        restored versions carry known advisories (NU1902/NU1903 fail the build because warnings are errors). Raise, never lower. -->
-  <ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
   </ItemGroup>

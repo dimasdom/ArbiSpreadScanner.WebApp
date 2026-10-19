@@ -47,7 +47,15 @@ public sealed class KafkaConsumerService : BackgroundService
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
-        => Task.Factory.StartNew(() => RunAsync(stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
+    {
+        if (!_options.Enabled)
+        {
+            _logger.LogInformation("Kafka consumer is disabled (Kafka:Consumer:Enabled=false)");
+            return Task.CompletedTask;
+        }
+
+        return Task.Factory.StartNew(() => RunAsync(stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
+    }
 
     private async Task RunAsync(CancellationToken stoppingToken)
     {

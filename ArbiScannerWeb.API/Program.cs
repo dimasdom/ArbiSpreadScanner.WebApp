@@ -64,14 +64,6 @@ try
         options.WorkerCount = 2;
         options.Queues = ["default"];
     });
-    // RabbitMQ -> Kafka migration: in Kafka mode RabbitMQ is not consumed at all (see docs/architecture/kafka-migration-plan.md).
-    var consumerMode = builder.Configuration.GetConsumerMode();
-    if (consumerMode != MessagingConsumerMode.Kafka)
-    {
-        builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>();
-        builder.Services.AddHostedService<MessageProcessingService>();
-    }
-
     builder.Services.AddScoped<IRealtimeNotifier, SignalRService>();
     builder.Services.AddSpreadMessaging<TradeOpportunityKafkaHandler>(builder.Configuration);
     builder.Services.AddHttpContextAccessor();
@@ -84,15 +76,7 @@ try
         .AddCheck<DbContextHealthCheck<AppDbContext>>("postgres")
         .AddCheck<MongoHealthCheck>("mongo")
         .AddCheck<RedisHealthCheck>("redis");
-    // The broker that carries spread events gates health; the other one must not. (Shadow mode adds no Kafka check on purpose.)
-    if (consumerMode == MessagingConsumerMode.Kafka)
-    {
-        healthChecks.AddCheck<KafkaHealthCheck>("kafka");
-    }
-    else
-    {
-        healthChecks.AddCheck<RabbitMqHealthCheck>("rabbitmq");
-    }
+    healthChecks.AddCheck<KafkaHealthCheck>("kafka");
     builder.Services.AddHttpClient("AdminApi", (sp, client) =>
     {
         var config = sp.GetRequiredService<IConfiguration>();
@@ -136,7 +120,6 @@ try
                 .AddHttpClientInstrumentation(o => o.RecordException = true)
                 .AddEntityFrameworkCoreInstrumentation()
                 .AddRedisInstrumentation()
-                .AddSource("RabbitMQ.Client.*")
                 .AddSource(KafkaTelemetry.SourceName)
                 .AddSource("MongoDB.Driver.Core.Extensions.DiagnosticSources")
                 .AddOtlpExporter())
@@ -144,11 +127,9 @@ try
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
-                .AddMeter(ParityMetrics.MeterName)
                 .AddMeter(ConsumerMetrics.MeterName)
                 .AddPrometheusExporter());
     }
-    builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
     builder.Services.AddRateLimiter(options =>
     {
         options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;

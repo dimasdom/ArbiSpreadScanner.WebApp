@@ -7,12 +7,6 @@ public sealed class WebApiCollection : ICollectionFixture<WebApiTestFixture>
 }
 
 [CollectionDefinition(Name)]
-public sealed class RabbitMqCollection : ICollectionFixture<RabbitMqTestFixture>
-{
-    public const string Name = "RabbitMq integration tests";
-}
-
-[CollectionDefinition(Name)]
 public sealed class AdminPanelCollection : ICollectionFixture<AdminPanelTestFixture>
 {
     public const string Name = "AdminPanel integration tests";

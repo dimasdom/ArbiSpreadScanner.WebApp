@@ -32,8 +32,8 @@ public static class KafkaServiceCollectionExtensions
 
         services.AddOptions<KafkaConsumerOptions>()
             .Bind(configuration.GetSection(KafkaConsumerOptions.SectionName))
-            .Validate(o => !string.IsNullOrWhiteSpace(o.GroupId), "Kafka:Consumer:GroupId is required.")
-            .Validate(o => !string.IsNullOrWhiteSpace(o.Topic), "Kafka:Consumer:Topic is required.")
+            .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.GroupId), "Kafka:Consumer:GroupId is required (set Messaging:ServiceName, which derives it).")
+            .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.Topic), "Kafka:Consumer:Topic is required.")
             .Validate(o => o.MaxHandlerAttempts >= 1, "Kafka:Consumer:MaxHandlerAttempts must be at least 1.")
             .Validate(o => Enum.TryParse<Confluent.Kafka.AutoOffsetReset>(o.AutoOffsetReset, ignoreCase: true, out _), "Kafka:Consumer:AutoOffsetReset must be Earliest, Latest or Error.")
             .ValidateOnStart();

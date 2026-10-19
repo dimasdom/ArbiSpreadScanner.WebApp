@@ -26,6 +26,9 @@ public sealed class KafkaConsumerOptions
 {
     public const string SectionName = "Kafka:Consumer";
 
+    /// <summary>When false the consumer does not start (and is not validated). For hosts and tests that run without a broker.</summary>
+    public bool Enabled { get; set; } = true;
+
     public string GroupId { get; set; } = string.Empty;
 
     public string Topic { get; set; } = KafkaTopics.Spreads;

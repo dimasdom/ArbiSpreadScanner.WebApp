@@ -11,7 +11,7 @@ using Testcontainers.Redis;
 
 namespace ArbiScannerWeb.IntegrationTests.Fixtures;
 
-/// <summary>The whole web API with Kafka as its only spread source (<c>Messaging:Consumer:Mode=Kafka</c>) against real
+/// <summary>The whole web API with Kafka as its only spread source (<c>Kafka consumer</c>) against real
 /// Postgres, Redis, Mongo and Kafka. No RabbitMQ is involved anywhere.</summary>
 public sealed class KafkaWebTestFixture : IAsyncLifetime
 {
@@ -26,8 +26,6 @@ public sealed class KafkaWebTestFixture : IAsyncLifetime
     private readonly RedisContainer _redis = new RedisBuilder(Images.Redis).Build();
     private readonly MongoDbContainer _mongo = new MongoDbBuilder(Images.Mongo).Build();
     private readonly KafkaContainer _kafka = new KafkaBuilder(Images.Kafka).Build();
-
-    private readonly List<string> _environmentVariables = [];
 
     internal CustomWebApplicationFactory Factory { get; private set; } = default!;
 
@@ -55,7 +53,6 @@ public sealed class KafkaWebTestFixture : IAsyncLifetime
                 ["MongoDb:CurrentSpreadsCollection"] = "CurrentSpreads",
                 ["MongoDb:SpreadsTickerCollection"] = "SpreadsTicker",
                 ["Messaging:ServiceName"] = "webapp",
-                ["Messaging:Consumer:Mode"] = "Kafka",
                 ["Kafka:BootstrapServers"] = BootstrapServers,
                 ["Kafka:Consumer:Topic"] = Topic,
                 ["Kafka:Consumer:AutoOffsetReset"] = "Earliest",
@@ -64,15 +61,6 @@ public sealed class KafkaWebTestFixture : IAsyncLifetime
                 ["Kafka:Consumer:RetryBaseDelayMs"] = "50",
                 ["Kafka:Consumer:RetryMaxDelayMs"] = "100",
             };
-
-        // Program.cs reads the messaging mode while it builds the service collection, which is before WebApplicationFactory's
-        // in-memory overrides are visible. Environment variables are, exactly as they are for the deployed container.
-        foreach (var (key, value) in overrides.Where(o => o.Key.StartsWith("Messaging:", StringComparison.Ordinal) || o.Key.StartsWith("Kafka:", StringComparison.Ordinal)))
-        {
-            var name = key.Replace(":", "__", StringComparison.Ordinal);
-            Environment.SetEnvironmentVariable(name, value);
-            _environmentVariables.Add(name);
-        }
 
         Factory = new CustomWebApplicationFactory(
             overrides,
@@ -89,11 +77,6 @@ public sealed class KafkaWebTestFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        foreach (var name in _environmentVariables)
-        {
-            Environment.SetEnvironmentVariable(name, null);
-        }
-
         await Factory.DisposeAsync();
         await Task.WhenAll(
             _postgres.DisposeAsync().AsTask(),

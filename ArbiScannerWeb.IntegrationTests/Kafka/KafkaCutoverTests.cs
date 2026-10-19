@@ -1,5 +1,4 @@
 using System.Text;
-using ArbiScannerWeb.Abstractions.Interfaces;
 using ArbiScannerWeb.Domain.Models;
 using ArbiScannerWeb.Infrastructure.Messaging;
 using ArbiScannerWeb.IntegrationTests.Fixtures;
@@ -113,7 +112,7 @@ public sealed class KafkaCutoverTests(KafkaWebTestFixture fixture)
     }
 
     [Fact]
-    public async Task The_app_consumes_in_the_live_group_and_exposes_a_kafka_health_check()
+    public async Task The_app_consumes_in_the_live_group_and_reports_kafka_health()
     {
         var group = fixture.Factory.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<KafkaConsumerOptions>>().Value.GroupId;
         group.Should().Be("webapp-spreads");
@@ -121,8 +120,7 @@ public sealed class KafkaCutoverTests(KafkaWebTestFixture fixture)
         var health = fixture.Factory.Services.GetRequiredService<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckService>();
         var report = await health.CheckHealthAsync();
 
-        report.Entries.Keys.Should().Contain("kafka").And.NotContain("rabbitmq");
+        report.Entries.Keys.Should().Contain("kafka");
         report.Entries["kafka"].Status.Should().Be(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Healthy);
-        fixture.Factory.Services.GetService<IRabbitMqService>().Should().BeNull("RabbitMQ is not consumed in Kafka mode");
     }
 }

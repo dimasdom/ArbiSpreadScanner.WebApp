@@ -12,7 +12,7 @@ using Testcontainers.Redis;
 namespace ArbiScannerWeb.IntegrationTests.Fixtures;
 
 /// <summary>The whole web API with Kafka as its only spread source (<c>Kafka consumer</c>) against real
-/// Postgres, Redis, Mongo and Kafka. No RabbitMQ is involved anywhere.</summary>
+/// Postgres, Redis, Mongo and Kafka.</summary>
 public sealed class KafkaWebTestFixture : IAsyncLifetime
 {
     public const string Topic = "spreads";

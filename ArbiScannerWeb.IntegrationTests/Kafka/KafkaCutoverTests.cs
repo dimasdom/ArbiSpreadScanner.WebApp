@@ -11,7 +11,7 @@ using static ArbiScannerWeb.IntegrationTests.Kafka.KafkaTestSupport;
 namespace ArbiScannerWeb.IntegrationTests.Kafka;
 
 /// <summary>The cutover end to end: spread events produced to Kafka reach the real web API's consumer group and change real
-/// Mongo state, with RabbitMQ nowhere in the picture.</summary>
+/// Mongo state.</summary>
 [Collection(KafkaWebCollection.Name)]
 public sealed class KafkaCutoverTests(KafkaWebTestFixture fixture)
 {

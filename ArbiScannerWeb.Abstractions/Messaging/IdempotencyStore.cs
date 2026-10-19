@@ -15,7 +15,7 @@ public enum ClaimResult
 /// <summary>Two-state duplicate suppression: a short-lived <c>processing</c> claim, upgraded to a long-lived
 /// <c>done</c> marker only after the side effects succeeded. A crash mid-handler leaves only the short claim,
 /// so the redelivered message is retried once it expires instead of being skipped as a "duplicate" and lost.
-/// Shared by the RabbitMQ and Kafka consumers so both backends agree on what has already been processed.</summary>
+/// Shared by every spread consumer (web API, Telegram notifier).</summary>
 public interface IIdempotencyStore
 {
     Task<ClaimResult> TryBeginAsync(string key, CancellationToken cancellationToken);

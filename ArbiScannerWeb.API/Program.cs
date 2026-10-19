@@ -9,6 +9,7 @@ using ArbiScannerWeb.Infrastructure.Filters;
 using ArbiScannerWeb.API.Filters;
 using ArbiScannerWeb.API.Hubs;
 using ArbiScannerWeb.Infrastructure.Middleware;
+using ArbiScannerWeb.Infrastructure.Realtime;
 using ArbiScannerWeb.API.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -64,7 +65,12 @@ try
         options.WorkerCount = 2;
         options.Queues = ["default"];
     });
-    builder.Services.AddScoped<IRealtimeNotifier, SignalRService>();
+    builder.Services.AddSpreadStream(builder.Configuration);
+    // Both transports until the SPA is moved to SSE; then SignalR (and the composite) goes away.
+    builder.Services.AddScoped<SignalRService>();
+    builder.Services.AddScoped<IRealtimeNotifier>(sp => new CompositeRealtimeNotifier(
+        [sp.GetRequiredService<SignalRService>(), sp.GetRequiredService<SseNotifier>()],
+        sp.GetRequiredService<ILogger<CompositeRealtimeNotifier>>()));
     builder.Services.AddSpreadMessaging<TradeOpportunityKafkaHandler>(builder.Configuration);
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
@@ -115,7 +121,8 @@ try
                 {
                     o.RecordException = true;
                     o.Filter = ctx => ctx.Request.Path != "/metrics"
-                                   && !ctx.Request.Path.StartsWithSegments("/hubs");
+                                   && !ctx.Request.Path.StartsWithSegments("/hubs")
+                                   && !ctx.Request.Path.StartsWithSegments("/api/TradeOpportunity/Stream"); // hours-long spans
                 })
                 .AddHttpClientInstrumentation(o => o.RecordException = true)
                 .AddEntityFrameworkCoreInstrumentation()
@@ -128,6 +135,7 @@ try
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
                 .AddMeter(ConsumerMetrics.MeterName)
+                .AddMeter(SpreadStreamMetrics.MeterName)
                 .AddPrometheusExporter());
     }
     builder.Services.AddRateLimiter(options =>

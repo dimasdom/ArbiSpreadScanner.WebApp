@@ -88,7 +88,7 @@ public sealed class SpreadStreamEndpointTests : IAsyncLifetime
         if (_app is not null) await _app.DisposeAsync();
     }
 
-    private SseNotifier Notifier => _app.Services.GetRequiredService<SseNotifier>();
+    private IRealtimeNotifier Notifier => _app.Services.GetRequiredService<IRealtimeNotifier>();
 
     private Task PublishTickerAsync(int seconds, bool withOrderBook = true) =>
         Notifier.NotifyGroupAsync(_spreadId.ToString(), new MessageDto { Ticker = BuildTicker(seconds, withOrderBook) });

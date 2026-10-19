@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace ArbiScannerWeb.Infrastructure.Realtime;
 
 /// <summary>Bridges <see cref="IRealtimeNotifier"/> (what <c>TradeOpportunityService</c> calls) to the SSE broker. The "group" is
-/// the lowercase spread GUID, the same value SignalR used.</summary>
+/// the lowercase spread GUID.</summary>
 public sealed class SseNotifier(ISpreadStreamBroker broker, ILogger<SseNotifier> logger) : IRealtimeNotifier
 {
     public Task NotifyGroupAsync(string group, object payload)

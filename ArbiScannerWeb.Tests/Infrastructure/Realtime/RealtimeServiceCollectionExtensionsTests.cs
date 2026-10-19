@@ -32,7 +32,7 @@ public class RealtimeServiceCollectionExtensionsTests
         using var scope = provider.CreateScope();
 
         scope.ServiceProvider.GetRequiredService<ISpreadStreamService>().Should().BeOfType<SpreadStreamService>();
-        provider.GetRequiredService<SseNotifier>().Should().NotBeNull();
+        provider.GetRequiredService<IRealtimeNotifier>().Should().BeOfType<SseNotifier>();
     }
 
     [Fact]
@@ -44,11 +44,29 @@ public class RealtimeServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void DoesNotRegisterIRealtimeNotifier_TheHostChoosesTheTransport()
+    public void TheRealtimeNotifierIsASingletonSoItCanBeInjectedIntoScopedServices()
     {
         using var provider = Build();
+        using var first = provider.CreateScope();
+        using var second = provider.CreateScope();
 
-        provider.GetService<IRealtimeNotifier>().Should().BeNull();
+        first.ServiceProvider.GetRequiredService<IRealtimeNotifier>()
+            .Should().BeSameAs(second.ServiceProvider.GetRequiredService<IRealtimeNotifier>());
+    }
+
+    [Fact]
+    public async Task NotifierPublishesIntoTheSameBrokerTheStreamsSubscribeTo()
+    {
+        using var provider = Build();
+        var broker = provider.GetRequiredService<ISpreadStreamBroker>();
+        var spread = Guid.NewGuid();
+        using var subscription = broker.Subscribe(spread);
+
+        await provider.GetRequiredService<IRealtimeNotifier>()
+            .NotifyGroupAsync(spread.ToString(), new ArbiScannerWeb.Domain.Models.DTOs.MessageDto { Ticker = new ArbiScannerWeb.Domain.Models.TradeOpportunityTickerModel() });
+
+        subscription.Reader.TryRead(out var received).Should().BeTrue();
+        received!.Type.Should().Be(ArbiScannerWeb.Domain.Models.DTOs.SpreadStreamEventTypes.Ticker);
     }
 
     [Fact]

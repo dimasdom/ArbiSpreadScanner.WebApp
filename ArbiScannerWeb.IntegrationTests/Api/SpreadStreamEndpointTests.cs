@@ -25,6 +25,18 @@ public class SpreadStreamEndpointTests(WebApiTestFixture fixture)
     }
 
     [Fact]
+    public async Task ATokenInTheQueryString_IsNotAccepted()
+    {
+        // The SignalR hub used to honour ?access_token= on /hubs paths; with the hub gone, tokens belong in the header only
+        // (a URL ends up in proxy and access logs).
+        var token = JwtTestTokenFactory.CreateToken(Guid.NewGuid().ToString(), "query-token@example.com", preferredUsername: "query-token@example.com");
+
+        var response = await fixture.Factory.CreateClient().GetAsync($"/api/TradeOpportunity/Stream/{Guid.NewGuid()}?access_token={token}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
     public async Task UnknownSpread_ReturnsNotFound()
     {
         var response = await fixture.Factory.CreateAuthenticatedClient().GetAsync($"/api/TradeOpportunity/Stream/{Guid.NewGuid()}");

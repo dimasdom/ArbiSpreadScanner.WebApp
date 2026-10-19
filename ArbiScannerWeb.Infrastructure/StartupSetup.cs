@@ -137,23 +137,6 @@ namespace ArbiScannerWeb.Infrastructure
                     // site in this codebase expects.
                     NameClaimType = "sub",
                 };
-                options.Events = new JwtBearerEvents
-                {
-                    // Browsers can't set an Authorization header on a WebSocket
-                    // handshake — the SignalR client instead appends the token as an
-                    // access_token query param (see signalrService.ts's
-                    // accessTokenFactory), which only the hub's own paths should honor.
-                    OnMessageReceived = context =>
-                    {
-                        var accessToken = context.Request.Query["access_token"];
-                        if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
-                        {
-                            context.Token = accessToken;
-                        }
-
-                        return Task.CompletedTask;
-                    }
-                };
             });
         }
 

@@ -7,13 +7,13 @@ namespace ArbiScannerWeb.Infrastructure.Realtime;
 
 public static class RealtimeServiceCollectionExtensions
 {
-    /// <summary>Registers the SSE pipeline: broker (singleton, shared by the Kafka consumer and the HTTP streams), notifier and
-    /// stream service. Does not touch <see cref="IRealtimeNotifier"/>; the host decides which notifier(s) feed it.</summary>
+    /// <summary>Registers the SSE pipeline: the broker (singleton, shared by the Kafka consumer and the HTTP streams), the
+    /// <see cref="IRealtimeNotifier"/> that feeds it, and the stream service.</summary>
     public static IServiceCollection AddSpreadStream(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<SpreadStreamOptions>(configuration.GetSection(SpreadStreamOptions.SectionName));
         services.AddSingleton<ISpreadStreamBroker, SpreadStreamBroker>();
-        services.AddSingleton<SseNotifier>();
+        services.AddSingleton<IRealtimeNotifier, SseNotifier>();
         services.AddScoped<ISpreadStreamService, SpreadStreamService>();
         return services;
     }

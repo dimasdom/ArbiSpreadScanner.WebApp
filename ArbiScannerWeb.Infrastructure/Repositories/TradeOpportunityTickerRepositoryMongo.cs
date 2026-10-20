@@ -64,19 +64,39 @@ namespace ArbiScannerWeb.Abstractions.Interfaces.Repositories
             // Using the typed collection + strongly-typed projection ensures the compound
             // index {Guid, DateTime DESC} is always used. The raw BsonDocument approach
             // previously risked a silent index miss if the BSON binary subtype didn't match.
-            var projection = Builders<TradeOpportunityTickerModel>.Projection
-                .Exclude(x => x.BidsExchangeA)
-                .Exclude(x => x.AsksExchangeA)
-                .Exclude(x => x.BidsExchangeB)
-                .Exclude(x => x.AsksExchangeB);
-
             return await _collection
                 .Find(Builders<TradeOpportunityTickerModel>.Filter.Eq(x => x.Guid, guid))
                 .SortByDescending(x => x.DateTime)
                 .Skip(skip)
                 .Limit(limit)
-                .Project<TradeOpportunityTickerModel>(projection)
+                .Project<TradeOpportunityTickerModel>(WithoutOrderBook)
                 .ToListAsync();
         }
+
+        public async Task<List<TradeOpportunityTickerModel>> GetSinceWithoutOrderBookAsync(Guid guid, DateTime since, int limit)
+        {
+            var filter = Builders<TradeOpportunityTickerModel>.Filter.And(
+                Builders<TradeOpportunityTickerModel>.Filter.Eq(x => x.Guid, guid),
+                Builders<TradeOpportunityTickerModel>.Filter.Gt(x => x.DateTime, since));
+
+            // Newest-first so the index {Guid, DateTime DESC} serves the sort and Limit keeps the live edge; flipped to
+            // chronological order for the caller.
+            var newestFirst = await _collection
+                .Find(filter)
+                .SortByDescending(x => x.DateTime)
+                .Limit(limit)
+                .Project<TradeOpportunityTickerModel>(WithoutOrderBook)
+                .ToListAsync();
+
+            newestFirst.Reverse();
+            return newestFirst;
+        }
+
+        private static readonly ProjectionDefinition<TradeOpportunityTickerModel> WithoutOrderBook =
+            Builders<TradeOpportunityTickerModel>.Projection
+                .Exclude(x => x.BidsExchangeA)
+                .Exclude(x => x.AsksExchangeA)
+                .Exclude(x => x.BidsExchangeB)
+                .Exclude(x => x.AsksExchangeB);
     }
 }

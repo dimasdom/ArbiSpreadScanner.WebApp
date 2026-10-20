@@ -64,11 +64,6 @@ export default defineConfig({
                 target,
                 secure: false,
             },
-            '^/hubs': {
-                target,
-                secure: false,
-                ws: true
-            },
             '^/ai-hub': {
                 target: aiAssistantTarget,
                 secure: false,

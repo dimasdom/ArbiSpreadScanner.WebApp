@@ -1,4 +1,4 @@
-import type { OrderBlock, TradeOpportunityModel } from "./tradeOpportunityModel";
+import type { OrderBlock } from "./tradeOpportunityModel";
 
 export interface PossiblePositionTickerModel {
     id: number;
@@ -17,8 +17,4 @@ export interface PossiblePositionTickerModel {
     asksExchangeA?: OrderBlock[];
     bidsExchangeB?: OrderBlock[];
     asksExchangeB?: OrderBlock[];
-}
-export interface MessageDTO {
-    possiblePosition: TradeOpportunityModel,
-    ticker: PossiblePositionTickerModel
 }

@@ -202,6 +202,15 @@ public class SpreadStreamEventTests
     }
 
     [Fact]
+    public void Ticker_TreatsALocalKindAsItsRealInstant()
+    {
+        var local = new DateTime(2026, 10, 19, 12, 0, 0, DateTimeKind.Local);
+
+        SpreadStreamEvent.Ticker(new TradeOpportunityTickerModel { DateTime = local }).Id
+            .Should().Be(new DateTimeOffset(local).ToUnixTimeMilliseconds().ToString());
+    }
+
+    [Fact]
     public void Close_CarriesTheSpreadIdAndNoEventId()
     {
         var spread = Guid.NewGuid();

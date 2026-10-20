@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 namespace ArbiScannerWeb.Messaging.Kafka;
 
 /// <summary>
-/// The live Kafka consumer of the web API: applies each spread event (Open / Update / Close) to Mongo and pushes it to SignalR
+/// The live Kafka consumer of the web API: applies each spread event (Open / Update / Close) to Mongo and pushes it to the open SSE streams
 /// through <see cref="ITradeOpportunityService"/>. Registered scoped, so every message gets its own DI scope and DbContext.
 /// </summary>
 /// <remarks>

@@ -49,7 +49,7 @@ public class JitUserProvisioningService(AppDbContext context, ILogger<JitUserPro
         catch (DbUpdateException ex)
         {
             // Another request for the same brand-new user (e.g. GetUserData and the
-            // SignalR handshake firing back-to-back right after login) already won
+            // spread stream connecting back-to-back right after login) already won
             // the race between the AnyAsync check above and this SaveChanges.
             logger.LogDebug(ex, "JIT provisioning race for user {UserId} — already provisioned.", userId);
         }

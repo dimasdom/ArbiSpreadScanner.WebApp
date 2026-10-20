@@ -7,9 +7,8 @@ using ArbiScannerWeb.Infrastructure.Services;
 using ArbiScannerWeb.Infrastructure.Settings;
 using ArbiScannerWeb.Infrastructure.Filters;
 using ArbiScannerWeb.API.Filters;
-using ArbiScannerWeb.API.Hubs;
 using ArbiScannerWeb.Infrastructure.Middleware;
-using ArbiScannerWeb.API.Services;
+using ArbiScannerWeb.Infrastructure.Realtime;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
@@ -47,7 +46,6 @@ try
 
     builder.Services.AddControllers(opts => opts.Filters.Add<ResultStatusCodeFilter>());
     builder.Services.AddOpenApi();
-    builder.Services.AddSignalR();
     builder.Services.AddDbContext(builder.Configuration);
     builder.Services.AddJwtOptions(builder.Configuration);
     builder.Services.AddAuthenticationJwt(builder.Configuration, builder.Environment);
@@ -64,7 +62,7 @@ try
         options.WorkerCount = 2;
         options.Queues = ["default"];
     });
-    builder.Services.AddScoped<IRealtimeNotifier, SignalRService>();
+    builder.Services.AddSpreadStream(builder.Configuration);
     builder.Services.AddSpreadMessaging<TradeOpportunityKafkaHandler>(builder.Configuration);
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
@@ -115,7 +113,7 @@ try
                 {
                     o.RecordException = true;
                     o.Filter = ctx => ctx.Request.Path != "/metrics"
-                                   && !ctx.Request.Path.StartsWithSegments("/hubs");
+                                   && !ctx.Request.Path.StartsWithSegments("/api/TradeOpportunity/Stream"); // hours-long spans
                 })
                 .AddHttpClientInstrumentation(o => o.RecordException = true)
                 .AddEntityFrameworkCoreInstrumentation()
@@ -128,6 +126,7 @@ try
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
                 .AddMeter(ConsumerMetrics.MeterName)
+                .AddMeter(SpreadStreamMetrics.MeterName)
                 .AddPrometheusExporter());
     }
     builder.Services.AddRateLimiter(options =>
@@ -183,7 +182,6 @@ try
     app.UseMiddleware<ExceptionHandlingMiddleware>();
     app.UseSerilogRequestLogging();
     app.UseCors("AllowAll");
-    app.MapHub<TradeOpportunityHub>("/hubs/TradeOpportunities").RequireCors("AllowAll").RequireAuthorization();
     app.UseDefaultFiles();
     app.MapStaticAssets();
 
